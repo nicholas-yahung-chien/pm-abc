@@ -467,6 +467,23 @@ export async function deleteMemberAccount(personId: string): Promise<MutationRes
   return { ok: true };
 }
 
+export async function deleteMemberAccounts(personIds: string[]): Promise<MutationResult> {
+  const uniqueIds = Array.from(
+    new Set(personIds.map((item) => item.trim()).filter(Boolean)),
+  );
+
+  if (!uniqueIds.length) {
+    return { ok: false, message: "請至少選擇一位學員。" };
+  }
+
+  for (const personId of uniqueIds) {
+    const result = await deleteMemberAccount(personId);
+    if (!result.ok) return result;
+  }
+
+  return { ok: true };
+}
+
 export async function createMembership(input: {
   groupId: string;
   personId: string;

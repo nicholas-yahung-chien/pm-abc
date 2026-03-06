@@ -1,4 +1,5 @@
 ﻿import {
+  batchDeleteMemberAccountsAction,
   createMemberAccountAction,
   deleteMemberAccountAction,
   updateMemberAccountAction,
@@ -85,6 +86,7 @@ export default async function PeoplePage({
           }))}
           onUpdateAction={updateMemberAccountAction}
           onDeleteAction={deleteMemberAccountAction}
+          onBatchDeleteAction={batchDeleteMemberAccountsAction}
         />
       </section>
     </AppShell>

@@ -9,6 +9,7 @@ import {
   createMembership,
   createPerson,
   deleteMemberAccount,
+  deleteMemberAccounts,
   createRole,
   createRoleAssignment,
   listGroupIdsByEmail,
@@ -202,6 +203,28 @@ export async function deleteMemberAccountAction(formData: FormData) {
   revalidatePath("/groups/[groupId]/directory", "page");
   if (!result.ok) redirectWithMessage("/people", false, result.message);
   redirectWithMessage("/people", true, "學員已刪除。");
+}
+
+export async function batchDeleteMemberAccountsAction(formData: FormData) {
+  await requireCoachOrAdmin("/people");
+
+  const personIds = readText(formData, "personIds")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (!personIds.length) {
+    redirectWithMessage("/people", false, "請先勾選要刪除的學員。");
+  }
+
+  const result = await deleteMemberAccounts(personIds);
+  revalidatePath("/people");
+  revalidatePath("/groups");
+  revalidatePath("/groups/[groupId]", "page");
+  revalidatePath("/groups/[groupId]/roles", "page");
+  revalidatePath("/groups/[groupId]/directory", "page");
+  if (!result.ok) redirectWithMessage("/people", false, result.message);
+  redirectWithMessage("/people", true, `已批次刪除 ${personIds.length} 位學員。`);
 }
 
 export async function createMembershipAction(formData: FormData) {

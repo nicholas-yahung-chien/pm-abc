@@ -1,9 +1,35 @@
-﻿import Link from "next/link";
+﻿import type { CSSProperties } from "react";
+import Link from "next/link";
+import { Briefcase, Shield, UserRound, X } from "lucide-react";
 import { StatusBanner } from "@/components/status-banner";
 import { AuthShell } from "@/components/auth-shell";
 import { pickSearchParam } from "@/lib/search";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const identities = [
+  {
+    href: "/login/member",
+    title: "學員登入",
+    subtitle: "Email OTP",
+    icon: UserRound,
+    circleClass: "bg-red-700",
+  },
+  {
+    href: "/login/coach",
+    title: "教練登入",
+    subtitle: "登入 / 註冊",
+    icon: Briefcase,
+    circleClass: "bg-red-700",
+  },
+  {
+    href: "/login/admin",
+    title: "管理員登入",
+    subtitle: "系統管理",
+    icon: Shield,
+    circleClass: "bg-slate-800",
+  },
+] as const;
 
 export default async function LoginPage({
   searchParams,
@@ -18,28 +44,52 @@ export default async function LoginPage({
     <AuthShell
       title="登入 PM-ABC 平台"
       description="請選擇您的身份進行登入。"
+      layout="selector"
     >
       <StatusBanner status={status} message={message} />
-      <div className="grid gap-3">
+
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
         <Link
-          href="/login/coach"
-          className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition hover:border-amber-300 hover:bg-amber-50"
+          href="/"
+          aria-label="關閉身份選擇"
+          className="absolute right-4 top-4 z-10 rounded-md bg-slate-800 p-2 text-white transition hover:bg-slate-700"
         >
-          教練登入 / 註冊
+          <X className="h-5 w-5" />
         </Link>
-        <Link
-          href="/login/member"
-          className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition hover:border-amber-300 hover:bg-amber-50"
+
+        <div
+          className="grid gap-3 md:gap-0 md:[grid-template-columns:repeat(var(--identity-cols),minmax(0,1fr))]"
+          style={{ "--identity-cols": identities.length } as CSSProperties}
         >
-          學員登入（Email OTP）
-        </Link>
-        <Link
-          href="/login/admin"
-          className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition hover:border-amber-300 hover:bg-amber-50"
-        >
-          管理員登入
-        </Link>
-      </div>
+          {identities.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  "group flex min-h-72 flex-col items-center justify-center gap-5 px-6 py-10 text-center transition hover:bg-white",
+                  index > 0 ? "md:border-l md:border-dashed md:border-slate-300" : "",
+                ].join(" ")}
+              >
+                <div
+                  className={`flex h-32 w-32 items-center justify-center rounded-full ${item.circleClass} text-white shadow-lg shadow-slate-300/50`}
+                >
+                  <Icon className="h-14 w-14" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-5xl font-light tracking-wide text-slate-600 group-hover:text-slate-800">
+                    {item.title}
+                  </p>
+                  <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+                    {item.subtitle}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </AuthShell>
   );
 }
