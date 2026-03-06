@@ -7,12 +7,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-env:
-  HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
-
 jobs:
   preview:
-    if: ${{ github.event_name == 'pull_request' && env.HAS_VERCEL_TOKEN == 'true' }}
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -28,23 +25,40 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Check Vercel token
+        id: precheck
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Vercel CLI
+        if: steps.precheck.outputs.has_token == 'true'
         run: npm i -g vercel@latest
 
       - name: Pull Vercel project settings (preview)
+        if: steps.precheck.outputs.has_token == 'true'
         working-directory: web
         run: vercel pull --yes --environment=preview --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Build preview artifacts
+        if: steps.precheck.outputs.has_token == 'true'
         working-directory: web
         run: vercel build --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Deploy preview
+        if: steps.precheck.outputs.has_token == 'true'
         working-directory: web
         run: vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}"
 
+      - name: Skip note (missing token)
+        if: steps.precheck.outputs.has_token != 'true'
+        run: echo "VERCEL_TOKEN is not set. Skipping preview deploy."
+
   production:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_VERCEL_TOKEN == 'true' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -60,24 +74,34 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Check Vercel token
+        id: precheck
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Vercel CLI
+        if: steps.precheck.outputs.has_token == 'true'
         run: npm i -g vercel@latest
 
       - name: Pull Vercel project settings (production)
+        if: steps.precheck.outputs.has_token == 'true'
         working-directory: web
         run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Build production artifacts
+        if: steps.precheck.outputs.has_token == 'true'
         working-directory: web
         run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
 
       - name: Deploy production
+        if: steps.precheck.outputs.has_token == 'true'
         working-directory: web
         run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
 
-  missing-token-note:
-    if: ${{ env.HAS_VERCEL_TOKEN != 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Explain skipped deploy
-        run: echo "VERCEL_TOKEN is not set. Vercel deployment job is skipped until the secret is configured."
+      - name: Skip note (missing token)
+        if: steps.precheck.outputs.has_token != 'true'
+        run: echo "VERCEL_TOKEN is not set. Skipping production deploy."
