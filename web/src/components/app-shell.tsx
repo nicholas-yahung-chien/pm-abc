@@ -15,7 +15,8 @@ const baseNavItems = [
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await getCurrentSession();
   if (!session) {
-    redirect("/login?status=error&message=請先登入後再繼續使用。");
+    const message = encodeURIComponent("請先登入後再繼續使用。");
+    redirect(`/login?status=error&message=${message}`);
   }
 
   const navItems =

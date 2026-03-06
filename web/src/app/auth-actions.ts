@@ -186,7 +186,8 @@ export async function adminLoginAction(formData: FormData) {
 
 export async function logoutAction() {
   await clearSession();
-  redirect("/login?status=success&message=您已成功登出。");
+  const message = encodeURIComponent("您已成功登出。");
+  redirect(`/login?status=success&message=${message}`);
 }
 
 async function requireAdminSession() {

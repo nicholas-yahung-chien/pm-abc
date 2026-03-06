@@ -12,7 +12,10 @@ export default async function DashboardPage({
   searchParams: SearchParams;
 }) {
   const session = await getCurrentSession();
-  if (!session) redirect("/login?status=error&message=請先登入後再繼續使用。");
+  if (!session) {
+    const message = encodeURIComponent("請先登入後再繼續使用。");
+    redirect(`/login?status=error&message=${message}`);
+  }
 
   const params = await searchParams;
   const status = pickSearchParam(params.status);

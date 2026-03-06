@@ -23,9 +23,13 @@ export default async function CoachApprovalsPage({
   searchParams: SearchParams;
 }) {
   const session = await getCurrentSession();
-  if (!session) redirect("/login/admin?status=error&message=請先登入管理員帳號。");
+  if (!session) {
+    const message = encodeURIComponent("請先登入管理員帳號。");
+    redirect(`/login/admin?status=error&message=${message}`);
+  }
   if (session.role !== "admin") {
-    redirect("/dashboard?status=error&message=此頁面僅限管理員使用。");
+    const message = encodeURIComponent("此頁面僅限管理員使用。");
+    redirect(`/dashboard?status=error&message=${message}`);
   }
 
   const params = await searchParams;
