@@ -5,10 +5,13 @@ import { redirect } from "next/navigation";
 import {
   createClass,
   createGroup,
+  createMemberAccount,
   createMembership,
   createPerson,
+  deleteMemberAccount,
   createRole,
   createRoleAssignment,
+  updateMemberAccount,
 } from "@/lib/repository";
 
 function redirectWithMessage(path: string, ok: boolean, message: string) {
@@ -99,6 +102,53 @@ export async function createPersonAction(formData: FormData) {
   revalidatePath("/groups");
   if (!result.ok) redirectWithMessage("/people", false, result.message);
   redirectWithMessage("/people", true, "學員新增成功。");
+}
+
+export async function createMemberAccountAction(formData: FormData) {
+  const email = readText(formData, "email");
+  if (!email) {
+    redirectWithMessage("/people", false, "請輸入學員 Email。");
+  }
+
+  const result = await createMemberAccount({ email });
+  revalidatePath("/people");
+  revalidatePath("/groups");
+  if (!result.ok) redirectWithMessage("/people", false, result.message);
+  redirectWithMessage("/people", true, "學員帳號新增成功。");
+}
+
+export async function updateMemberAccountAction(formData: FormData) {
+  const personId = readText(formData, "personId");
+  const email = readText(formData, "email");
+  const personNo = readText(formData, "personNo");
+
+  if (!personId || !email) {
+    redirectWithMessage("/people", false, "請填寫學員 Email。");
+  }
+
+  const result = await updateMemberAccount({
+    personId,
+    email,
+    personNo,
+  });
+
+  revalidatePath("/people");
+  revalidatePath("/groups");
+  if (!result.ok) redirectWithMessage("/people", false, result.message);
+  redirectWithMessage("/people", true, "學員資料已更新。");
+}
+
+export async function deleteMemberAccountAction(formData: FormData) {
+  const personId = readText(formData, "personId");
+  if (!personId) {
+    redirectWithMessage("/people", false, "缺少學員識別資料。");
+  }
+
+  const result = await deleteMemberAccount(personId);
+  revalidatePath("/people");
+  revalidatePath("/groups");
+  if (!result.ok) redirectWithMessage("/people", false, result.message);
+  redirectWithMessage("/people", true, "學員已刪除。");
 }
 
 export async function createMembershipAction(formData: FormData) {

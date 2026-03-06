@@ -25,6 +25,10 @@ function getClientOrError():
   return { client };
 }
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 export async function listClasses(): Promise<ClassRow[]> {
   const db = getClientOrError();
   if (!db.client) return [];
@@ -56,6 +60,19 @@ export async function listPeople(): Promise<PersonRow[]> {
   const { data } = await db.client
     .from("people")
     .select("*")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as PersonRow[];
+}
+
+export async function listMembers(): Promise<PersonRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("people")
+    .select("*")
+    .eq("person_type", "member")
     .order("created_at", { ascending: false });
 
   return (data ?? []) as PersonRow[];
@@ -180,6 +197,204 @@ export async function createPerson(input: {
   return { ok: true };
 }
 
+export async function createMemberAccount(input: {
+  email: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const email = normalizeEmail(input.email);
+  if (!email || !email.includes("@")) {
+    return { ok: false, message: "請輸入有效的 Email。" };
+  }
+
+  const { data: existingPeople, error: existingPeopleError } = await db.client
+    .from("people")
+    .select("id")
+    .eq("person_type", "member")
+    .eq("email", email)
+    .limit(1);
+
+  if (existingPeopleError) return { ok: false, message: existingPeopleError.message };
+  if (existingPeople?.length) {
+    return { ok: false, message: "此學員 Email 已存在。" };
+  }
+
+  const { data: existingAuth, error: existingAuthError } = await db.client
+    .from("auth_accounts")
+    .select("id, role")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existingAuthError) return { ok: false, message: existingAuthError.message };
+  if (existingAuth && existingAuth.role !== "member") {
+    return { ok: false, message: "此 Email 已被其他身份使用。" };
+  }
+
+  const { error: insertPeopleError } = await db.client.from("people").insert({
+    person_no: null,
+    full_name: email,
+    display_name: "",
+    person_type: "member",
+    email,
+    phone: "",
+    line_id: "",
+    intro: "",
+  });
+  if (insertPeopleError) return { ok: false, message: insertPeopleError.message };
+
+  if (!existingAuth) {
+    const { error: insertAuthError } = await db.client.from("auth_accounts").insert({
+      email,
+      display_name: email,
+      role: "member",
+      coach_status: "approved",
+      is_active: true,
+    });
+    if (insertAuthError) return { ok: false, message: insertAuthError.message };
+  }
+
+  return { ok: true };
+}
+
+export async function updateMemberAccount(input: {
+  personId: string;
+  email: string;
+  personNo: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const email = normalizeEmail(input.email);
+  if (!email || !email.includes("@")) {
+    return { ok: false, message: "請輸入有效的 Email。" };
+  }
+
+  const { data: currentMember, error: currentMemberError } = await db.client
+    .from("people")
+    .select("id, email, full_name")
+    .eq("id", input.personId)
+    .eq("person_type", "member")
+    .maybeSingle();
+
+  if (currentMemberError) return { ok: false, message: currentMemberError.message };
+  if (!currentMember) return { ok: false, message: "找不到學員資料。" };
+
+  const { data: duplicateMember, error: duplicateMemberError } = await db.client
+    .from("people")
+    .select("id")
+    .eq("person_type", "member")
+    .eq("email", email)
+    .neq("id", input.personId)
+    .limit(1);
+
+  if (duplicateMemberError) return { ok: false, message: duplicateMemberError.message };
+  if (duplicateMember?.length) {
+    return { ok: false, message: "此學員 Email 已存在。" };
+  }
+
+  const { data: targetAuth, error: targetAuthError } = await db.client
+    .from("auth_accounts")
+    .select("id, role")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (targetAuthError) return { ok: false, message: targetAuthError.message };
+  if (targetAuth && targetAuth.role !== "member") {
+    return { ok: false, message: "此 Email 已被其他身份使用。" };
+  }
+
+  const oldEmail = normalizeEmail(currentMember.email ?? "");
+  const shouldUpdateName = !currentMember.full_name || currentMember.full_name === oldEmail;
+
+  const updatePayload: {
+    person_no: string | null;
+    email: string;
+    full_name?: string;
+  } = {
+    person_no: input.personNo.trim() || null,
+    email,
+  };
+  if (shouldUpdateName) {
+    updatePayload.full_name = email;
+  }
+
+  const { error: updatePeopleError } = await db.client
+    .from("people")
+    .update(updatePayload)
+    .eq("id", input.personId)
+    .eq("person_type", "member");
+
+  if (updatePeopleError) return { ok: false, message: updatePeopleError.message };
+
+  const { data: oldAuth, error: oldAuthError } = await db.client
+    .from("auth_accounts")
+    .select("id")
+    .eq("email", oldEmail)
+    .eq("role", "member")
+    .maybeSingle();
+
+  if (oldAuthError) return { ok: false, message: oldAuthError.message };
+
+  if (oldAuth && targetAuth && oldAuth.id !== targetAuth.id) {
+    const { error: deleteOldAuthError } = await db.client
+      .from("auth_accounts")
+      .delete()
+      .eq("id", oldAuth.id)
+      .eq("role", "member");
+    if (deleteOldAuthError) return { ok: false, message: deleteOldAuthError.message };
+  } else if (oldAuth && oldEmail !== email) {
+    const { error: updateAuthError } = await db.client
+      .from("auth_accounts")
+      .update({ email, display_name: email })
+      .eq("id", oldAuth.id)
+      .eq("role", "member");
+    if (updateAuthError) return { ok: false, message: updateAuthError.message };
+  } else if (!oldAuth && !targetAuth) {
+    const { error: insertAuthError } = await db.client.from("auth_accounts").insert({
+      email,
+      display_name: email,
+      role: "member",
+      coach_status: "approved",
+      is_active: true,
+    });
+    if (insertAuthError) return { ok: false, message: insertAuthError.message };
+  }
+
+  return { ok: true };
+}
+
+export async function deleteMemberAccount(personId: string): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: member, error: memberError } = await db.client
+    .from("people")
+    .select("id, email")
+    .eq("id", personId)
+    .eq("person_type", "member")
+    .maybeSingle();
+
+  if (memberError) return { ok: false, message: memberError.message };
+  if (!member) return { ok: false, message: "找不到學員資料。" };
+
+  const { error: deletePeopleError } = await db.client
+    .from("people")
+    .delete()
+    .eq("id", personId)
+    .eq("person_type", "member");
+  if (deletePeopleError) return { ok: false, message: deletePeopleError.message };
+
+  const { error: deleteAuthError } = await db.client
+    .from("auth_accounts")
+    .delete()
+    .eq("email", normalizeEmail(member.email ?? ""))
+    .eq("role", "member");
+  if (deleteAuthError) return { ok: false, message: deleteAuthError.message };
+
+  return { ok: true };
+}
+
 export async function createMembership(input: {
   groupId: string;
   personId: string;
@@ -239,4 +454,3 @@ export async function createRoleAssignment(input: {
   if (error) return { ok: false, message: error.message };
   return { ok: true };
 }
-
