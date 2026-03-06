@@ -46,9 +46,19 @@ npm run dev
 - `SUPABASE_PROJECT_REF`
 - `SUPABASE_DB_PASSWORD`
 
+## Current Setup Status
+
+- Configured automatically:
+  - `VERCEL_ORG_ID`
+  - `VERCEL_PROJECT_ID`
+  - `SUPABASE_ACCESS_TOKEN`
+- Still required before full production auto-deploy:
+  - `VERCEL_TOKEN` (for GitHub Actions -> Vercel CLI deploy)
+  - `SUPABASE_PROJECT_REF`
+  - `SUPABASE_DB_PASSWORD`
+
 ## Security Notes
 
 - Do not commit `.env*` files or tokens.
 - Keep all credentials in GitHub Secrets / platform environment variables.
 - Rotate credentials if any accidental leakage is detected.
-
