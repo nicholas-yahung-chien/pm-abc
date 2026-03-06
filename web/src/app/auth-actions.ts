@@ -13,6 +13,7 @@ import {
   findAccountById,
   getAdminNotificationEmail,
   setAdminNotificationEmail,
+  upsertCoachDirectoryProfile,
   updateAccountDisplayName,
   updateCoachStatus,
   verifyMemberOtp,
@@ -342,4 +343,54 @@ export async function changeMyPasswordAction(formData: FormData) {
 
   if (!result.ok) toMessage("/account", "error", result.message);
   toMessage("/account", "success", "密碼已更新。");
+}
+
+export async function updateCoachDirectoryProfileAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== "coach") {
+    toMessage("/account", "error", "僅教練可編輯通訊錄資訊。");
+  }
+
+  const fullName = readText(formData, "fullName");
+  const displayName = readText(formData, "displayName");
+  const phone = readText(formData, "phone");
+  const lineId = readText(formData, "lineId");
+  const intro = readText(formData, "intro");
+
+  if (!fullName) {
+    toMessage("/account", "error", "姓名不可為空白。");
+  }
+
+  const profileResult = await upsertCoachDirectoryProfile({
+    accountEmail: session.email,
+    fullName,
+    displayName,
+    phone,
+    lineId,
+    intro,
+  });
+  if (!profileResult.ok) {
+    toMessage("/account", "error", profileResult.message);
+  }
+
+  const nextDisplayName = displayName || fullName;
+  const accountResult = await updateAccountDisplayName({
+    accountId: session.accountId,
+    displayName: nextDisplayName,
+  });
+  if (!accountResult.ok) {
+    toMessage("/account", "error", accountResult.message);
+  }
+
+  await createSession({
+    accountId: accountResult.data.id,
+    email: accountResult.data.email,
+    displayName: accountResult.data.display_name,
+    role: accountResult.data.role,
+  });
+
+  revalidatePath("/account");
+  revalidatePath("/dashboard");
+  revalidatePath("/groups");
+  toMessage("/account", "success", "教練通訊錄資料已更新。");
 }

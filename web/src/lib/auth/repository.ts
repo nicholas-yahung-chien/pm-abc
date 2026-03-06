@@ -6,6 +6,14 @@ import type { AuthAccountRow, CoachAccountStatus } from "@/lib/auth/types";
 type Ok<T> = { ok: true; data: T };
 type Err = { ok: false; message: string };
 type Result<T> = Ok<T> | Err;
+type CoachDirectoryProfile = {
+  fullName: string;
+  displayName: string;
+  email: string;
+  phone: string;
+  lineId: string;
+  intro: string;
+};
 
 function dbOrError():
   | { client: NonNullable<ReturnType<typeof getSupabaseAdminClient>> }
@@ -526,5 +534,88 @@ export async function changeAccountPassword(input: {
     .eq("id", input.accountId);
 
   if (error) return { ok: false, message: error.message };
+  return { ok: true, data: null };
+}
+
+export async function getCoachDirectoryProfileByEmail(
+  emailInput: string,
+): Promise<Result<CoachDirectoryProfile>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const accountEmail = normalizeEmail(emailInput);
+  const { data, error } = await db.client
+    .from("people")
+    .select("full_name, display_name, email, phone, line_id, intro")
+    .eq("person_type", "coach")
+    .eq("email", accountEmail)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (error) return { ok: false, message: error.message };
+  const person = data?.[0];
+
+  return {
+    ok: true,
+    data: {
+      fullName: person?.full_name ?? "",
+      displayName: person?.display_name ?? "",
+      email: accountEmail,
+      phone: person?.phone ?? "",
+      lineId: person?.line_id ?? "",
+      intro: person?.intro ?? "",
+    },
+  };
+}
+
+export async function upsertCoachDirectoryProfile(input: {
+  accountEmail: string;
+  fullName: string;
+  displayName: string;
+  phone: string;
+  lineId: string;
+  intro: string;
+}): Promise<Result<null>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const fullName = input.fullName.trim();
+  if (!fullName) {
+    return { ok: false, message: "姓名不可為空白。" };
+  }
+
+  const payload = {
+    full_name: fullName,
+    display_name: input.displayName.trim(),
+    person_type: "coach" as const,
+    email: normalizeEmail(input.accountEmail),
+    phone: input.phone.trim(),
+    line_id: input.lineId.trim(),
+    intro: input.intro.trim(),
+  };
+
+  const { data: existing, error: findError } = await db.client
+    .from("people")
+    .select("id")
+    .eq("person_type", "coach")
+    .eq("email", payload.email)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (findError) return { ok: false, message: findError.message };
+  const existingId = existing?.[0]?.id;
+
+  if (!existingId) {
+    const { error: insertError } = await db.client.from("people").insert(payload);
+    if (insertError) return { ok: false, message: insertError.message };
+    return { ok: true, data: null };
+  }
+
+  const { error: updateError } = await db.client
+    .from("people")
+    .update(payload)
+    .eq("id", existingId);
+
+  if (updateError) return { ok: false, message: updateError.message };
   return { ok: true, data: null };
 }

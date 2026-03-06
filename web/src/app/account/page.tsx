@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import {
   changeMyPasswordAction,
   updateAccountProfileAction,
+  updateCoachDirectoryProfileAction,
 } from "@/app/auth-actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { getCoachDirectoryProfileByEmail } from "@/lib/auth/repository";
 import { getCurrentSession } from "@/lib/auth/session";
 import { pickSearchParam } from "@/lib/search";
 
@@ -24,6 +26,11 @@ export default async function AccountPage({
   const params = await searchParams;
   const status = pickSearchParam(params.status);
   const message = pickSearchParam(params.message);
+  const coachProfileResult =
+    session.role === "coach"
+      ? await getCoachDirectoryProfileByEmail(session.email)
+      : null;
+  const coachProfile = coachProfileResult?.ok ? coachProfileResult.data : null;
 
   const roleLabel =
     session.role === "admin" ? "管理員" : session.role === "coach" ? "教練" : "學員";
@@ -63,6 +70,62 @@ export default async function AccountPage({
           </div>
         </form>
       </section>
+
+      {session.role === "coach" && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">教練通訊錄資料</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            以下資料將顯示於小組通訊錄，提供學員查看。
+          </p>
+
+          <form
+            action={updateCoachDirectoryProfileAction}
+            className="mt-4 grid gap-3 md:grid-cols-2"
+          >
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">姓名 *</span>
+              <input
+                name="fullName"
+                defaultValue={coachProfile?.fullName || session.displayName}
+                required
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">
+                希望別人怎麼稱呼
+              </span>
+              <input
+                name="displayName"
+                defaultValue={coachProfile?.displayName || session.displayName}
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">LINE ID</span>
+              <input name="lineId" defaultValue={coachProfile?.lineId || ""} />
+            </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">聯絡電話</span>
+              <input name="phone" defaultValue={coachProfile?.phone || ""} />
+            </label>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-sm font-medium text-slate-700">
+                電子信箱（登入帳號）
+              </span>
+              <input value={coachProfile?.email || session.email} readOnly disabled />
+            </label>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-sm font-medium text-slate-700">自我介紹</span>
+              <textarea name="intro" rows={6} defaultValue={coachProfile?.intro || ""} />
+            </label>
+
+            <div className="md:col-span-2">
+              <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                儲存通訊錄資料
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">密碼設定</h3>
