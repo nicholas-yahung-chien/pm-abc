@@ -92,6 +92,40 @@ export async function listMemberships(): Promise<MembershipRow[]> {
   return (data ?? []) as MembershipRow[];
 }
 
+export async function listMembershipsByEmail(
+  emailInput: string,
+): Promise<MembershipRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const email = normalizeEmail(emailInput);
+  if (!email) return [];
+
+  const { data: peopleRows, error: peopleError } = await db.client
+    .from("people")
+    .select("id")
+    .eq("email", email);
+
+  if (peopleError) return [];
+  const personIds = (peopleRows ?? []).map((row) => row.id as string).filter(Boolean);
+  if (!personIds.length) return [];
+
+  const { data } = await db.client
+    .from("group_memberships")
+    .select(
+      "*, group:groups(id, name, code), person:people(id, full_name, display_name, person_type)",
+    )
+    .in("person_id", personIds)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as MembershipRow[];
+}
+
+export async function listGroupIdsByEmail(emailInput: string): Promise<string[]> {
+  const memberships = await listMembershipsByEmail(emailInput);
+  return Array.from(new Set(memberships.map((item) => item.group_id).filter(Boolean)));
+}
+
 export async function listRoles(): Promise<RoleDefinitionRow[]> {
   const db = getClientOrError();
   if (!db.client) return [];

@@ -3,12 +3,18 @@ import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/auth-actions";
 import { getCurrentSession } from "@/lib/auth/session";
 
-const baseNavItems = [
+const coachNavItems = [
   { href: "/dashboard", label: "總覽" },
   { href: "/account", label: "帳號設定" },
   { href: "/classes", label: "班別管理" },
   { href: "/groups", label: "小組管理" },
   { href: "/people", label: "學員管理" },
+];
+
+const memberNavItems = [
+  { href: "/dashboard", label: "總覽" },
+  { href: "/account", label: "帳號設定" },
+  { href: "/groups", label: "我的小組" },
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,12 +25,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const navItems =
-    session.role === "admin"
-      ? [
-          ...baseNavItems,
-          { href: "/admin/coach-approvals", label: "教練審核中心" },
-        ]
-      : baseNavItems;
+    session.role === "member"
+      ? memberNavItems
+      : session.role === "admin"
+        ? [...coachNavItems, { href: "/admin/coach-approvals", label: "教練審核中心" }]
+        : coachNavItems;
 
   const roleLabel =
     session.role === "admin" ? "管理員" : session.role === "coach" ? "教練" : "學員";

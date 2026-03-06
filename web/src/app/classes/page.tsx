@@ -1,6 +1,8 @@
 ﻿import { createClassAction } from "@/app/actions";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { getCurrentSession } from "@/lib/auth/session";
 import { listClasses } from "@/lib/repository";
 import { pickSearchParam } from "@/lib/search";
 
@@ -11,6 +13,16 @@ export default async function ClassesPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const session = await getCurrentSession();
+  if (!session) {
+    const encoded = encodeURIComponent("請先登入後再繼續使用。");
+    redirect(`/login?status=error&message=${encoded}`);
+  }
+  if (session.role === "member") {
+    const encoded = encodeURIComponent("學員身份不可管理班別。");
+    redirect(`/groups?status=error&message=${encoded}`);
+  }
+
   const params = await searchParams;
   const status = pickSearchParam(params.status);
   const message = pickSearchParam(params.message);

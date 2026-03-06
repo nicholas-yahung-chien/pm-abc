@@ -1,11 +1,14 @@
 ﻿import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createGroupAction, createMembershipAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { getCurrentSession } from "@/lib/auth/session";
 import {
   listClasses,
   listGroups,
   listMemberships,
+  listMembershipsByEmail,
   listPeople,
 } from "@/lib/repository";
 import { pickSearchParam } from "@/lib/search";
@@ -17,9 +20,85 @@ export default async function GroupsPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const session = await getCurrentSession();
+  if (!session) {
+    const encoded = encodeURIComponent("請先登入後再繼續使用。");
+    redirect(`/login?status=error&message=${encoded}`);
+  }
+
   const params = await searchParams;
   const status = pickSearchParam(params.status);
   const message = pickSearchParam(params.message);
+
+  if (session.role === "member") {
+    const [allGroups, memberMemberships] = await Promise.all([
+      listGroups(),
+      listMembershipsByEmail(session.email),
+    ]);
+
+    const memberGroupIds = new Set(memberMemberships.map((item) => item.group_id));
+    const groups = allGroups.filter((item) => memberGroupIds.has(item.id));
+
+    return (
+      <AppShell>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+            第二階段 / 我的小組
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-900">我的小組列表</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            學員僅可進入已被指派的小組，並在小組內進行管理與協作。
+          </p>
+
+          <div className="mt-4">
+            <StatusBanner status={status} message={message} />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">小組列表</h3>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="px-3 py-2">班別</th>
+                  <th className="px-3 py-2">小組代碼</th>
+                  <th className="px-3 py-2">小組名稱</th>
+                  <th className="px-3 py-2">說明</th>
+                  <th className="px-3 py-2">入口</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map((item) => (
+                  <tr key={item.id} className="border-t border-slate-100">
+                    <td className="px-3 py-2">{item.class?.code ?? "-"}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{item.code}</td>
+                    <td className="px-3 py-2 font-medium">{item.name}</td>
+                    <td className="px-3 py-2">{item.description || "-"}</td>
+                    <td className="px-3 py-2">
+                      <Link
+                        href={`/groups/${item.id}`}
+                        className="text-sm font-semibold text-amber-700 underline"
+                      >
+                        進入小組
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {!groups.length && (
+                  <tr>
+                    <td className="px-3 py-4 text-slate-500" colSpan={5}>
+                      目前尚未被指派到任何小組。
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </AppShell>
+    );
+  }
 
   const [classes, groups, people, memberships] = await Promise.all([
     listClasses(),

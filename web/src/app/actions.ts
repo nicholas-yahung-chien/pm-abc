@@ -11,10 +11,13 @@ import {
   deleteMemberAccount,
   createRole,
   createRoleAssignment,
+  listGroupIdsByEmail,
   updateMemberAccount,
 } from "@/lib/repository";
+import { getCurrentSession } from "@/lib/auth/session";
+import type { AppSession } from "@/lib/auth/types";
 
-function redirectWithMessage(path: string, ok: boolean, message: string) {
+function redirectWithMessage(path: string, ok: boolean, message: string): never {
   const status = ok ? "success" : "error";
   const encoded = encodeURIComponent(message);
   redirect(`${path}?status=${status}&message=${encoded}`);
@@ -31,7 +34,36 @@ function readReturnTo(formData: FormData): string | null {
   return value;
 }
 
+async function requireSignedIn(redirectPath: string): Promise<AppSession> {
+  const session = await getCurrentSession();
+  if (!session) {
+    redirectWithMessage(redirectPath, false, "請先登入後再繼續使用。");
+  }
+  return session;
+}
+
+async function requireCoachOrAdmin(redirectPath: string) {
+  const session = await requireSignedIn(redirectPath);
+  if (session.role === "member") {
+    redirectWithMessage(redirectPath, false, "學員身份無法執行此操作。");
+  }
+  return session;
+}
+
+async function requireGroupAccess(groupId: string, redirectPath: string) {
+  const session = await requireSignedIn(redirectPath);
+  if (session.role !== "member") return session;
+
+  const groupIds = await listGroupIdsByEmail(session.email);
+  if (!groupIds.includes(groupId)) {
+    redirectWithMessage(redirectPath, false, "學員僅可管理已被指派的小組。");
+  }
+  return session;
+}
+
 export async function createClassAction(formData: FormData) {
+  await requireCoachOrAdmin("/classes");
+
   const code = readText(formData, "code");
   const name = readText(formData, "name");
   const description = readText(formData, "description");
@@ -57,6 +89,8 @@ export async function createClassAction(formData: FormData) {
 }
 
 export async function createGroupAction(formData: FormData) {
+  await requireCoachOrAdmin("/groups");
+
   const classId = readText(formData, "classId");
   const code = readText(formData, "code");
   const name = readText(formData, "name");
@@ -74,6 +108,8 @@ export async function createGroupAction(formData: FormData) {
 }
 
 export async function createPersonAction(formData: FormData) {
+  await requireCoachOrAdmin("/people");
+
   const personNo = readText(formData, "personNo");
   const fullName = readText(formData, "fullName");
   const displayName = readText(formData, "displayName");
@@ -105,6 +141,8 @@ export async function createPersonAction(formData: FormData) {
 }
 
 export async function createMemberAccountAction(formData: FormData) {
+  await requireCoachOrAdmin("/people");
+
   const email = readText(formData, "email");
   if (!email) {
     redirectWithMessage("/people", false, "請輸入學員 Email。");
@@ -121,6 +159,8 @@ export async function createMemberAccountAction(formData: FormData) {
 }
 
 export async function updateMemberAccountAction(formData: FormData) {
+  await requireCoachOrAdmin("/people");
+
   const personId = readText(formData, "personId");
   const email = readText(formData, "email");
   const personNo = readText(formData, "personNo");
@@ -147,6 +187,8 @@ export async function updateMemberAccountAction(formData: FormData) {
 }
 
 export async function deleteMemberAccountAction(formData: FormData) {
+  await requireCoachOrAdmin("/people");
+
   const personId = readText(formData, "personId");
   if (!personId) {
     redirectWithMessage("/people", false, "缺少學員識別資料。");
@@ -163,6 +205,8 @@ export async function deleteMemberAccountAction(formData: FormData) {
 }
 
 export async function createMembershipAction(formData: FormData) {
+  await requireCoachOrAdmin("/groups");
+
   const groupId = readText(formData, "groupId");
   const personId = readText(formData, "personId");
   const membershipType = readText(formData, "membershipType") as
@@ -201,6 +245,8 @@ export async function createRoleAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "請填寫小組與角色名稱。");
   }
 
+  await requireGroupAccess(groupId, returnTo);
+
   const result = await createRole({
     groupId,
     name,
@@ -226,6 +272,8 @@ export async function createRoleAssignmentAction(formData: FormData) {
   if (!groupId || !roleId || !personId) {
     redirectWithMessage(returnTo, false, "請填寫小組、角色與學員。");
   }
+
+  await requireGroupAccess(groupId, returnTo);
 
   const result = await createRoleAssignment({
     groupId,

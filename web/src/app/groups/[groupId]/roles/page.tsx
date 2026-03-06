@@ -1,11 +1,13 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createRoleAction, createRoleAssignmentAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { getCurrentSession } from "@/lib/auth/session";
 import {
   listGroups,
   listMemberships,
+  listMembershipsByEmail,
   listRoleAssignments,
   listRoles,
 } from "@/lib/repository";
@@ -21,17 +23,32 @@ export default async function GroupRolesPage({
   params: Params;
   searchParams: SearchParams;
 }) {
+  const session = await getCurrentSession();
+  if (!session) {
+    const message = encodeURIComponent("請先登入後再繼續使用。");
+    redirect(`/login?status=error&message=${message}`);
+  }
+
   const { groupId } = await params;
   const query = await searchParams;
   const status = pickSearchParam(query.status);
   const message = pickSearchParam(query.message);
 
-  const [groups, memberships, roles, assignments] = await Promise.all([
+  const [groups, memberships, roles, assignments, myMemberships] = await Promise.all([
     listGroups(),
     listMemberships(),
     listRoles(),
     listRoleAssignments(),
+    session.role === "member" ? listMembershipsByEmail(session.email) : Promise.resolve([]),
   ]);
+
+  if (
+    session.role === "member" &&
+    !myMemberships.some((membership) => membership.group_id === groupId)
+  ) {
+    const encoded = encodeURIComponent("學員僅可管理已被指派的小組。");
+    redirect(`/groups?status=error&message=${encoded}`);
+  }
 
   const group = groups.find((item) => item.id === groupId);
   if (!group) {
@@ -68,7 +85,7 @@ export default async function GroupRolesPage({
         </h1>
         <div className="mt-3 flex flex-wrap gap-4 text-sm">
           <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
-            返回小組入口
+            回到小組總覽
           </Link>
           <Link href={`/groups/${groupId}/directory`} className="text-amber-700 underline">
             前往通訊錄
@@ -87,7 +104,7 @@ export default async function GroupRolesPage({
 
           <label className="space-y-1">
             <span className="text-sm font-medium text-slate-700">角色名稱 *</span>
-            <input name="name" placeholder="例如：值日生、資訊長" required />
+            <input name="name" placeholder="例如：副組長、場地長、值日生" required />
           </label>
 
           <label className="space-y-1">
@@ -147,7 +164,7 @@ export default async function GroupRolesPage({
 
           <label className="space-y-1 md:col-span-2">
             <span className="text-sm font-medium text-slate-700">備註</span>
-            <input name="note" placeholder="例如：本週輪值" />
+            <input name="note" placeholder="例如：本期負責第一章導讀" />
           </label>
 
           <div className="md:col-span-2">
@@ -161,13 +178,13 @@ export default async function GroupRolesPage({
         </form>
         {(!groupRoles.length || !memberOptions.size) && (
           <p className="mt-3 text-sm text-slate-600">
-            請先建立角色並確認小組已有成員，再進行角色指派。
+            請先建立角色，並確認小組中已有可指派成員。
           </p>
         )}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">角色與指派總覽</h2>
+        <h2 className="text-lg font-semibold text-slate-900">角色與指派列表</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="min-w-full text-left text-sm">
@@ -189,7 +206,7 @@ export default async function GroupRolesPage({
                 {!groupRoles.length && (
                   <tr>
                     <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                      尚無角色資料。
+                      目前尚無角色資料。
                     </td>
                   </tr>
                 )}
@@ -219,7 +236,7 @@ export default async function GroupRolesPage({
                 {!groupAssignments.length && (
                   <tr>
                     <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                      尚無角色指派資料。
+                      目前尚無角色指派資料。
                     </td>
                   </tr>
                 )}

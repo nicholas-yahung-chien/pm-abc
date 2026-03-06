@@ -1,9 +1,11 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { getCurrentSession } from "@/lib/auth/session";
 import {
   listGroups,
   listMemberships,
+  listMembershipsByEmail,
   listPeople,
   listRoleAssignments,
 } from "@/lib/repository";
@@ -15,13 +17,28 @@ export default async function GroupDirectoryPage({
 }: {
   params: Params;
 }) {
+  const session = await getCurrentSession();
+  if (!session) {
+    const message = encodeURIComponent("請先登入後再繼續使用。");
+    redirect(`/login?status=error&message=${message}`);
+  }
+
   const { groupId } = await params;
-  const [groups, memberships, people, assignments] = await Promise.all([
+  const [groups, memberships, people, assignments, myMemberships] = await Promise.all([
     listGroups(),
     listMemberships(),
     listPeople(),
     listRoleAssignments(),
+    session.role === "member" ? listMembershipsByEmail(session.email) : Promise.resolve([]),
   ]);
+
+  if (
+    session.role === "member" &&
+    !myMemberships.some((membership) => membership.group_id === groupId)
+  ) {
+    const encoded = encodeURIComponent("學員僅可進入已被指派的小組。");
+    redirect(`/groups?status=error&message=${encoded}`);
+  }
 
   const group = groups.find((item) => item.id === groupId);
   if (!group) {
@@ -65,7 +82,7 @@ export default async function GroupDirectoryPage({
         </p>
         <div className="mt-3 flex flex-wrap gap-4 text-sm">
           <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
-            返回小組入口
+            回到小組總覽
           </Link>
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
             前往 R&R 管理
@@ -118,7 +135,7 @@ export default async function GroupDirectoryPage({
               {!sortedMembers.length && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={6}>
-                    此小組尚未指派任何成員。
+                    目前此小組尚無成員資料。
                   </td>
                 </tr>
               )}
