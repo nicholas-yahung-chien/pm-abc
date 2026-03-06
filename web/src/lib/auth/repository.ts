@@ -1,4 +1,4 @@
-import { randomInt } from "crypto";
+﻿import { randomInt } from "crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { hashOtpCode, hashPassword, verifyPassword } from "@/lib/auth/password";
 import type { AuthAccountRow, CoachAccountStatus } from "@/lib/auth/types";
@@ -15,7 +15,7 @@ function dbOrError():
     return {
       client: null,
       error:
-        "Supabase server config is missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+        "缺少 Supabase 伺服器設定，請檢查 NEXT_PUBLIC_SUPABASE_URL 與 SUPABASE_SERVICE_ROLE_KEY。",
     };
   }
 
@@ -42,7 +42,7 @@ export async function ensureDefaultAdminAccount(): Promise<Result<null>> {
 
   const { error } = await db.client.from("auth_accounts").insert({
     email: "root",
-    display_name: "Root Admin",
+    display_name: "系統管理員",
     role: "admin",
     password_hash: hashPassword("root"),
     coach_status: "approved",
@@ -81,7 +81,7 @@ export async function createCoachApplication(input: {
   const existing = await findAccountByEmail(email);
   if (!existing.ok) return existing;
   if (existing.data) {
-    return { ok: false, message: "This email is already registered." };
+    return { ok: false, message: "此 Email 已被註冊。" };
   }
 
   const { error } = await db.client.from("auth_accounts").insert({
@@ -107,19 +107,19 @@ export async function authenticateAdmin(input: {
   const accountResult = await findAccountByEmail(input.username);
   if (!accountResult.ok) return accountResult;
   if (!accountResult.data || accountResult.data.role !== "admin") {
-    return { ok: false, message: "Invalid admin credentials." };
+    return { ok: false, message: "管理員帳號或密碼錯誤。" };
   }
 
   if (!accountResult.data.password_hash) {
-    return { ok: false, message: "Admin account password is not configured." };
+    return { ok: false, message: "管理員帳號尚未設定密碼。" };
   }
 
   if (!verifyPassword(input.password, accountResult.data.password_hash)) {
-    return { ok: false, message: "Invalid admin credentials." };
+    return { ok: false, message: "管理員帳號或密碼錯誤。" };
   }
 
   if (!accountResult.data.is_active) {
-    return { ok: false, message: "Admin account is inactive." };
+    return { ok: false, message: "管理員帳號已停用。" };
   }
 
   await markAccountLogin(accountResult.data.id);
@@ -133,23 +133,23 @@ export async function authenticateCoach(input: {
   const accountResult = await findAccountByEmail(input.email);
   if (!accountResult.ok) return accountResult;
   if (!accountResult.data || accountResult.data.role !== "coach") {
-    return { ok: false, message: "Coach account was not found." };
+    return { ok: false, message: "找不到此教練帳號。" };
   }
 
   const account = accountResult.data;
   if (!account.password_hash || !verifyPassword(input.password, account.password_hash)) {
-    return { ok: false, message: "Invalid email/password." };
+    return { ok: false, message: "Email 或密碼錯誤。" };
   }
 
   if (!account.is_active) {
-    return { ok: false, message: "This coach account is inactive." };
+    return { ok: false, message: "此教練帳號已停用。" };
   }
 
   if (account.coach_status === "pending") {
-    return { ok: false, message: "Coach account is pending admin approval." };
+    return { ok: false, message: "此教練帳號尚待管理員審核。" };
   }
   if (account.coach_status === "rejected") {
-    return { ok: false, message: "Coach application was rejected." };
+    return { ok: false, message: "此教練申請已被拒絕。" };
   }
 
   await markAccountLogin(account.id);
@@ -166,7 +166,7 @@ async function upsertMemberAccountFromPeople(
   if (!existing.ok) return existing;
   if (existing.data) {
     if (existing.data.role !== "member") {
-      return { ok: false, message: "This email is not a member account." };
+      return { ok: false, message: "此 Email 不是學員帳號。" };
     }
     return { ok: true, data: existing.data };
   }
@@ -180,7 +180,7 @@ async function upsertMemberAccountFromPeople(
 
   if (peopleError) return { ok: false, message: peopleError.message };
   if (!personRows?.length) {
-    return { ok: false, message: "Member account was not found." };
+    return { ok: false, message: "找不到此學員帳號。" };
   }
 
   const person = personRows[0];
@@ -218,7 +218,7 @@ export async function createMemberOtp(emailInput: string): Promise<
   const accountResult = await upsertMemberAccountFromPeople(email);
   if (!accountResult.ok) return accountResult;
   if (!accountResult.data) {
-    return { ok: false, message: "Member account was not found." };
+    return { ok: false, message: "找不到此學員帳號。" };
   }
 
   const otpCode = String(randomInt(100000, 1000000));
@@ -254,7 +254,7 @@ export async function verifyMemberOtp(input: {
   const accountResult = await findAccountByEmail(email);
   if (!accountResult.ok) return accountResult;
   if (!accountResult.data || accountResult.data.role !== "member") {
-    return { ok: false, message: "Member account was not found." };
+    return { ok: false, message: "找不到此學員帳號。" };
   }
 
   const { data: otpRows, error: otpError } = await db.client
@@ -266,15 +266,15 @@ export async function verifyMemberOtp(input: {
     .limit(1);
 
   if (otpError) return { ok: false, message: otpError.message };
-  if (!otpRows?.length) return { ok: false, message: "OTP is missing or expired." };
+  if (!otpRows?.length) return { ok: false, message: "OTP 不存在或已失效。" };
 
   const otp = otpRows[0];
   if (new Date(otp.expires_at).getTime() < Date.now()) {
-    return { ok: false, message: "OTP is expired." };
+    return { ok: false, message: "OTP 已過期，請重新取得。" };
   }
 
   if (otp.otp_hash !== hashOtpCode(email, input.otpCode.trim())) {
-    return { ok: false, message: "OTP is invalid." };
+    return { ok: false, message: "OTP 驗證碼錯誤。" };
   }
 
   const { error: consumeError } = await db.client
@@ -361,7 +361,7 @@ export async function createCoachByAdmin(input: {
   }
 
   if (account.data.role !== "coach") {
-    return { ok: false, message: "This email is already used by another role." };
+    return { ok: false, message: "此 Email 已被其他身份使用。" };
   }
 
   const { error: updateError } = await db.client

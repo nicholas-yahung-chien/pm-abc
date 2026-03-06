@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -38,7 +38,7 @@ export async function coachRegisterAction(formData: FormData) {
   const password = readText(formData, "password");
 
   if (!displayName || !email || !password) {
-    toMessage("/login/coach", "error", "Name, email, and password are required.");
+    toMessage("/login/coach", "error", "姓名、Email 與密碼皆為必填。");
   }
 
   const createResult = await createCoachApplication({ displayName, email, password });
@@ -49,7 +49,7 @@ export async function coachRegisterAction(formData: FormData) {
     toMessage(
       "/login/coach",
       "success",
-      `Application submitted. Admin email lookup failed: ${notificationEmailResult.message}`,
+      `申請已送出，但查詢管理員通知信箱失敗：${notificationEmailResult.message}`,
     );
   }
 
@@ -58,26 +58,26 @@ export async function coachRegisterAction(formData: FormData) {
     toMessage(
       "/login/coach",
       "success",
-      "Application submitted. Admin notification email is not configured yet.",
+      "申請已送出，但尚未設定管理員通知信箱。",
     );
   }
 
   const emailResult = await sendTransactionalEmail({
     to: notificationEmail,
-    subject: "New coach registration pending approval",
-    text: `Coach registration pending approval.\nName: ${displayName}\nEmail: ${email}`,
-    html: `<p>Coach registration pending approval.</p><p><strong>Name:</strong> ${displayName}<br/><strong>Email:</strong> ${email}</p>`,
+    subject: "新的教練註冊申請待審核",
+    text: `有新的教練註冊申請待審核。\n姓名：${displayName}\nEmail：${email}`,
+    html: `<p>有新的教練註冊申請待審核。</p><p><strong>姓名：</strong>${displayName}<br/><strong>Email：</strong>${email}</p>`,
   });
 
   if (!emailResult.ok) {
     toMessage(
       "/login/coach",
       "success",
-      `Application submitted. Notification email failed: ${emailResult.message}`,
+      `申請已送出，但通知信寄送失敗：${emailResult.message}`,
     );
   }
 
-  toMessage("/login/coach", "success", "Application submitted and sent to admin.");
+  toMessage("/login/coach", "success", "教練註冊申請已送出，等待管理員審核。");
 }
 
 export async function coachLoginAction(formData: FormData) {
@@ -85,7 +85,7 @@ export async function coachLoginAction(formData: FormData) {
   const password = readText(formData, "password");
 
   if (!email || !password) {
-    toMessage("/login/coach", "error", "Email and password are required.");
+    toMessage("/login/coach", "error", "請輸入 Email 與密碼。");
   }
 
   const result = await authenticateCoach({ email, password });
@@ -98,12 +98,12 @@ export async function coachLoginAction(formData: FormData) {
     role: result.data.role,
   });
 
-  toMessage("/dashboard", "success", "Coach login successful.");
+  toMessage("/dashboard", "success", "教練登入成功。");
 }
 
 export async function memberSendOtpAction(formData: FormData) {
   const email = readText(formData, "email");
-  if (!email) toMessage("/login/member", "error", "Email is required.");
+  if (!email) toMessage("/login/member", "error", "請輸入 Email。");
 
   const otpResult = await createMemberOtp(email);
   if (!otpResult.ok) toMessage("/login/member", "error", otpResult.message);
@@ -111,27 +111,27 @@ export async function memberSendOtpAction(formData: FormData) {
   const otpCodeForDev = otpResult.data.otpCodeForDev;
   const emailResult = await sendTransactionalEmail({
     to: email.toLowerCase(),
-    subject: "Your PM-ABC login OTP",
-    text: `Your OTP code is ${otpResult.data.otpCode} (valid for 10 minutes).`,
-    html: `<p>Your OTP code is <strong>${otpResult.data.otpCode}</strong> (valid for 10 minutes).</p>`,
+    subject: "PM-ABC 登入驗證碼",
+    text: `您的 OTP 驗證碼是 ${otpResult.data.otpCode}，10 分鐘內有效。`,
+    html: `<p>您的 OTP 驗證碼是 <strong>${otpResult.data.otpCode}</strong>，10 分鐘內有效。</p>`,
   });
 
   if (!emailResult.ok && !otpCodeForDev) {
-    toMessage("/login/member", "error", `OTP email failed: ${emailResult.message}`);
+    toMessage("/login/member", "error", `OTP 郵件寄送失敗：${emailResult.message}`);
   }
 
   if (otpCodeForDev) {
     toMessage(
       `/login/member?email=${encodeURIComponent(email.toLowerCase())}`,
       "success",
-      `OTP sent (dev mode). Code: ${otpCodeForDev}`,
+      `OTP 已送出（開發模式）：${otpCodeForDev}`,
     );
   }
 
   toMessage(
     `/login/member?email=${encodeURIComponent(email.toLowerCase())}`,
     "success",
-    "OTP has been sent to your email.",
+    "OTP 已寄送，請到信箱收取。",
   );
 }
 
@@ -140,7 +140,7 @@ export async function memberVerifyOtpAction(formData: FormData) {
   const otpCode = readText(formData, "otpCode");
 
   if (!email || !otpCode) {
-    toMessage("/login/member", "error", "Email and OTP are required.");
+    toMessage("/login/member", "error", "請輸入 Email 與 OTP 驗證碼。");
   }
 
   const result = await verifyMemberOtp({ emailInput: email, otpCode });
@@ -159,7 +159,7 @@ export async function memberVerifyOtpAction(formData: FormData) {
     role: result.data.role,
   });
 
-  toMessage("/dashboard", "success", "Member login successful.");
+  toMessage("/dashboard", "success", "學員登入成功。");
 }
 
 export async function adminLoginAction(formData: FormData) {
@@ -168,7 +168,7 @@ export async function adminLoginAction(formData: FormData) {
   const username = usernameInput.toLowerCase() === "root" ? "root" : usernameInput;
 
   if (!username || !password) {
-    toMessage("/login/admin", "error", "Username and password are required.");
+    toMessage("/login/admin", "error", "請輸入帳號與密碼。");
   }
 
   const result = await authenticateAdmin({ username, password });
@@ -181,18 +181,18 @@ export async function adminLoginAction(formData: FormData) {
     role: result.data.role,
   });
 
-  toMessage("/dashboard", "success", "Admin login successful.");
+  toMessage("/dashboard", "success", "管理員登入成功。");
 }
 
 export async function logoutAction() {
   await clearSession();
-  redirect("/login?status=success&message=Signed%20out%20successfully.");
+  redirect("/login?status=success&message=您已成功登出。");
 }
 
 async function requireAdminSession() {
   const session = await getCurrentSession();
   if (!session || session.role !== "admin") {
-    toMessage("/login/admin", "error", "Admin access is required.");
+    toMessage("/login/admin", "error", "此操作僅限管理員執行。");
   }
   return session;
 }
@@ -208,7 +208,7 @@ export async function approveCoachAction(formData: FormData) {
 
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
-  toMessage("/admin/coach-approvals", "success", "Coach approved.");
+  toMessage("/admin/coach-approvals", "success", "已核准教練申請。");
 }
 
 export async function rejectCoachAction(formData: FormData) {
@@ -222,7 +222,7 @@ export async function rejectCoachAction(formData: FormData) {
 
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
-  toMessage("/admin/coach-approvals", "success", "Coach rejected.");
+  toMessage("/admin/coach-approvals", "success", "已拒絕教練申請。");
 }
 
 export async function createCoachByAdminAction(formData: FormData) {
@@ -235,14 +235,14 @@ export async function createCoachByAdminAction(formData: FormData) {
     toMessage(
       "/admin/coach-approvals",
       "error",
-      "Email, display name, and password are required.",
+      "Email、顯示名稱與密碼皆為必填。",
     );
   }
 
   const result = await createCoachByAdmin({ email, displayName, password });
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
-  toMessage("/admin/coach-approvals", "success", "Coach account saved.");
+  toMessage("/admin/coach-approvals", "success", "教練帳號已儲存。");
 }
 
 export async function deleteCoachByAdminAction(formData: FormData) {
@@ -252,7 +252,7 @@ export async function deleteCoachByAdminAction(formData: FormData) {
 
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
-  toMessage("/admin/coach-approvals", "success", "Coach account deleted.");
+  toMessage("/admin/coach-approvals", "success", "教練帳號已刪除。");
 }
 
 export async function updateAdminNotificationEmailAction(formData: FormData) {
@@ -260,11 +260,11 @@ export async function updateAdminNotificationEmailAction(formData: FormData) {
   await requireAdminSession();
 
   if (!notificationEmail.includes("@")) {
-    toMessage("/admin/coach-approvals", "error", "Please provide a valid email.");
+    toMessage("/admin/coach-approvals", "error", "請輸入有效的 Email。");
   }
 
   const result = await setAdminNotificationEmail(notificationEmail);
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
-  toMessage("/admin/coach-approvals", "success", "Admin notification email updated.");
+  toMessage("/admin/coach-approvals", "success", "管理員通知信箱已更新。");
 }

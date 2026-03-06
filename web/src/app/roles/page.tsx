@@ -1,4 +1,4 @@
-import { createRoleAction, createRoleAssignmentAction } from "@/app/actions";
+﻿import { createRoleAction, createRoleAssignmentAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
 import {
@@ -31,9 +31,9 @@ export default async function RolesPage({
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          Phase 2 / 角色管理
+          第二階段 / R&R 角色管理
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-slate-900">建立組內角色</h2>
+        <h2 className="mt-2 text-xl font-semibold text-slate-900">建立角色</h2>
 
         <div className="mt-4">
           <StatusBanner status={status} message={message} />
@@ -56,7 +56,7 @@ export default async function RolesPage({
 
           <label className="space-y-1">
             <span className="text-sm font-medium text-slate-700">角色名稱 *</span>
-            <input name="name" placeholder="例如：小組長 / 副組長 / 場地長" required />
+            <input name="name" placeholder="例如：值日生、資訊長" required />
           </label>
 
           <label className="space-y-1">
@@ -65,20 +65,20 @@ export default async function RolesPage({
           </label>
 
           <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">職責說明</span>
+            <span className="text-sm font-medium text-slate-700">角色說明</span>
             <textarea name="description" rows={3} />
           </label>
 
           <div className="md:col-span-2">
             <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              建立角色
+              新增角色
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">角色分派</h3>
+        <h3 className="text-lg font-semibold text-slate-900">角色指派</h3>
         <form
           action={createRoleAssignmentAction}
           className="mt-4 grid gap-3 md:grid-cols-2"
@@ -124,19 +124,19 @@ export default async function RolesPage({
           </label>
           <label className="space-y-1">
             <span className="text-sm font-medium text-slate-700">備註</span>
-            <input name="note" placeholder="例如：代理/輪值" />
+            <input name="note" placeholder="例如：本週輪值" />
           </label>
 
           <div className="md:col-span-2">
             <button className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900">
-              新增分派
+              新增指派
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">角色與分派清單</h3>
+        <h3 className="text-lg font-semibold text-slate-900">角色與指派總覽</h3>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="min-w-full text-left text-sm">
@@ -160,7 +160,7 @@ export default async function RolesPage({
                 {!roles.length && (
                   <tr>
                     <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                      尚無角色定義。
+                      尚無角色資料。
                     </td>
                   </tr>
                 )}
@@ -192,7 +192,7 @@ export default async function RolesPage({
                 {!assignments.length && (
                   <tr>
                     <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                      尚無角色分派。
+                      尚無角色指派資料。
                     </td>
                   </tr>
                 )}
@@ -204,4 +204,3 @@ export default async function RolesPage({
     </AppShell>
   );
 }
-

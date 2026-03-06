@@ -13,8 +13,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PM-ABC Learning Portal",
-  description: "PMP coaching class and study group management portal",
+  title: "PM-ABC 共好看板",
+  description: "PMP 專案管理班別與小組協作平台",
 };
 
 export default function RootLayout({

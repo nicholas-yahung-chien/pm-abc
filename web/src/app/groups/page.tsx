@@ -1,4 +1,4 @@
-import { createGroupAction, createMembershipAction } from "@/app/actions";
+﻿import { createGroupAction, createMembershipAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
 import {
@@ -31,11 +31,11 @@ export default async function GroupsPage({
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          Phase 2 / 小組管理
+          第二階段 / 小組管理
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">建立小組</h2>
         <p className="mt-1 text-sm text-slate-600">
-          對應 Excel 的小組基本資料建立與管理。
+          在班別底下建立小組，作為後續組內管理單位。
         </p>
 
         <div className="mt-4">
@@ -44,7 +44,7 @@ export default async function GroupsPage({
 
         <form action={createGroupAction} className="mt-4 grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">班別 *</span>
+            <span className="text-sm font-medium text-slate-700">所屬班別 *</span>
             <select name="classId" required defaultValue="">
               <option value="" disabled>
                 請選擇班別
@@ -64,24 +64,24 @@ export default async function GroupsPage({
 
           <label className="space-y-1">
             <span className="text-sm font-medium text-slate-700">小組名稱 *</span>
-            <input name="name" placeholder="例如：明天會更好" required />
+            <input name="name" placeholder="例如：共好學習組" required />
           </label>
 
           <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">描述</span>
-            <textarea name="description" rows={3} placeholder="小組說明、備註" />
+            <span className="text-sm font-medium text-slate-700">說明</span>
+            <textarea name="description" rows={3} placeholder="小組補充資訊" />
           </label>
 
           <div className="md:col-span-2">
             <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              建立小組
+              新增小組
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">加入小組成員</h3>
+        <h3 className="text-lg font-semibold text-slate-900">小組成員指派</h3>
         <form
           action={createMembershipAction}
           className="mt-4 grid gap-3 md:grid-cols-4"
@@ -108,35 +108,35 @@ export default async function GroupsPage({
               </option>
               {people.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.full_name} ({item.person_type})
+                  {item.full_name}（{item.person_type === "coach" ? "教練" : "學員"}）
                 </option>
               ))}
             </select>
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">類型 *</span>
+            <span className="text-sm font-medium text-slate-700">成員類型 *</span>
             <select name="membershipType" required defaultValue="member">
-              <option value="member">member</option>
-              <option value="coach">coach</option>
+              <option value="member">學員</option>
+              <option value="coach">教練</option>
             </select>
           </label>
 
           <label className="flex items-center gap-2 pt-7 text-sm text-slate-700">
             <input type="checkbox" name="isLeader" className="h-4 w-4" />
-            小組長
+            設為小組長
           </label>
 
           <div className="md:col-span-4">
             <button className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900">
-              新增成員
+              新增成員指派
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">小組清單</h3>
+        <h3 className="text-lg font-semibold text-slate-900">小組列表</h3>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
@@ -144,7 +144,7 @@ export default async function GroupsPage({
                 <th className="px-3 py-2">班別</th>
                 <th className="px-3 py-2">小組代碼</th>
                 <th className="px-3 py-2">小組名稱</th>
-                <th className="px-3 py-2">描述</th>
+                <th className="px-3 py-2">說明</th>
               </tr>
             </thead>
             <tbody>
@@ -159,7 +159,7 @@ export default async function GroupsPage({
               {!groups.length && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                    尚無小組，請先建立班別與小組。
+                    目前尚無小組資料。
                   </td>
                 </tr>
               )}
@@ -169,15 +169,15 @@ export default async function GroupsPage({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">小組成員清單</h3>
+        <h3 className="text-lg font-semibold text-slate-900">小組成員列表</h3>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="px-3 py-2">小組</th>
-                <th className="px-3 py-2">成員</th>
-                <th className="px-3 py-2">類型</th>
-                <th className="px-3 py-2">組長</th>
+                <th className="px-3 py-2">人員</th>
+                <th className="px-3 py-2">成員類型</th>
+                <th className="px-3 py-2">小組長</th>
               </tr>
             </thead>
             <tbody>
@@ -189,14 +189,16 @@ export default async function GroupsPage({
                   <td className="px-3 py-2">
                     {item.person?.display_name || item.person?.full_name || "-"}
                   </td>
-                  <td className="px-3 py-2">{item.membership_type}</td>
+                  <td className="px-3 py-2">
+                    {item.membership_type === "coach" ? "教練" : "學員"}
+                  </td>
                   <td className="px-3 py-2">{item.is_leader ? "是" : "否"}</td>
                 </tr>
               ))}
               {!memberships.length && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                    尚無成員分派。
+                    目前尚無成員指派資料。
                   </td>
                 </tr>
               )}
@@ -207,4 +209,3 @@ export default async function GroupsPage({
     </AppShell>
   );
 }
-

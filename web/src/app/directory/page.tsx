@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/app-shell";
+﻿import { AppShell } from "@/components/app-shell";
 import {
   listGroups,
   listMemberships,
@@ -32,13 +32,13 @@ export default async function DirectoryPage() {
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          Phase 2 / 通訊錄
+          第二階段 / 通訊錄
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">
-          小組通訊錄與角色總覽
+          小組通訊錄與角色對照
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          對應 Excel「通訊錄」+「R&R」視圖，彙整聯絡資訊與角色分派。
+          依小組彙整教練與學員聯絡資訊，並顯示目前 R&R 角色指派。
         </p>
       </section>
 
@@ -60,7 +60,7 @@ export default async function DirectoryPage() {
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>
                     <th className="px-3 py-2">姓名</th>
-                    <th className="px-3 py-2">組內類型</th>
+                    <th className="px-3 py-2">身份</th>
                     <th className="px-3 py-2">角色</th>
                     <th className="px-3 py-2">電話</th>
                     <th className="px-3 py-2">Email</th>
@@ -86,9 +86,11 @@ export default async function DirectoryPage() {
                             {person.display_name || "-"}
                           </p>
                         </td>
-                        <td className="px-3 py-2">{membership.membership_type}</td>
                         <td className="px-3 py-2">
-                          {displayRoles.length ? displayRoles.join(", ") : "-"}
+                          {membership.membership_type === "coach" ? "教練" : "學員"}
+                        </td>
+                        <td className="px-3 py-2">
+                          {displayRoles.length ? displayRoles.join("、") : "-"}
                         </td>
                         <td className="px-3 py-2">{person.phone || "-"}</td>
                         <td className="px-3 py-2">{person.email || "-"}</td>
@@ -99,7 +101,7 @@ export default async function DirectoryPage() {
                   {!groupMembers.length && (
                     <tr>
                       <td className="px-3 py-4 text-slate-500" colSpan={6}>
-                        此小組尚未加入成員。
+                        此小組尚未指派任何成員。
                       </td>
                     </tr>
                   )}
@@ -112,16 +114,15 @@ export default async function DirectoryPage() {
 
       {!groups.length && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-          尚無小組資料，請先到「班別管理」與「小組管理」建立資料。
+          目前尚無小組資料，請先建立班別與小組。
         </section>
       )}
 
       {!!roles.length && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-          目前已定義角色數：<strong>{roles.length}</strong>
+          目前已建立角色總數：<strong>{roles.length}</strong>
         </section>
       )}
     </AppShell>
   );
 }
-

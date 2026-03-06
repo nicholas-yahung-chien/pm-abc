@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,7 +29,7 @@ export async function createClassAction(formData: FormData) {
   const endDate = readText(formData, "endDate");
 
   if (!code || !name) {
-    redirectWithMessage("/classes", false, "班別代碼與名稱為必填。");
+    redirectWithMessage("/classes", false, "班別代碼與班別名稱為必填欄位。");
   }
 
   const result = await createClass({
@@ -43,7 +43,7 @@ export async function createClassAction(formData: FormData) {
   revalidatePath("/classes");
   revalidatePath("/groups");
   if (!result.ok) redirectWithMessage("/classes", false, result.message);
-  redirectWithMessage("/classes", true, "班別已建立。");
+  redirectWithMessage("/classes", true, "班別新增成功。");
 }
 
 export async function createGroupAction(formData: FormData) {
@@ -53,7 +53,7 @@ export async function createGroupAction(formData: FormData) {
   const description = readText(formData, "description");
 
   if (!classId || !code || !name) {
-    redirectWithMessage("/groups", false, "請完整填寫班別、組別代碼與名稱。");
+    redirectWithMessage("/groups", false, "請填寫班別、小組代碼與小組名稱。");
   }
 
   const result = await createGroup({ classId, code, name, description });
@@ -62,7 +62,7 @@ export async function createGroupAction(formData: FormData) {
   revalidatePath("/directory");
 
   if (!result.ok) redirectWithMessage("/groups", false, result.message);
-  redirectWithMessage("/groups", true, "小組已建立。");
+  redirectWithMessage("/groups", true, "小組新增成功。");
 }
 
 export async function createPersonAction(formData: FormData) {
@@ -76,7 +76,7 @@ export async function createPersonAction(formData: FormData) {
   const intro = readText(formData, "intro");
 
   if (!fullName || !personType) {
-    redirectWithMessage("/people", false, "姓名與人員類型為必填。");
+    redirectWithMessage("/people", false, "姓名與人員類型為必填欄位。");
   }
 
   const result = await createPerson({
@@ -94,7 +94,7 @@ export async function createPersonAction(formData: FormData) {
   revalidatePath("/groups");
   revalidatePath("/directory");
   if (!result.ok) redirectWithMessage("/people", false, result.message);
-  redirectWithMessage("/people", true, "人員資料已建立。");
+  redirectWithMessage("/people", true, "人員新增成功。");
 }
 
 export async function createMembershipAction(formData: FormData) {
@@ -106,7 +106,7 @@ export async function createMembershipAction(formData: FormData) {
   const isLeader = formData.get("isLeader") === "on";
 
   if (!groupId || !personId || !membershipType) {
-    redirectWithMessage("/groups", false, "請完整選擇小組、人員與類型。");
+    redirectWithMessage("/groups", false, "請填寫小組、人員與成員類型。");
   }
 
   const result = await createMembership({
@@ -119,7 +119,7 @@ export async function createMembershipAction(formData: FormData) {
   revalidatePath("/groups");
   revalidatePath("/directory");
   if (!result.ok) redirectWithMessage("/groups", false, result.message);
-  redirectWithMessage("/groups", true, "已加入小組成員。");
+  redirectWithMessage("/groups", true, "小組成員指派成功。");
 }
 
 export async function createRoleAction(formData: FormData) {
@@ -130,7 +130,7 @@ export async function createRoleAction(formData: FormData) {
   const sortOrder = sortOrderRaw ? Number(sortOrderRaw) : 100;
 
   if (!groupId || !name) {
-    redirectWithMessage("/roles", false, "請完整填寫小組與角色名稱。");
+    redirectWithMessage("/roles", false, "請填寫小組與角色名稱。");
   }
 
   const result = await createRole({
@@ -143,7 +143,7 @@ export async function createRoleAction(formData: FormData) {
   revalidatePath("/roles");
   revalidatePath("/directory");
   if (!result.ok) redirectWithMessage("/roles", false, result.message);
-  redirectWithMessage("/roles", true, "角色已建立。");
+  redirectWithMessage("/roles", true, "角色新增成功。");
 }
 
 export async function createRoleAssignmentAction(formData: FormData) {
@@ -153,7 +153,7 @@ export async function createRoleAssignmentAction(formData: FormData) {
   const note = readText(formData, "note");
 
   if (!groupId || !roleId || !personId) {
-    redirectWithMessage("/roles", false, "請完整選擇小組、角色與人員。");
+    redirectWithMessage("/roles", false, "請填寫小組、角色與人員。");
   }
 
   const result = await createRoleAssignment({
@@ -166,6 +166,5 @@ export async function createRoleAssignmentAction(formData: FormData) {
   revalidatePath("/roles");
   revalidatePath("/directory");
   if (!result.ok) redirectWithMessage("/roles", false, result.message);
-  redirectWithMessage("/roles", true, "角色分派已建立。");
+  redirectWithMessage("/roles", true, "角色指派成功。");
 }
-

@@ -1,4 +1,4 @@
-import { createClassAction } from "@/app/actions";
+﻿import { createClassAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
 import { listClasses } from "@/lib/repository";
@@ -20,11 +20,11 @@ export default async function ClassesPage({
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          Phase 2 / 班別管理
+          第二階段 / 班別管理
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-slate-900">建立新班別</h2>
+        <h2 className="mt-2 text-xl font-semibold text-slate-900">建立班別</h2>
         <p className="mt-1 text-sm text-slate-600">
-          對應 Excel 的「班別建立：開啟一份全新的管理」。
+          建立課程班別基本資料，供後續小組與學員管理使用。
         </p>
 
         <div className="mt-4">
@@ -39,7 +39,7 @@ export default async function ClassesPage({
 
           <label className="space-y-1">
             <span className="text-sm font-medium text-slate-700">班別名稱 *</span>
-            <input name="name" placeholder="例如：PMP北區第201班" required />
+            <input name="name" placeholder="例如：PMP 專案管理衝刺班" required />
           </label>
 
           <label className="space-y-1">
@@ -53,24 +53,20 @@ export default async function ClassesPage({
           </label>
 
           <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">描述</span>
-            <textarea
-              name="description"
-              rows={3}
-              placeholder="課程批次說明、備註"
-            />
+            <span className="text-sm font-medium text-slate-700">說明</span>
+            <textarea name="description" rows={3} placeholder="班別補充資訊" />
           </label>
 
           <div className="md:col-span-2">
             <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              建立班別
+              新增班別
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">班別清單</h3>
+        <h3 className="text-lg font-semibold text-slate-900">班別列表</h3>
 
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -78,9 +74,9 @@ export default async function ClassesPage({
               <tr>
                 <th className="px-3 py-2">代碼</th>
                 <th className="px-3 py-2">名稱</th>
-                <th className="px-3 py-2">開始</th>
-                <th className="px-3 py-2">結束</th>
-                <th className="px-3 py-2">描述</th>
+                <th className="px-3 py-2">開始日期</th>
+                <th className="px-3 py-2">結束日期</th>
+                <th className="px-3 py-2">說明</th>
               </tr>
             </thead>
             <tbody>
@@ -106,7 +102,7 @@ export default async function ClassesPage({
               {!classes.length && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={5}>
-                    尚無資料。先建立第一個班別。
+                    目前尚無班別資料，請先新增班別。
                   </td>
                 </tr>
               )}
@@ -117,4 +113,3 @@ export default async function ClassesPage({
     </AppShell>
   );
 }
-
