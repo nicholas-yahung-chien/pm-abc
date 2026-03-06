@@ -20,11 +20,11 @@ export default async function PeoplePage({
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          第二階段 / 人員管理
+          第二階段 / 學員管理
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-slate-900">建立人員資料</h2>
+        <h2 className="mt-2 text-xl font-semibold text-slate-900">建立學員資料</h2>
         <p className="mt-1 text-sm text-slate-600">
-          維護教練與學員基本資料，作為通訊錄與小組指派來源。
+          維護學員基本資料，作為小組指派來源。
         </p>
 
         <div className="mt-4">
@@ -33,7 +33,7 @@ export default async function PeoplePage({
 
         <form action={createPersonAction} className="mt-4 grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">人員編號</span>
+            <span className="text-sm font-medium text-slate-700">學員編號</span>
             <input name="personNo" placeholder="例如：2508" />
           </label>
           <label className="space-y-1">
@@ -45,7 +45,7 @@ export default async function PeoplePage({
             <input name="displayName" placeholder="例如：小明" />
           </label>
           <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">人員類型 *</span>
+            <span className="text-sm font-medium text-slate-700">身份類型 *</span>
             <select name="personType" defaultValue="member" required>
               <option value="member">學員</option>
               <option value="coach">教練</option>
@@ -70,14 +70,14 @@ export default async function PeoplePage({
 
           <div className="md:col-span-2">
             <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              新增人員
+              新增學員
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">人員列表</h3>
+        <h3 className="text-lg font-semibold text-slate-900">學員列表</h3>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
@@ -113,7 +113,7 @@ export default async function PeoplePage({
               {!people.length && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={6}>
-                    目前尚無人員資料。
+                    目前尚無學員資料。
                   </td>
                 </tr>
               )}

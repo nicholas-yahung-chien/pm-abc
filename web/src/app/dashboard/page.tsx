@@ -47,7 +47,8 @@ export default async function DashboardPage({
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">操作指引</h2>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-          <li>請從左側選單進入班別、小組、人員與角色管理。</li>
+          <li>請從左側選單進入班別、小組與學員管理。</li>
+          <li>R&R 與通訊錄請先進入「小組管理」後，再從單一小組操作。</li>
           <li>管理員可由左側選單進入「教練審核中心」。</li>
           <li>帳號資訊與密碼設定請至「帳號設定」頁面。</li>
         </ul>

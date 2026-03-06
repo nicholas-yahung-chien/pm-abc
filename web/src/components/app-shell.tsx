@@ -8,9 +8,7 @@ const baseNavItems = [
   { href: "/account", label: "帳號設定" },
   { href: "/classes", label: "班別管理" },
   { href: "/groups", label: "小組管理" },
-  { href: "/people", label: "人員管理" },
-  { href: "/roles", label: "R&R 角色" },
-  { href: "/directory", label: "通訊錄" },
+  { href: "/people", label: "學員管理" },
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
