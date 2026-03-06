@@ -1,0 +1,18 @@
+# Root-level ignores
+.env
+.env.*
+!.env.example
+
+# Local tooling/cache
+.DS_Store
+Thumbs.db
+
+# Local source workbook (contains personal data)
+共好看板.xlsx
+
+# Python cache (if scripts are added later)
+__pycache__/
+*.pyc
+
+# Local Vercel metadata if linking from repo root
+.vercel/
