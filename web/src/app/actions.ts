@@ -113,6 +113,9 @@ export async function createMemberAccountAction(formData: FormData) {
   const result = await createMemberAccount({ email });
   revalidatePath("/people");
   revalidatePath("/groups");
+  revalidatePath("/groups/[groupId]", "page");
+  revalidatePath("/groups/[groupId]/roles", "page");
+  revalidatePath("/groups/[groupId]/directory", "page");
   if (!result.ok) redirectWithMessage("/people", false, result.message);
   redirectWithMessage("/people", true, "學員帳號新增成功。");
 }
@@ -134,6 +137,9 @@ export async function updateMemberAccountAction(formData: FormData) {
 
   revalidatePath("/people");
   revalidatePath("/groups");
+  revalidatePath("/groups/[groupId]", "page");
+  revalidatePath("/groups/[groupId]/roles", "page");
+  revalidatePath("/groups/[groupId]/directory", "page");
   if (!result.ok) redirectWithMessage("/people", false, result.message);
   redirectWithMessage("/people", true, "學員資料已更新。");
 }
@@ -147,6 +153,9 @@ export async function deleteMemberAccountAction(formData: FormData) {
   const result = await deleteMemberAccount(personId);
   revalidatePath("/people");
   revalidatePath("/groups");
+  revalidatePath("/groups/[groupId]", "page");
+  revalidatePath("/groups/[groupId]/roles", "page");
+  revalidatePath("/groups/[groupId]/directory", "page");
   if (!result.ok) redirectWithMessage("/people", false, result.message);
   redirectWithMessage("/people", true, "學員已刪除。");
 }

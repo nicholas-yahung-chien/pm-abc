@@ -378,6 +378,34 @@ export async function deleteMemberAccount(personId: string): Promise<MutationRes
   if (memberError) return { ok: false, message: memberError.message };
   if (!member) return { ok: false, message: "找不到學員資料。" };
 
+  const normalizedEmail = normalizeEmail(member.email ?? "");
+  let authAccountId: string | null = null;
+  if (normalizedEmail) {
+    const { data: authAccount, error: authLookupError } = await db.client
+      .from("auth_accounts")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .eq("role", "member")
+      .maybeSingle();
+
+    if (authLookupError) return { ok: false, message: authLookupError.message };
+    authAccountId = authAccount?.id ?? null;
+  }
+
+  const { error: deleteRoleAssignmentsError } = await db.client
+    .from("role_assignments")
+    .delete()
+    .eq("person_id", personId);
+  if (deleteRoleAssignmentsError) {
+    return { ok: false, message: deleteRoleAssignmentsError.message };
+  }
+
+  const { error: deleteMembershipsError } = await db.client
+    .from("group_memberships")
+    .delete()
+    .eq("person_id", personId);
+  if (deleteMembershipsError) return { ok: false, message: deleteMembershipsError.message };
+
   const { error: deletePeopleError } = await db.client
     .from("people")
     .delete()
@@ -385,12 +413,20 @@ export async function deleteMemberAccount(personId: string): Promise<MutationRes
     .eq("person_type", "member");
   if (deletePeopleError) return { ok: false, message: deletePeopleError.message };
 
-  const { error: deleteAuthError } = await db.client
-    .from("auth_accounts")
-    .delete()
-    .eq("email", normalizeEmail(member.email ?? ""))
-    .eq("role", "member");
-  if (deleteAuthError) return { ok: false, message: deleteAuthError.message };
+  if (authAccountId) {
+    const { error: deleteOtpsError } = await db.client
+      .from("member_login_otps")
+      .delete()
+      .eq("account_id", authAccountId);
+    if (deleteOtpsError) return { ok: false, message: deleteOtpsError.message };
+
+    const { error: deleteAuthError } = await db.client
+      .from("auth_accounts")
+      .delete()
+      .eq("id", authAccountId)
+      .eq("role", "member");
+    if (deleteAuthError) return { ok: false, message: deleteAuthError.message };
+  }
 
   return { ok: true };
 }
