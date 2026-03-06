@@ -5,6 +5,7 @@ import { getCurrentSession } from "@/lib/auth/session";
 
 const baseNavItems = [
   { href: "/dashboard", label: "總覽" },
+  { href: "/account", label: "帳號設定" },
   { href: "/classes", label: "班別管理" },
   { href: "/groups", label: "小組管理" },
   { href: "/people", label: "人員管理" },

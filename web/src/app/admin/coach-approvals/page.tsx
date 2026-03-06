@@ -6,6 +6,7 @@ import {
   rejectCoachAction,
   updateAdminNotificationEmailAction,
 } from "@/app/auth-actions";
+import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
@@ -56,7 +57,7 @@ export default async function CoachApprovalsPage({
   };
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl space-y-5 px-4 py-8">
+    <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
           管理員
@@ -73,9 +74,7 @@ export default async function CoachApprovalsPage({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          管理員通知信箱
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900">管理員通知信箱</h2>
         <form
           action={updateAdminNotificationEmailAction}
           className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]"
@@ -142,9 +141,7 @@ export default async function CoachApprovalsPage({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          手動建立或重設教練帳號
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900">手動建立或重設教練帳號</h2>
         <form
           action={createCoachByAdminAction}
           className="mt-3 grid gap-3 md:grid-cols-3"
@@ -201,6 +198,6 @@ export default async function CoachApprovalsPage({
           </table>
         </div>
       </section>
-    </main>
+    </AppShell>
   );
 }

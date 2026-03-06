@@ -457,3 +457,74 @@ export async function markAccountLogin(accountId: string): Promise<Result<null>>
   if (error) return { ok: false, message: error.message };
   return { ok: true, data: null };
 }
+
+export async function findAccountById(
+  accountId: string,
+): Promise<Result<AuthAccountRow | null>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data, error } = await db.client
+    .from("auth_accounts")
+    .select("*")
+    .eq("id", accountId)
+    .maybeSingle();
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, data: (data ?? null) as AuthAccountRow | null };
+}
+
+export async function updateAccountDisplayName(input: {
+  accountId: string;
+  displayName: string;
+}): Promise<Result<AuthAccountRow>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data, error } = await db.client
+    .from("auth_accounts")
+    .update({ display_name: input.displayName })
+    .eq("id", input.accountId)
+    .select("*")
+    .limit(1);
+
+  if (error) return { ok: false, message: error.message };
+  if (!data?.length) return { ok: false, message: "找不到帳號資料。" };
+  return { ok: true, data: data[0] as AuthAccountRow };
+}
+
+export async function changeAccountPassword(input: {
+  accountId: string;
+  currentPassword: string;
+  newPassword: string;
+}): Promise<Result<null>> {
+  const accountResult = await findAccountById(input.accountId);
+  if (!accountResult.ok) return accountResult;
+  if (!accountResult.data) {
+    return { ok: false, message: "找不到帳號資料。" };
+  }
+
+  const account = accountResult.data;
+  if (account.role === "member") {
+    return { ok: false, message: "學員帳號採 OTP 登入，不支援密碼變更。" };
+  }
+
+  if (!account.password_hash) {
+    return { ok: false, message: "此帳號尚未設定密碼。" };
+  }
+
+  if (!verifyPassword(input.currentPassword, account.password_hash)) {
+    return { ok: false, message: "目前密碼輸入錯誤。" };
+  }
+
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("auth_accounts")
+    .update({ password_hash: hashPassword(input.newPassword) })
+    .eq("id", input.accountId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, data: null };
+}

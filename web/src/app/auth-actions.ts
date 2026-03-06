@@ -5,12 +5,15 @@ import { redirect } from "next/navigation";
 import {
   authenticateAdmin,
   authenticateCoach,
+  changeAccountPassword,
   createCoachApplication,
   createCoachByAdmin,
   createMemberOtp,
   deleteCoachByAdmin,
+  findAccountById,
   getAdminNotificationEmail,
   setAdminNotificationEmail,
+  updateAccountDisplayName,
   updateCoachStatus,
   verifyMemberOtp,
 } from "@/lib/auth/repository";
@@ -198,6 +201,14 @@ async function requireAdminSession() {
   return session;
 }
 
+async function requireSession() {
+  const session = await getCurrentSession();
+  if (!session) {
+    toMessage("/login", "error", "請先登入後再繼續使用。");
+  }
+  return session;
+}
+
 export async function approveCoachAction(formData: FormData) {
   const accountId = readText(formData, "accountId");
   const admin = await requireAdminSession();
@@ -268,4 +279,67 @@ export async function updateAdminNotificationEmailAction(formData: FormData) {
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
   toMessage("/admin/coach-approvals", "success", "管理員通知信箱已更新。");
+}
+
+export async function updateAccountProfileAction(formData: FormData) {
+  const session = await requireSession();
+  const displayName = readText(formData, "displayName");
+
+  if (!displayName) {
+    toMessage("/account", "error", "顯示名稱不可為空白。");
+  }
+
+  const result = await updateAccountDisplayName({
+    accountId: session.accountId,
+    displayName,
+  });
+
+  if (!result.ok) toMessage("/account", "error", result.message);
+
+  await createSession({
+    accountId: result.data.id,
+    email: result.data.email,
+    displayName: result.data.display_name,
+    role: result.data.role,
+  });
+
+  revalidatePath("/account");
+  revalidatePath("/dashboard");
+  toMessage("/account", "success", "帳號資訊已更新。");
+}
+
+export async function changeMyPasswordAction(formData: FormData) {
+  const session = await requireSession();
+  const currentPassword = readText(formData, "currentPassword");
+  const newPassword = readText(formData, "newPassword");
+  const confirmPassword = readText(formData, "confirmPassword");
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    toMessage("/account", "error", "請完整填寫密碼欄位。");
+  }
+
+  if (newPassword.length < 8) {
+    toMessage("/account", "error", "新密碼至少需要 8 碼。");
+  }
+
+  if (newPassword !== confirmPassword) {
+    toMessage("/account", "error", "新密碼與確認密碼不一致。");
+  }
+
+  const accountResult = await findAccountById(session.accountId);
+  if (!accountResult.ok) toMessage("/account", "error", accountResult.message);
+  if (!accountResult.data) toMessage("/account", "error", "找不到帳號資料。");
+
+  if (accountResult.data.role === "member") {
+    toMessage("/account", "error", "學員帳號採 OTP 登入，不支援密碼變更。");
+  }
+
+  const result = await changeAccountPassword({
+    accountId: session.accountId,
+    currentPassword,
+    newPassword,
+  });
+
+  if (!result.ok) toMessage("/account", "error", result.message);
+  toMessage("/account", "success", "密碼已更新。");
 }
