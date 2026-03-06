@@ -128,26 +128,26 @@
 - [ ] 定義完成率計算規則（是否完全沿用 Excel 邏輯）。
 - [ ] 盤點並確認欄位字典（班別/小組/人員/角色/章程/追蹤）。
 - [ ] 制定資料匯入策略（Excel -> DB）。
-- [ ] 建立 GitHub Repo 與權限模型（Owner/Maintainer/Developer）。
+- [x] 建立 GitHub Repo 與權限模型（Owner/Maintainer/Developer）。
 - [ ] 建立 Git Flow 規範（branch naming、commit convention、PR template、code owners）。
 - [ ] 設定分支保護規則（PR 必要、CI 必要、review 必要）。
 - [ ] 建立多環境策略（`dev`/`staging`/`prod` 對應 Vercel + Supabase）。
-- [ ] 將現有工作目錄初始化並連接到指定 GitHub repo。
-- [ ] 建立 `.gitignore` 與 secrets policy（禁止 `.env*`、token 檔進版控）。
+- [x] 將現有工作目錄初始化並連接到指定 GitHub repo。
+- [x] 建立 `.gitignore` 與 secrets policy（禁止 `.env*`、token 檔進版控）。
 
 ## Phase 1: 基礎架構與帳號權限
-- [ ] 初始化 Next.js 專案（App Router, TypeScript, i18n/zh-TW）。
+- [x] 初始化 Next.js 專案（App Router, TypeScript, i18n/zh-TW）。
 - [ ] 建立 Supabase 專案與環境變數管理（dev/stage/prod）。
 - [ ] 完成 Auth（Email magic link 或密碼登入）。
 - [ ] 完成 RLS 策略（班別/小組級別隔離）。
 - [ ] 建立共用 UI Layout（桌機/平板/手機 RWD）。
-- [ ] 建立 GitHub Actions CI（lint / type-check / test / build）。
+- [x] 建立 GitHub Actions CI（lint / type-check / test / build）。
 - [ ] 串接 Vercel GitHub Integration（PR Preview + main Production）。
-- [ ] 建立 Supabase migration 流程（CLI、migration 產生、CI 驗證、CD 套用）。
+- [x] 建立 Supabase migration 流程（CLI、migration 產生、CI 驗證、CD 套用）。
 - [ ] 設定 GitHub Environments + Secrets（Vercel、Supabase、Mail、Zoom）。
-- [ ] 建立部署守門條件（未通過 CI 禁止部署）。
-- [ ] 根據專案性質自動建立並命名 Vercel 專案（由 repo 綁定，啟用 Preview/Production）。
-- [ ] 將 Supabase Access Token 設為 GitHub Actions 與本機 CLI 所需 secret（不入庫）。
+- [x] 建立部署守門條件（未通過 CI 禁止部署）。
+- [x] 根據專案性質自動建立並命名 Vercel 專案（由 repo 綁定，啟用 Preview/Production）。
+- [x] 將 Supabase Access Token 設為 GitHub Actions 與本機 CLI 所需 secret（不入庫）。
 
 ## Phase 2: 核心主資料 CRUD
 - [ ] 班別管理（建立/編輯/封存）。
