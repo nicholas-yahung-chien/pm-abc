@@ -261,13 +261,18 @@ export async function updateMemberAccount(input: {
   personId: string;
   email: string;
   personNo: string;
+  fullName: string;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
 
   const email = normalizeEmail(input.email);
+  const fullName = input.fullName.trim();
   if (!email || !email.includes("@")) {
     return { ok: false, message: "請輸入有效的 Email。" };
+  }
+  if (!fullName) {
+    return { ok: false, message: "請輸入學員姓名。" };
   }
 
   const { data: currentMember, error: currentMemberError } = await db.client
@@ -305,19 +310,16 @@ export async function updateMemberAccount(input: {
   }
 
   const oldEmail = normalizeEmail(currentMember.email ?? "");
-  const shouldUpdateName = !currentMember.full_name || currentMember.full_name === oldEmail;
 
   const updatePayload: {
     person_no: string | null;
     email: string;
-    full_name?: string;
+    full_name: string;
   } = {
     person_no: input.personNo.trim() || null,
     email,
+    full_name: fullName,
   };
-  if (shouldUpdateName) {
-    updatePayload.full_name = email;
-  }
 
   const { error: updatePeopleError } = await db.client
     .from("people")

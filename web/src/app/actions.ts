@@ -124,15 +124,17 @@ export async function updateMemberAccountAction(formData: FormData) {
   const personId = readText(formData, "personId");
   const email = readText(formData, "email");
   const personNo = readText(formData, "personNo");
+  const fullName = readText(formData, "fullName");
 
-  if (!personId || !email) {
-    redirectWithMessage("/people", false, "請填寫學員 Email。");
+  if (!personId || !email || !fullName) {
+    redirectWithMessage("/people", false, "請填寫學員姓名與 Email。");
   }
 
   const result = await updateMemberAccount({
     personId,
     email,
     personNo,
+    fullName,
   });
 
   revalidatePath("/people");

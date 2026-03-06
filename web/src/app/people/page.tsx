@@ -29,7 +29,7 @@ export default async function PeoplePage({
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">新增學員帳號</h2>
         <p className="mt-1 text-sm text-slate-600">
-          此頁只管理學員帳號與編號。通訊錄中的姓名、LINE ID、稱呼、自我介紹由學員在小組通訊錄自行編輯。
+          此頁只管理學員帳號、編號與姓名。LINE ID、稱呼、自我介紹由學員在小組通訊錄自行編輯。
         </p>
 
         <div className="mt-4">
@@ -61,15 +61,15 @@ export default async function PeoplePage({
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">學員管理清單</h3>
         <p className="mt-1 text-sm text-slate-600">
-          可修改學員 Email、設定學員編號，或刪除學員。新增完成後即可到小組管理進行成員指派。
+          可修改學員編號、姓名、Email，或刪除學員。新增完成後即可到小組管理進行成員指派。
         </p>
 
         <MemberManagementTable
           members={members.map((item) => ({
             id: item.id,
             personNo: item.person_no || "",
+            fullName: item.full_name || "",
             email: item.email || "",
-            createdAt: item.created_at,
           }))}
           onUpdateAction={updateMemberAccountAction}
           onDeleteAction={deleteMemberAccountAction}

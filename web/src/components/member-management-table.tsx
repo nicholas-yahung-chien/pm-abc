@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 
 type MemberListItem = {
   id: string;
   personNo: string;
+  fullName: string;
   email: string;
-  createdAt: string;
 };
 
 type MemberManagementTableProps = {
@@ -14,19 +14,6 @@ type MemberManagementTableProps = {
   onUpdateAction: (formData: FormData) => void | Promise<void>;
   onDeleteAction: (formData: FormData) => void | Promise<void>;
 };
-
-function formatDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date);
-}
 
 export function MemberManagementTable({
   members,
@@ -39,16 +26,20 @@ export function MemberManagementTable({
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { personNo: string; email: string }>>(
-    {},
-  );
+  const [drafts, setDrafts] = useState<
+    Record<string, { personNo: string; fullName: string; email: string }>
+  >({});
 
   const startEdit = (memberId: string) => {
     const source = memberById.get(memberId);
     if (!source) return;
     setDrafts((prev) => ({
       ...prev,
-      [memberId]: { personNo: source.personNo, email: source.email },
+      [memberId]: {
+        personNo: source.personNo,
+        fullName: source.fullName,
+        email: source.email,
+      },
     }));
     setEditingId(memberId);
   };
@@ -61,20 +52,25 @@ export function MemberManagementTable({
     }
     setDrafts((prev) => ({
       ...prev,
-      [memberId]: { personNo: source.personNo, email: source.email },
+      [memberId]: {
+        personNo: source.personNo,
+        fullName: source.fullName,
+        email: source.email,
+      },
     }));
     setEditingId(null);
   };
 
   const updateDraft = (
     memberId: string,
-    field: "personNo" | "email",
+    field: "personNo" | "fullName" | "email",
     value: string,
   ) => {
     const source = memberById.get(memberId);
     setDrafts((prev) => {
       const base = prev[memberId] ?? {
         personNo: source?.personNo ?? "",
+        fullName: source?.fullName ?? "",
         email: source?.email ?? "",
       };
       return {
@@ -90,8 +86,8 @@ export function MemberManagementTable({
         <thead className="bg-slate-50 text-slate-600">
           <tr>
             <th className="px-3 py-2">學員編號</th>
+            <th className="px-3 py-2">學員姓名</th>
             <th className="px-3 py-2">Email</th>
-            <th className="px-3 py-2">建立時間</th>
             <th className="px-3 py-2">操作</th>
           </tr>
         </thead>
@@ -101,6 +97,7 @@ export function MemberManagementTable({
             const formId = `member-update-${item.id}`;
             const draft = drafts[item.id] ?? {
               personNo: item.personNo,
+              fullName: item.fullName,
               email: item.email,
             };
 
@@ -126,6 +123,23 @@ export function MemberManagementTable({
                   {isEditing ? (
                     <input
                       form={formId}
+                      name="fullName"
+                      value={draft.fullName}
+                      onChange={(event) =>
+                        updateDraft(item.id, "fullName", event.currentTarget.value)
+                      }
+                      placeholder="請輸入學員姓名"
+                      required
+                      className="min-w-32"
+                    />
+                  ) : (
+                    item.fullName || "-"
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {isEditing ? (
+                    <input
+                      form={formId}
                       name="email"
                       type="email"
                       value={draft.email}
@@ -139,14 +153,12 @@ export function MemberManagementTable({
                     item.email || "-"
                   )}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">
-                  {formatDateTime(item.createdAt)}
-                </td>
                 <td className="px-3 py-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <form id={formId} action={onUpdateAction}>
                       <input type="hidden" name="personId" value={item.id} />
                       {!isEditing && <input type="hidden" name="personNo" value={item.personNo} />}
+                      {!isEditing && <input type="hidden" name="fullName" value={item.fullName} />}
                       {!isEditing && <input type="hidden" name="email" value={item.email} />}
 
                       {isEditing ? (
