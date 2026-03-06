@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Noto_Sans_TC, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,8 +13,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PM-ABC 共好看板平台",
-  description: "PMP 小組班別與進度管理平台",
+  title: "PM-ABC Learning Portal",
+  description: "PMP coaching class and study group management portal",
 };
 
 export default function RootLayout({

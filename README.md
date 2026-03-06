@@ -41,12 +41,20 @@ npm run dev
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
 - `VERCEL_TOKEN`
+- `APP_SESSION_SECRET`
 
 ### Supabase
 
 - `SUPABASE_ACCESS_TOKEN`
 - `SUPABASE_PROJECT_REF`
 - `SUPABASE_DB_PASSWORD`
+
+### Email (for OTP and coach approval notifications)
+
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
+- `ADMIN_NOTIFICATION_EMAIL` (fallback admin notification target)
+- `OTP_HASH_SECRET` (optional, falls back to `APP_SESSION_SECRET`)
 
 ## Current Setup Status
 

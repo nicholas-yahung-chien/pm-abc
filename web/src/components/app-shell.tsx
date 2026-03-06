@@ -1,14 +1,31 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+import { redirect } from "next/navigation";
+import { logoutAction } from "@/app/auth-actions";
+import { getCurrentSession } from "@/lib/auth/session";
 
-const navItems = [
-  { href: "/classes", label: "班別管理" },
-  { href: "/groups", label: "小組管理" },
-  { href: "/people", label: "學員與教練" },
-  { href: "/roles", label: "角色分派" },
-  { href: "/directory", label: "通訊錄" },
+const baseNavItems = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/classes", label: "Classes" },
+  { href: "/groups", label: "Groups" },
+  { href: "/people", label: "People" },
+  { href: "/roles", label: "R&R" },
+  { href: "/directory", label: "Directory" },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export async function AppShell({ children }: { children: React.ReactNode }) {
+  const session = await getCurrentSession();
+  if (!session) {
+    redirect("/login?status=error&message=Please%20sign%20in%20first.");
+  }
+
+  const navItems =
+    session.role === "admin"
+      ? [
+          ...baseNavItems,
+          { href: "/admin/coach-approvals", label: "Coach Approvals" },
+        ]
+      : baseNavItems;
+
   return (
     <div className="mx-auto grid min-h-screen max-w-7xl gap-8 px-4 py-6 md:grid-cols-[260px_1fr]">
       <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -16,11 +33,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
             PM-ABC
           </p>
-          <h1 className="mt-2 text-xl font-semibold text-slate-900">
-            共好看板平台
-          </h1>
+          <h1 className="mt-2 text-xl font-semibold text-slate-900">Learning Portal</h1>
           <p className="mt-1 text-sm text-slate-600">
-            班別 / 小組 / 成員 / 角色 / 通訊錄
+            {session.displayName || session.email} ({session.role})
           </p>
         </div>
 
@@ -35,10 +50,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
+
+        <form action={logoutAction} className="mt-6">
+          <button className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700">
+            Sign out
+          </button>
+        </form>
       </aside>
 
       <main className="space-y-5">{children}</main>
     </div>
   );
 }
-
