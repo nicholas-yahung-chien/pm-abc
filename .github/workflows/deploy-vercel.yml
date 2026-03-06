@@ -48,7 +48,42 @@ jobs:
 
       - name: Deploy preview
         if: steps.precheck.outputs.has_token == 'true'
-        run: vercel deploy --prebuilt --yes --token="${{ secrets.VERCEL_TOKEN }}"
+        id: deploy_preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEPLOY_JSON=$(vercel deploy --prebuilt --yes --token="${{ secrets.VERCEL_TOKEN }}" --format json --no-color)
+          echo "$DEPLOY_JSON"
+          DEPLOY_URL=$(echo "$DEPLOY_JSON" | node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(0, 'utf8')); let u=j.url||''; if (u && !u.startsWith('http')) u='https://'+u; process.stdout.write(u);")
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "Failed to resolve preview deployment URL."
+            exit 1
+          fi
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Health check preview homepage
+        if: steps.precheck.outputs.has_token == 'true'
+        shell: bash
+        env:
+          HEALTH_URL: ${{ steps.deploy_preview.outputs.url }}
+        run: |
+          set -euo pipefail
+          echo "Checking preview URL: $HEALTH_URL"
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+            if [ "$STATUS" = "200" ]; then
+              echo "Preview health check passed."
+              exit 0
+            fi
+            if [ "$STATUS" = "401" ]; then
+              echo "Preview is access-protected (401). Treating as healthy."
+              exit 0
+            fi
+            echo "Attempt $i/12: status=$STATUS, retry in 10s..."
+            sleep 10
+          done
+          echo "Preview health check failed: $HEALTH_URL"
+          exit 1
 
       - name: Skip note (missing token)
         if: steps.precheck.outputs.has_token != 'true'
@@ -94,7 +129,38 @@ jobs:
 
       - name: Deploy production
         if: steps.precheck.outputs.has_token == 'true'
-        run: vercel deploy --prebuilt --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"
+        id: deploy_production
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEPLOY_JSON=$(vercel deploy --prebuilt --prod --yes --token="${{ secrets.VERCEL_TOKEN }}" --format json --no-color)
+          echo "$DEPLOY_JSON"
+          DEPLOY_URL=$(echo "$DEPLOY_JSON" | node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(0, 'utf8')); let u=j.url||''; if (u && !u.startsWith('http')) u='https://'+u; process.stdout.write(u);")
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "Failed to resolve production deployment URL."
+            exit 1
+          fi
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Health check production homepage
+        if: steps.precheck.outputs.has_token == 'true'
+        shell: bash
+        env:
+          PRODUCTION_SITE_URL: https://pm-abc-learning-portal.vercel.app
+        run: |
+          set -euo pipefail
+          echo "Checking production URL: $PRODUCTION_SITE_URL"
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PRODUCTION_SITE_URL")
+            if [ "$STATUS" = "200" ]; then
+              echo "Production health check passed."
+              exit 0
+            fi
+            echo "Attempt $i/12: status=$STATUS, retry in 10s..."
+            sleep 10
+          done
+          echo "Production health check failed: $PRODUCTION_SITE_URL"
+          exit 1
 
       - name: Skip note (missing token)
         if: steps.precheck.outputs.has_token != 'true'

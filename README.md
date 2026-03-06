@@ -7,6 +7,7 @@ Website rewrite of the PMP coaching workbook, built with `Next.js` + `Supabase`,
 - `web/`: Next.js application (App Router, TypeScript, Tailwind).
 - `.github/workflows/`: CI/CD workflows.
 - `supabase/migrations/`: Database migration files (versioned).
+- `docs/VERIFICATION_AND_UAT_GUIDE.md`: Standard verification and UAT steps after each task.
 - `TODO_WEBSITE_PLAN.md`: Product analysis and development TODO plan.
 
 ## Local Development
@@ -26,6 +27,7 @@ npm run dev
 - `Deploy Vercel` (`.github/workflows/deploy-vercel.yml`)
   - PR: preview deploy (when `VERCEL_TOKEN` is set).
   - `main`: production deploy (when `VERCEL_TOKEN` is set).
+  - Includes post-deploy homepage health checks (HTTP `200`) for preview/production targets.
   - If token is missing, workflow posts a skip note job.
 
 - `Deploy Supabase Migrations` (`.github/workflows/deploy-supabase.yml`)
