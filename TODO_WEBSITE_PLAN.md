@@ -144,17 +144,17 @@
 - [x] 建立 GitHub Actions CI（lint / type-check / test / build）。
 - [ ] 串接 Vercel GitHub Integration（PR Preview + main Production）。
 - [x] 建立 Supabase migration 流程（CLI、migration 產生、CI 驗證、CD 套用）。
-- [ ] 設定 GitHub Environments + Secrets（Vercel、Supabase、Mail、Zoom）。
+- [x] 設定 GitHub Environments + Secrets（Vercel、Supabase、Mail、Zoom）。
 - [x] 建立部署守門條件（未通過 CI 禁止部署）。
 - [x] 根據專案性質自動建立並命名 Vercel 專案（由 repo 綁定，啟用 Preview/Production）。
 - [x] 將 Supabase Access Token 設為 GitHub Actions 與本機 CLI 所需 secret（不入庫）。
 
 ## Phase 2: 核心主資料 CRUD
-- [ ] 班別管理（建立/編輯/封存）。
-- [ ] 小組管理（建立/編輯/教練指派）。
-- [ ] 教練與學員資料 CRUD。
-- [ ] 角色管理與分派（支援自訂角色）。
-- [ ] 通訊錄頁（搜尋、篩選、匯出）。
+- [x] 班別管理（建立/編輯/封存）。
+- [x] 小組管理（建立/編輯/教練指派）。
+- [x] 教練與學員資料 CRUD。
+- [x] 角色管理與分派（支援自訂角色）。
+- [x] 通訊錄頁（搜尋、篩選、匯出）。
 
 ## Phase 3: 團隊章程與課程運營
 - [ ] 團隊章程編輯器（區塊化欄位 + 版本記錄）。
