@@ -7,9 +7,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
+
 jobs:
   preview:
-    if: ${{ github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != '' }}
+    if: ${{ github.event_name == 'pull_request' && env.HAS_VERCEL_TOKEN == 'true' }}
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -41,7 +44,7 @@ jobs:
         run: vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}"
 
   production:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != '' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_VERCEL_TOKEN == 'true' }}
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -73,9 +76,8 @@ jobs:
         run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
 
   missing-token-note:
-    if: ${{ secrets.VERCEL_TOKEN == '' }}
+    if: ${{ env.HAS_VERCEL_TOKEN != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Explain skipped deploy
         run: echo "VERCEL_TOKEN is not set. Vercel deployment job is skipped until the secret is configured."
-
