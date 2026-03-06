@@ -16,3 +16,6 @@ __pycache__/
 
 # Local Vercel metadata if linking from repo root
 .vercel/
+
+# Supabase CLI local cache
+supabase/.temp/
