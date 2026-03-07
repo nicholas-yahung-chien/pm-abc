@@ -65,6 +65,11 @@ export function MemberManagementTable({
     setEditingId(null);
   };
 
+  const submitUpdate = async (formData: FormData) => {
+    setEditingId(null);
+    await onUpdateAction(formData);
+  };
+
   const columns: ColumnDef<MemberListItem>[] = [
     {
       id: "select",
@@ -208,7 +213,7 @@ export function MemberManagementTable({
 
         return (
           <div className="flex items-center gap-2">
-            <form id={formId} action={onUpdateAction} className="contents">
+            <form id={formId} action={submitUpdate} className="contents">
               <input type="hidden" name="personId" value={item.id} />
 
               {isEditing ? (
