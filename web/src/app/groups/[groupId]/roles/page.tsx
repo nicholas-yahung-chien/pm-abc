@@ -1,7 +1,12 @@
 ﻿import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createRoleAction, createRoleAssignmentAction } from "@/app/actions";
+import {
+  createRoleAction,
+  createRoleAssignmentAction,
+  updateRoleDefinitionAction,
+} from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { RoleDefinitionTable } from "@/components/role-definition-table";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
@@ -181,65 +186,51 @@ export default async function GroupRolesPage({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">角色與指派列表</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="px-3 py-2">角色</th>
-                  <th className="px-3 py-2">排序</th>
-                  <th className="px-3 py-2">說明</th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupRoles.map((item) => (
-                  <tr key={item.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2 font-medium">{item.name}</td>
-                    <td className="px-3 py-2">{item.sort_order}</td>
-                    <td className="px-3 py-2">{item.description || "-"}</td>
-                  </tr>
-                ))}
-                {!groupRoles.length && (
-                  <tr>
-                    <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                      目前尚無角色資料。
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <h2 className="text-lg font-semibold text-slate-900">角色列表</h2>
+        <RoleDefinitionTable
+          groupId={groupId}
+          returnTo={returnTo}
+          roles={groupRoles.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description || "",
+          }))}
+          onUpdateAction={updateRoleDefinitionAction}
+        />
+      </section>
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="px-3 py-2">角色</th>
-                  <th className="px-3 py-2">學員</th>
-                  <th className="px-3 py-2">備註</th>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">角色指派列表</h2>
+        <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="px-3 py-2">角色</th>
+                <th className="px-3 py-2">學員</th>
+                <th className="px-3 py-2">備註</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupAssignments.map((item) => (
+                <tr key={item.id} className="border-t border-slate-100">
+                  <td className="px-3 py-2">{item.role?.name || "-"}</td>
+                  <td className="px-3 py-2">
+                    {item.person?.display_name || item.person?.full_name || "-"}
+                  </td>
+                  <td className="px-3 py-2 whitespace-pre-wrap break-words">
+                    {item.note || "-"}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {groupAssignments.map((item) => (
-                  <tr key={item.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2">{item.role?.name || "-"}</td>
-                    <td className="px-3 py-2">
-                      {item.person?.display_name || item.person?.full_name || "-"}
-                    </td>
-                    <td className="px-3 py-2">{item.note || "-"}</td>
-                  </tr>
-                ))}
-                {!groupAssignments.length && (
-                  <tr>
-                    <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                      目前尚無角色指派資料。
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+              {!groupAssignments.length && (
+                <tr>
+                  <td className="px-3 py-4 text-slate-500" colSpan={3}>
+                    目前尚無角色指派資料。
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </AppShell>

@@ -14,6 +14,7 @@ import {
   deleteMemberAccounts,
   createRole,
   createRoleAssignment,
+  updateRoleDefinition,
   updateGroupDescription,
   updateGroupMemberDirectoryProfile,
   upsertGroupCoachOwner,
@@ -413,6 +414,34 @@ export async function createRoleAssignmentAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/directory`);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);
   redirectWithMessage(returnTo, true, "角色指派成功。");
+}
+
+export async function updateRoleDefinitionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const roleId = readText(formData, "roleId");
+  const name = readText(formData, "name");
+  const description = readText(formData, "description");
+
+  if (!groupId || !roleId || !name) {
+    redirectWithMessage(returnTo, false, "請填寫角色名稱。");
+  }
+
+  await requireGroupAccess(groupId, returnTo);
+
+  const result = await updateRoleDefinition({
+    groupId,
+    roleId,
+    name,
+    description,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/roles`);
+  revalidatePath(`/groups/${groupId}/directory`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "角色已更新。");
 }
 
 export async function updateGroupMemberDirectoryProfileAction(formData: FormData) {

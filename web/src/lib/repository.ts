@@ -708,6 +708,28 @@ export async function createRole(input: {
   return { ok: true };
 }
 
+export async function updateRoleDefinition(input: {
+  groupId: string;
+  roleId: string;
+  name: string;
+  description: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("role_definitions")
+    .update({
+      name: input.name,
+      description: input.description,
+    })
+    .eq("id", input.roleId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
 export async function createRoleAssignment(input: {
   groupId: string;
   roleId: string;
