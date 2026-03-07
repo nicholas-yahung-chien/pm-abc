@@ -8,6 +8,7 @@ import {
   updateGroupDescriptionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { GroupMembershipList } from "@/components/group-membership-list";
 import { GroupManagementTable } from "@/components/group-management-table";
 import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
@@ -152,6 +153,25 @@ export default async function GroupsPage({
     (item) => item.membership_type === "member",
   );
 
+  const groupOptions = groups.map((item) => ({
+    id: item.id,
+    label: `${item.class?.code ?? "-"} / ${item.code} ${item.name}`,
+  }));
+
+  const memberMembershipRows = memberMemberships.map((item) => {
+    const key = `${item.group_id}:${item.person_id}`;
+    const roleNames = roleNamesByGroupPerson.get(key) ?? [];
+
+    return {
+      id: item.id,
+      groupId: item.group_id,
+      groupLabel: `${item.group?.code ?? "-"} ${item.group?.name ?? ""}`.trim(),
+      memberLabel: item.person?.display_name || item.person?.full_name || "-",
+      membershipTypeLabel: "學員",
+      roleLabel: roleNames.length ? roleNames.join("、") : "-",
+    };
+  });
+
   return (
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -267,45 +287,7 @@ export default async function GroupsPage({
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">小組成員列表</h3>
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-3 py-2">小組</th>
-                <th className="px-3 py-2">學員</th>
-                <th className="px-3 py-2">成員類型</th>
-                <th className="px-3 py-2">組內角色</th>
-              </tr>
-            </thead>
-            <tbody>
-              {memberMemberships.map((item) => {
-                const key = `${item.group_id}:${item.person_id}`;
-                const roleNames = roleNamesByGroupPerson.get(key) ?? [];
-                return (
-                  <tr key={item.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2">
-                      {item.group?.code} {item.group?.name}
-                    </td>
-                    <td className="px-3 py-2">
-                      {item.person?.display_name || item.person?.full_name || "-"}
-                    </td>
-                    <td className="px-3 py-2">學員</td>
-                    <td className="px-3 py-2">
-                      {roleNames.length ? roleNames.join("、") : "-"}
-                    </td>
-                  </tr>
-                );
-              })}
-              {!memberMemberships.length && (
-                <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                    目前尚無成員指派資料。
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <GroupMembershipList groups={groupOptions} rows={memberMembershipRows} />
       </section>
     </AppShell>
   );
