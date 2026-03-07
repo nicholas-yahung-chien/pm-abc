@@ -46,7 +46,9 @@ export default async function GroupDetailPage({
     redirect(`/groups?status=error&message=${message}`);
   }
 
-  const groupMembers = memberships.filter((item) => item.group_id === groupId);
+  const groupMembers = memberships.filter(
+    (item) => item.group_id === groupId && item.membership_type === "member",
+  );
   const groupRoles = roles.filter((item) => item.group_id === groupId);
   const groupAssignments = assignments.filter((item) => item.group_id === groupId);
 

@@ -1,6 +1,6 @@
 ﻿import type { CSSProperties } from "react";
 import Link from "next/link";
-import { Briefcase, Shield, UserRound, X } from "lucide-react";
+import { Briefcase, Shield, UserRound } from "lucide-react";
 import { StatusBanner } from "@/components/status-banner";
 import { AuthShell } from "@/components/auth-shell";
 import { pickSearchParam } from "@/lib/search";
@@ -48,15 +48,7 @@ export default async function LoginPage({
     >
       <StatusBanner status={status} message={message} />
 
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
-        <Link
-          href="/"
-          aria-label="關閉身份選擇"
-          className="absolute right-4 top-4 z-10 rounded-md bg-slate-800 p-2 text-white transition hover:bg-slate-700"
-        >
-          <X className="h-5 w-5" />
-        </Link>
-
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70">
         <div
           className="grid gap-3 md:gap-0 md:[grid-template-columns:repeat(var(--identity-cols),minmax(0,1fr))]"
           style={{ "--identity-cols": identities.length } as CSSProperties}

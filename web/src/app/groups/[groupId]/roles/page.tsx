@@ -56,7 +56,9 @@ export default async function GroupRolesPage({
     redirect(`/groups?status=error&message=${encoded}`);
   }
 
-  const groupMemberships = memberships.filter((item) => item.group_id === groupId);
+  const groupMemberships = memberships.filter(
+    (item) => item.group_id === groupId && item.membership_type === "member",
+  );
   const groupRoles = roles.filter((item) => item.group_id === groupId);
   const groupAssignments = assignments.filter((item) => item.group_id === groupId);
   const returnTo = `/groups/${groupId}/roles`;

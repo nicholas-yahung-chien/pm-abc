@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
+  listGroupCoachOwners,
   listGroups,
   listMemberships,
   listMembershipsByEmail,
@@ -24,12 +25,13 @@ export default async function GroupDirectoryPage({
   }
 
   const { groupId } = await params;
-  const [groups, memberships, people, assignments, myMemberships] = await Promise.all([
+  const [groups, memberships, people, assignments, myMemberships, coachOwners] = await Promise.all([
     listGroups(),
     listMemberships(),
     listPeople(),
     listRoleAssignments(),
     session.role === "member" ? listMembershipsByEmail(session.email) : Promise.resolve([]),
+    listGroupCoachOwners(),
   ]);
 
   if (
@@ -46,15 +48,18 @@ export default async function GroupDirectoryPage({
     redirect(`/groups?status=error&message=${encoded}`);
   }
 
-  const groupMembers = memberships.filter((item) => item.group_id === groupId);
+  const coachOwner = coachOwners.find((item) => item.group_id === groupId);
+  const coachPerson = people.find(
+    (item) =>
+      item.person_type === "coach" &&
+      item.email?.toLowerCase() === coachOwner?.coach?.email?.toLowerCase(),
+  );
+
+  const groupMembers = memberships.filter(
+    (item) => item.group_id === groupId && item.membership_type === "member",
+  );
   const personById = new Map(people.map((item) => [item.id, item]));
   const sortedMembers = [...groupMembers].sort((a, b) => {
-    if (a.membership_type !== b.membership_type) {
-      return a.membership_type === "coach" ? -1 : 1;
-    }
-    if (a.is_leader !== b.is_leader) {
-      return a.is_leader ? -1 : 1;
-    }
     const aName = a.person?.display_name || a.person?.full_name || "";
     const bName = b.person?.display_name || b.person?.full_name || "";
     return aName.localeCompare(bName, "zh-Hant");
@@ -105,14 +110,29 @@ export default async function GroupDirectoryPage({
               </tr>
             </thead>
             <tbody>
+              {coachOwner?.coach && (
+                <tr className="border-t border-slate-100 bg-amber-50/30">
+                  <td className="px-3 py-2">
+                    <p className="font-medium">
+                      {coachPerson?.full_name || coachOwner.coach.display_name || "-"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {coachPerson?.display_name || coachOwner.coach.display_name || "-"}
+                    </p>
+                  </td>
+                  <td className="px-3 py-2">教練</td>
+                  <td className="px-3 py-2">小組教練</td>
+                  <td className="px-3 py-2">{coachPerson?.phone || "-"}</td>
+                  <td className="px-3 py-2">{coachOwner.coach.email || "-"}</td>
+                  <td className="px-3 py-2">{coachPerson?.line_id || "-"}</td>
+                </tr>
+              )}
+
               {sortedMembers.map((membership) => {
                 const person = personById.get(membership.person_id);
                 if (!person || !membership.person) return null;
 
                 const roleNames = rolesByPerson.get(person.id) ?? [];
-                const displayRoles = membership.is_leader
-                  ? ["小組長", ...roleNames]
-                  : roleNames;
 
                 return (
                   <tr key={membership.id} className="border-t border-slate-100">
@@ -120,11 +140,9 @@ export default async function GroupDirectoryPage({
                       <p className="font-medium">{person.full_name}</p>
                       <p className="text-xs text-slate-500">{person.display_name || "-"}</p>
                     </td>
+                    <td className="px-3 py-2">學員</td>
                     <td className="px-3 py-2">
-                      {membership.membership_type === "coach" ? "教練" : "學員"}
-                    </td>
-                    <td className="px-3 py-2">
-                      {displayRoles.length ? displayRoles.join("、") : "-"}
+                      {roleNames.length ? roleNames.join("、") : "-"}
                     </td>
                     <td className="px-3 py-2">{person.phone || "-"}</td>
                     <td className="px-3 py-2">{person.email || "-"}</td>
@@ -132,7 +150,7 @@ export default async function GroupDirectoryPage({
                   </tr>
                 );
               })}
-              {!sortedMembers.length && (
+              {!coachOwner?.coach && !sortedMembers.length && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={6}>
                     目前此小組尚無成員資料。

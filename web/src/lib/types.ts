@@ -98,3 +98,16 @@ export type RoleAssignmentRow = {
   } | null;
 };
 
+export type GroupCoachOwnerRow = {
+  group_id: string;
+  coach_account_id: string;
+  created_at: string;
+  updated_at: string;
+  coach?: {
+    id: string;
+    email: string;
+    display_name: string;
+    coach_status: "pending" | "approved" | "rejected";
+    is_active: boolean;
+  } | null;
+};

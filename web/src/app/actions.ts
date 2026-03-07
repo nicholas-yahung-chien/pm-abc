@@ -14,6 +14,7 @@ import {
   deleteMemberAccounts,
   createRole,
   createRoleAssignment,
+  upsertGroupCoachOwner,
   listGroupIdsByEmail,
   updateClass,
   updateMemberAccount,
@@ -298,20 +299,15 @@ export async function createMembershipAction(formData: FormData) {
 
   const groupId = readText(formData, "groupId");
   const personId = readText(formData, "personId");
-  const membershipType = readText(formData, "membershipType") as
-    | "coach"
-    | "member";
-  const isLeader = formData.get("isLeader") === "on";
-
-  if (!groupId || !personId || !membershipType) {
-    redirectWithMessage("/groups", false, "請填寫小組、學員與成員類型。");
+  if (!groupId || !personId) {
+    redirectWithMessage("/groups", false, "請填寫小組與學員。");
   }
 
   const result = await createMembership({
     groupId,
     personId,
-    membershipType,
-    isLeader,
+    membershipType: "member",
+    isLeader: false,
   });
 
   revalidatePath("/groups");
@@ -320,6 +316,27 @@ export async function createMembershipAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/roles`);
   if (!result.ok) redirectWithMessage("/groups", false, result.message);
   redirectWithMessage("/groups", true, "小組成員指派成功。");
+}
+
+export async function assignGroupCoachOwnerAction(formData: FormData) {
+  await requireCoachOrAdmin("/groups");
+
+  const groupId = readText(formData, "groupId");
+  const coachAccountId = readText(formData, "coachAccountId");
+  if (!groupId || !coachAccountId) {
+    redirectWithMessage("/groups", false, "請選擇小組與教練。");
+  }
+
+  const result = await upsertGroupCoachOwner({
+    groupId,
+    coachAccountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/directory`);
+  if (!result.ok) redirectWithMessage("/groups", false, result.message);
+  redirectWithMessage("/groups", true, "小組教練已更新。");
 }
 
 export async function createRoleAction(formData: FormData) {

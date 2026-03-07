@@ -2,6 +2,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import type {
   ClassRow,
   GroupRow,
+  GroupCoachOwnerRow,
   MembershipRow,
   PersonRow,
   RoleAssignmentRow,
@@ -152,6 +153,32 @@ export async function listRoleAssignments(): Promise<RoleAssignmentRow[]> {
   return (data ?? []) as RoleAssignmentRow[];
 }
 
+export async function listGroupCoachOwners(): Promise<GroupCoachOwnerRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("group_coach_owners")
+    .select(
+      "group_id, coach_account_id, created_at, updated_at, coach:auth_accounts(id, email, display_name, coach_status, is_active)",
+    );
+
+  return (data ?? []).map((row) => {
+    const coachValue = (row as { coach?: unknown }).coach;
+    const coach = Array.isArray(coachValue)
+      ? (coachValue[0] ?? null)
+      : (coachValue ?? null);
+
+    return {
+      group_id: String((row as { group_id: unknown }).group_id),
+      coach_account_id: String((row as { coach_account_id: unknown }).coach_account_id),
+      created_at: String((row as { created_at: unknown }).created_at),
+      updated_at: String((row as { updated_at: unknown }).updated_at),
+      coach: coach as GroupCoachOwnerRow["coach"],
+    };
+  });
+}
+
 export function getDataLayerStatus(): { ok: boolean; message: string } {
   const db = getClientOrError();
   if (!db.client) {
@@ -248,6 +275,36 @@ export async function createGroup(input: {
     name: input.name,
     description: input.description,
   });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function upsertGroupCoachOwner(input: {
+  groupId: string;
+  coachAccountId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: coach, error: coachError } = await db.client
+    .from("auth_accounts")
+    .select("id, role, coach_status, is_active")
+    .eq("id", input.coachAccountId)
+    .maybeSingle();
+
+  if (coachError) return { ok: false, message: coachError.message };
+  if (!coach || coach.role !== "coach" || coach.coach_status !== "approved" || !coach.is_active) {
+    return { ok: false, message: "僅可指派已核准且啟用中的教練。" };
+  }
+
+  const { error } = await db.client.from("group_coach_owners").upsert(
+    {
+      group_id: input.groupId,
+      coach_account_id: input.coachAccountId,
+    },
+    { onConflict: "group_id" },
+  );
 
   if (error) return { ok: false, message: error.message };
   return { ok: true };
@@ -543,11 +600,22 @@ export async function createMembership(input: {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
 
+  const { data: person, error: personError } = await db.client
+    .from("people")
+    .select("id, person_type")
+    .eq("id", input.personId)
+    .maybeSingle();
+
+  if (personError) return { ok: false, message: personError.message };
+  if (!person || person.person_type !== "member") {
+    return { ok: false, message: "小組成員僅能指派學員。" };
+  }
+
   const { error } = await db.client.from("group_memberships").insert({
     group_id: input.groupId,
     person_id: input.personId,
-    membership_type: input.membershipType,
-    is_leader: input.isLeader,
+    membership_type: "member",
+    is_leader: false,
   });
 
   if (error) return { ok: false, message: error.message };
