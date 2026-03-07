@@ -2,14 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Fragment } from "react";
 import {
-  copyTrackingItemAction,
   createTrackingItemAction,
   createTrackingSectionAction,
   createTrackingSubsectionAction,
   deleteTrackingItemAction,
   deleteTrackingSectionAction,
   deleteTrackingSubsectionAction,
-  moveTrackingItemAction,
+  moveTrackingItemOrderAction,
   moveTrackingSectionAction,
   moveTrackingSubsectionAction,
   setTrackingItemMemberCompletionAction,
@@ -19,6 +18,7 @@ import {
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { TrackingManagementPanel } from "@/components/tracking-management-panel";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
   listGroups,
@@ -122,8 +122,6 @@ export default async function GroupTrackingPage({
     .filter((item) => item.group_id === groupId)
     .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
 
-  const sectionById = new Map(groupSections.map((item) => [item.id, item]));
-
   const groupSubsections = trackingSubsections
     .filter((item) => item.group_id === groupId)
     .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
@@ -189,15 +187,6 @@ export default async function GroupTrackingPage({
 
   const totalCells = groupItems.length * groupMembers.length;
   const overallCompletionPercent = toPercent(completionRows.length, totalCells);
-
-  const subsectionOptions = groupSubsections.map((item) => {
-    const section = sectionById.get(item.section_id);
-    return {
-      id: item.id,
-      sectionId: item.section_id,
-      label: `${section?.title || "未分類大項"} / ${item.title}`,
-    };
-  });
 
   const itemsBySubsectionId = new Map<string, typeof groupItems>();
   for (const item of groupItems) {
@@ -405,7 +394,7 @@ export default async function GroupTrackingPage({
                                           />
                                           <button
                                             title={completed ? "取消完成" : "標記完成"}
-                                            className={`h-8 w-8 rounded-md border text-lg font-semibold transition ${
+                                            className={`h-6 w-6 rounded-md border text-sm font-semibold transition ${
                                               completed
                                                 ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
                                                 : "border-slate-300 bg-white text-slate-500 hover:border-emerald-400 hover:text-emerald-600"
@@ -416,7 +405,7 @@ export default async function GroupTrackingPage({
                                         </form>
                                       ) : (
                                         <div
-                                          className={`mx-auto flex h-8 w-8 items-center justify-center rounded-md border text-lg ${
+                                          className={`mx-auto flex h-6 w-6 items-center justify-center rounded-md border text-sm ${
                                             completed
                                               ? "border-emerald-700 bg-emerald-700 text-white"
                                               : "border-slate-300 bg-slate-100 text-slate-400"
@@ -463,402 +452,26 @@ export default async function GroupTrackingPage({
           </table>
         </div>
       </section>
-
       {canManageStructure && (
-        <section className="space-y-4">
-          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣管理（教練）</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              此區塊僅供教練新增與維護追蹤大項、小項與追蹤項目；學員僅可查看上方追蹤矩陣並回報自己的完成狀態。
-            </p>
-
-            <div className="mt-4 grid gap-4 xl:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-900">新增追蹤大項</h3>
-                <form action={createTrackingSectionAction} className="mt-3 space-y-3">
-                  <input type="hidden" name="groupId" value={groupId} />
-                  <input type="hidden" name="returnTo" value={returnTo} />
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">大項名稱 *</span>
-                    <input name="title" required placeholder="例如：課程準備" />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">說明</span>
-                    <textarea name="description" rows={3} />
-                  </label>
-                  <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-                    新增大項
-                  </button>
-                </form>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-900">新增追蹤小項</h3>
-                <form action={createTrackingSubsectionAction} className="mt-3 space-y-3">
-                  <input type="hidden" name="groupId" value={groupId} />
-                  <input type="hidden" name="returnTo" value={returnTo} />
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-                    <select name="sectionId" defaultValue="" required>
-                      <option value="" disabled>
-                        請選擇大項
-                      </option>
-                      {groupSections.map((section) => (
-                        <option key={section.id} value={section.id}>
-                          {section.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">小項名稱 *</span>
-                    <input name="title" required placeholder="例如：讀書會任務" />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">說明</span>
-                    <textarea name="description" rows={3} />
-                  </label>
-                  <button
-                    disabled={!groupSections.length}
-                    className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
-                  >
-                    新增小項
-                  </button>
-                </form>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-900">新增追蹤項目</h3>
-                <form action={createTrackingItemAction} className="mt-3 space-y-3">
-                  <input type="hidden" name="groupId" value={groupId} />
-                  <input type="hidden" name="returnTo" value={returnTo} />
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-                    <select name="sectionId" defaultValue="" required>
-                      <option value="" disabled>
-                        請選擇大項
-                      </option>
-                      {groupSections.map((section) => (
-                        <option key={section.id} value={section.id}>
-                          {section.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">所屬小項 *</span>
-                    <select name="subsectionId" defaultValue="" required>
-                      <option value="" disabled>
-                        請選擇小項
-                      </option>
-                      {subsectionOptions.map((subsection) => (
-                        <option key={subsection.id} value={subsection.id}>
-                          {subsection.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">項目名稱 *</span>
-                    <input name="title" required placeholder="例如：完成第 1 章題庫" />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">內容</span>
-                    <textarea name="content" rows={2} />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium text-slate-700">到期日</span>
-                    <input name="dueDate" type="date" />
-                  </label>
-                  <input type="hidden" name="extraData" value="" />
-                  <input type="hidden" name="externalUrl" value="" />
-                  <button
-                    disabled={!groupSubsections.length}
-                    className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
-                  >
-                    新增追蹤項目
-                  </button>
-                </form>
-              </div>
-            </div>
-          </article>
-
-          {groupSections.map((section) => {
-            const subsectionRows = groupSubsections.filter((item) => item.section_id === section.id);
-
-            return (
-              <article key={section.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-slate-900">大項管理：{section.title}</h2>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <form action={moveTrackingSectionAction}>
-                      <input type="hidden" name="groupId" value={groupId} />
-                      <input type="hidden" name="sectionId" value={section.id} />
-                      <input type="hidden" name="direction" value="up" />
-                      <input type="hidden" name="returnTo" value={returnTo} />
-                      <button
-                        className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                        title="上移大項"
-                      >
-                        上
-                      </button>
-                    </form>
-                    <form action={moveTrackingSectionAction}>
-                      <input type="hidden" name="groupId" value={groupId} />
-                      <input type="hidden" name="sectionId" value={section.id} />
-                      <input type="hidden" name="direction" value="down" />
-                      <input type="hidden" name="returnTo" value={returnTo} />
-                      <button
-                        className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                        title="下移大項"
-                      >
-                        下
-                      </button>
-                    </form>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <form action={updateTrackingSectionAction} className="grid grow gap-2 md:grid-cols-2">
-                    <input type="hidden" name="groupId" value={groupId} />
-                    <input type="hidden" name="sectionId" value={section.id} />
-                    <input type="hidden" name="returnTo" value={returnTo} />
-                    <label className="space-y-1">
-                      <span className="text-xs font-medium text-slate-700">大項名稱 *</span>
-                      <input name="title" defaultValue={section.title} required />
-                    </label>
-                    <label className="space-y-1">
-                      <span className="text-xs font-medium text-slate-700">說明</span>
-                      <textarea name="description" rows={2} defaultValue={section.description} />
-                    </label>
-                    <div className="md:col-span-2">
-                      <button className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-900">
-                        儲存大項
-                      </button>
-                    </div>
-                  </form>
-
-                  <form action={deleteTrackingSectionAction}>
-                    <input type="hidden" name="groupId" value={groupId} />
-                    <input type="hidden" name="sectionId" value={section.id} />
-                    <input type="hidden" name="returnTo" value={returnTo} />
-                    <button className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
-                      刪除大項
-                    </button>
-                  </form>
-                </div>
-
-                <div className="mt-4 space-y-4">
-                  {subsectionRows.map((subsection) => {
-                    const items = itemsBySubsectionId.get(subsection.id) ?? [];
-
-                    return (
-                      <div key={subsection.id} className="rounded-xl border border-slate-200 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-base font-semibold text-slate-900">小項管理：{subsection.title}</h3>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <form action={moveTrackingSubsectionAction}>
-                              <input type="hidden" name="groupId" value={groupId} />
-                              <input type="hidden" name="sectionId" value={section.id} />
-                              <input type="hidden" name="subsectionId" value={subsection.id} />
-                              <input type="hidden" name="direction" value="up" />
-                              <input type="hidden" name="returnTo" value={returnTo} />
-                              <button
-                                className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                                title="上移小項"
-                              >
-                                上
-                              </button>
-                            </form>
-                            <form action={moveTrackingSubsectionAction}>
-                              <input type="hidden" name="groupId" value={groupId} />
-                              <input type="hidden" name="sectionId" value={section.id} />
-                              <input type="hidden" name="subsectionId" value={subsection.id} />
-                              <input type="hidden" name="direction" value="down" />
-                              <input type="hidden" name="returnTo" value={returnTo} />
-                              <button
-                                className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                                title="下移小項"
-                              >
-                                下
-                              </button>
-                            </form>
-                          </div>
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                          <form action={updateTrackingSubsectionAction} className="grid grow gap-2 md:grid-cols-3">
-                            <input type="hidden" name="groupId" value={groupId} />
-                            <input type="hidden" name="subsectionId" value={subsection.id} />
-                            <input type="hidden" name="returnTo" value={returnTo} />
-                            <select name="sectionId" defaultValue={subsection.section_id} required>
-                              {groupSections.map((sectionOption) => (
-                                <option key={sectionOption.id} value={sectionOption.id}>
-                                  {sectionOption.title}
-                                </option>
-                              ))}
-                            </select>
-                            <input name="title" defaultValue={subsection.title} required />
-                            <textarea
-                              name="description"
-                              rows={2}
-                              defaultValue={subsection.description}
-                              className="md:col-span-3"
-                            />
-                            <div className="md:col-span-3">
-                              <button className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-900">
-                                儲存小項
-                              </button>
-                            </div>
-                          </form>
-
-                          <form action={deleteTrackingSubsectionAction}>
-                            <input type="hidden" name="groupId" value={groupId} />
-                            <input type="hidden" name="subsectionId" value={subsection.id} />
-                            <input type="hidden" name="returnTo" value={returnTo} />
-                            <button className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
-                              刪除小項
-                            </button>
-                          </form>
-                        </div>
-
-                        <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200">
-                          <table className="min-w-full text-left text-sm">
-                            <thead className="bg-slate-50 text-slate-600">
-                              <tr>
-                                <th className="px-3 py-2">項目</th>
-                                <th className="px-3 py-2">到期日</th>
-                                <th className="px-3 py-2">操作</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {items.map((item) => (
-                                <tr key={item.id} className="border-t border-slate-100 align-top">
-                                  <td className="px-3 py-2">
-                                    <p className="font-medium text-slate-900">{item.title}</p>
-                                    <p className="mt-1 text-xs text-slate-600">{item.content || "-"}</p>
-                                  </td>
-                                  <td className="px-3 py-2 text-xs text-slate-700">
-                                    {formatDate(item.due_date)}
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <details>
-                                      <summary className="cursor-pointer text-xs font-semibold text-slate-700">
-                                        編輯 / 搬移 / 複製 / 刪除
-                                      </summary>
-                                      <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-2">
-                                        <form action={updateTrackingItemAction} className="grid gap-2">
-                                          <input type="hidden" name="groupId" value={groupId} />
-                                          <input type="hidden" name="itemId" value={item.id} />
-                                          <input type="hidden" name="returnTo" value={returnTo} />
-                                          <select name="sectionId" defaultValue={item.section_id} required>
-                                            {groupSections.map((sectionOption) => (
-                                              <option key={sectionOption.id} value={sectionOption.id}>
-                                                {sectionOption.title}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <select name="subsectionId" defaultValue={item.subsection_id} required>
-                                            {subsectionOptions.map((subsectionOption) => (
-                                              <option key={subsectionOption.id} value={subsectionOption.id}>
-                                                {subsectionOption.label}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <input name="title" defaultValue={item.title} required />
-                                          <textarea name="content" rows={2} defaultValue={item.content} />
-                                          <input name="dueDate" type="date" defaultValue={item.due_date || ""} />
-                                          <input type="hidden" name="extraData" value={item.extra_data} />
-                                          <input type="hidden" name="externalUrl" value={item.external_url} />
-                                          <button className="rounded-md bg-slate-800 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-900">
-                                            儲存項目
-                                          </button>
-                                        </form>
-
-                                        <form action={moveTrackingItemAction} className="grid gap-2">
-                                          <input type="hidden" name="groupId" value={groupId} />
-                                          <input type="hidden" name="itemId" value={item.id} />
-                                          <input type="hidden" name="returnTo" value={returnTo} />
-                                          <select name="targetSectionId" defaultValue={item.section_id} required>
-                                            {groupSections.map((sectionOption) => (
-                                              <option key={sectionOption.id} value={sectionOption.id}>
-                                                {sectionOption.title}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <select name="targetSubsectionId" defaultValue={item.subsection_id} required>
-                                            {subsectionOptions.map((subsectionOption) => (
-                                              <option key={subsectionOption.id} value={subsectionOption.id}>
-                                                {subsectionOption.label}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <button className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-semibold text-white hover:bg-indigo-700">
-                                            搬移項目
-                                          </button>
-                                        </form>
-
-                                        <form action={copyTrackingItemAction} className="grid gap-2">
-                                          <input type="hidden" name="groupId" value={groupId} />
-                                          <input type="hidden" name="itemId" value={item.id} />
-                                          <input type="hidden" name="returnTo" value={returnTo} />
-                                          <select name="targetSectionId" defaultValue={item.section_id} required>
-                                            {groupSections.map((sectionOption) => (
-                                              <option key={sectionOption.id} value={sectionOption.id}>
-                                                {sectionOption.title}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <select name="targetSubsectionId" defaultValue={item.subsection_id} required>
-                                            {subsectionOptions.map((subsectionOption) => (
-                                              <option key={subsectionOption.id} value={subsectionOption.id}>
-                                                {subsectionOption.label}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          <button className="rounded-md bg-teal-600 px-2 py-1 text-xs font-semibold text-white hover:bg-teal-700">
-                                            複製項目
-                                          </button>
-                                        </form>
-
-                                        <form action={deleteTrackingItemAction}>
-                                          <input type="hidden" name="groupId" value={groupId} />
-                                          <input type="hidden" name="itemId" value={item.id} />
-                                          <input type="hidden" name="returnTo" value={returnTo} />
-                                          <button className="rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100">
-                                            刪除此項目
-                                          </button>
-                                        </form>
-                                      </div>
-                                    </details>
-                                  </td>
-                                </tr>
-                              ))}
-
-                              {!items.length && (
-                                <tr>
-                                  <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                                    此小項尚無追蹤項目。
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {!subsectionRows.length && (
-                    <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                      此大項尚無追蹤小項。
-                    </p>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </section>
+        <TrackingManagementPanel
+          groupId={groupId}
+          returnTo={returnTo}
+          sections={groupSections}
+          subsections={groupSubsections}
+          items={groupItems}
+          onCreateSectionAction={createTrackingSectionAction}
+          onCreateSubsectionAction={createTrackingSubsectionAction}
+          onCreateItemAction={createTrackingItemAction}
+          onUpdateSectionAction={updateTrackingSectionAction}
+          onDeleteSectionAction={deleteTrackingSectionAction}
+          onMoveSectionAction={moveTrackingSectionAction}
+          onUpdateSubsectionAction={updateTrackingSubsectionAction}
+          onDeleteSubsectionAction={deleteTrackingSubsectionAction}
+          onMoveSubsectionAction={moveTrackingSubsectionAction}
+          onUpdateItemAction={updateTrackingItemAction}
+          onDeleteItemAction={deleteTrackingItemAction}
+          onMoveItemOrderAction={moveTrackingItemOrderAction}
+        />
       )}
     </AppShell>
   );

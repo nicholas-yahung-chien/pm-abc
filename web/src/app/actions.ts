@@ -25,6 +25,7 @@ import {
   moveTrackingSection,
   moveTrackingSubsection,
   moveTrackingItem,
+  moveTrackingItemOrder,
   setTrackingItemMemberCompletion,
   updateRoleDefinition,
   updateRoleAssignment,
@@ -840,6 +841,35 @@ export async function moveTrackingItemAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}`);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);
   redirectWithMessage(returnTo, true, "追蹤項目已搬移。");
+}
+
+export async function moveTrackingItemOrderAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const sectionId = readText(formData, "sectionId");
+  const subsectionId = readText(formData, "subsectionId");
+  const itemId = readText(formData, "itemId");
+  const directionRaw = readText(formData, "direction");
+  const direction = directionRaw === "up" || directionRaw === "down" ? directionRaw : null;
+
+  if (!groupId || !sectionId || !subsectionId || !itemId || !direction) {
+    redirectWithMessage(returnTo, false, "缺少追蹤項目排序資料。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+  const result = await moveTrackingItemOrder({
+    groupId,
+    sectionId,
+    subsectionId,
+    itemId,
+    direction,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, direction === "up" ? "追蹤項目已上移。" : "追蹤項目已下移。");
 }
 
 export async function copyTrackingItemAction(formData: FormData) {

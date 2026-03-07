@@ -969,6 +969,35 @@ async function resequenceTrackingSubsections(input: {
   return { ok: true };
 }
 
+async function resequenceTrackingItems(input: {
+  groupId: string;
+  sectionId: string;
+  subsectionId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("tracking_items")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("group_id", input.groupId)
+      .eq("section_id", input.sectionId)
+      .eq("subsection_id", input.subsectionId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
 export async function createTrackingSection(input: {
   groupId: string;
   title: string;
@@ -1349,6 +1378,42 @@ export async function moveTrackingItem(input: {
 
   if (error) return { ok: false, message: error.message };
   return { ok: true };
+}
+
+export async function moveTrackingItemOrder(input: {
+  groupId: string;
+  sectionId: string;
+  subsectionId: string;
+  itemId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("tracking_items")
+    .select("id")
+    .eq("group_id", input.groupId)
+    .eq("section_id", input.sectionId)
+    .eq("subsection_id", input.subsectionId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.itemId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "找不到追蹤項目。" };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceTrackingItems({
+    groupId: input.groupId,
+    sectionId: input.sectionId,
+    subsectionId: input.subsectionId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
 }
 
 export async function copyTrackingItem(input: {
