@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -63,6 +64,7 @@ export function GroupManagementTable({
     pageIndex: 0,
     pageSize: 10,
   });
+  const [showFilters, setShowFilters] = useState(false);
   const [coachDraftByGroupId, setCoachDraftByGroupId] = useState<Record<string, string>>({});
 
   const coachLabelById = useMemo(() => {
@@ -216,48 +218,68 @@ export function GroupManagementTable({
 
   return (
     <div className="mt-4 space-y-4">
-      <div className="relative w-full max-w-sm">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          value={globalFilter}
-          onChange={(event) => setGlobalFilter(event.currentTarget.value)}
-          placeholder="搜尋班別、小組代碼、小組名稱"
-          className="pl-9"
-        />
+      <div className="flex w-full flex-wrap items-center gap-2">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.currentTarget.value)}
+            placeholder="搜尋班別、小組代碼、小組名稱"
+            className="!pl-11"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowFilters((prev) => !prev)}
+          aria-label={showFilters ? "收合篩選欄位" : "展開篩選欄位"}
+          aria-expanded={showFilters}
+          className={[
+            "inline-flex items-center justify-center rounded-md border p-2 transition",
+            showFilters
+              ? "border-amber-300 bg-amber-50 text-amber-700"
+              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+          ].join(" ")}
+          title={showFilters ? "收合篩選欄位" : "展開篩選欄位"}
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-3">
-        <label className="space-y-1">
-          <span className="text-xs text-slate-500">篩選：班別</span>
-          <input
-            value={String(table.getColumn("classCode")?.getFilterValue() ?? "")}
-            onChange={(event) =>
-              table.getColumn("classCode")?.setFilterValue(event.currentTarget.value)
-            }
-            placeholder="輸入班別"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="text-xs text-slate-500">篩選：小組代碼</span>
-          <input
-            value={String(table.getColumn("code")?.getFilterValue() ?? "")}
-            onChange={(event) =>
-              table.getColumn("code")?.setFilterValue(event.currentTarget.value)
-            }
-            placeholder="輸入代碼"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="text-xs text-slate-500">篩選：小組名稱</span>
-          <input
-            value={String(table.getColumn("name")?.getFilterValue() ?? "")}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.currentTarget.value)
-            }
-            placeholder="輸入名稱"
-          />
-        </label>
-      </div>
+      {showFilters && (
+        <div className="grid gap-2 md:grid-cols-3">
+          <label className="space-y-1">
+            <span className="text-xs text-slate-500">篩選：班別</span>
+            <input
+              value={String(table.getColumn("classCode")?.getFilterValue() ?? "")}
+              onChange={(event) =>
+                table.getColumn("classCode")?.setFilterValue(event.currentTarget.value)
+              }
+              placeholder="輸入班別"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="text-xs text-slate-500">篩選：小組代碼</span>
+            <input
+              value={String(table.getColumn("code")?.getFilterValue() ?? "")}
+              onChange={(event) =>
+                table.getColumn("code")?.setFilterValue(event.currentTarget.value)
+              }
+              placeholder="輸入代碼"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="text-xs text-slate-500">篩選：小組名稱</span>
+            <input
+              value={String(table.getColumn("name")?.getFilterValue() ?? "")}
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.currentTarget.value)
+              }
+              placeholder="輸入名稱"
+            />
+          </label>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="min-w-full text-left text-sm">

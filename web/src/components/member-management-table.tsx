@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Pencil,
   Search,
+  SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
@@ -62,6 +63,7 @@ export function MemberManagementTable({
     pageIndex: 0,
     pageSize: 10,
   });
+  const [showFilters, setShowFilters] = useState(false);
 
   const startEdit = (memberId: string) => {
     const source = memberById.get(memberId);
@@ -364,14 +366,31 @@ export function MemberManagementTable({
   return (
     <div className="mt-4 space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full lg:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            value={globalFilter}
-            onChange={(event) => setGlobalFilter(event.currentTarget.value)}
-            placeholder="搜尋學員編號、姓名、Email"
-            className="pl-9"
-          />
+        <div className="flex w-full items-center gap-2 lg:max-w-md">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={globalFilter}
+              onChange={(event) => setGlobalFilter(event.currentTarget.value)}
+              placeholder="搜尋學員編號、姓名、Email"
+              className="!pl-11"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters((prev) => !prev)}
+            aria-label={showFilters ? "收合篩選欄位" : "展開篩選欄位"}
+            aria-expanded={showFilters}
+            className={[
+              "inline-flex items-center justify-center rounded-md border p-2 transition",
+              showFilters
+                ? "border-amber-300 bg-amber-50 text-amber-700"
+                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+            ].join(" ")}
+            title={showFilters ? "收合篩選欄位" : "展開篩選欄位"}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -403,38 +422,40 @@ export function MemberManagementTable({
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-3">
-        <label className="space-y-1">
-          <span className="text-xs text-slate-500">篩選：學員編號</span>
-          <input
-            value={String(table.getColumn("personNo")?.getFilterValue() ?? "")}
-            onChange={(event) =>
-              table.getColumn("personNo")?.setFilterValue(event.currentTarget.value)
-            }
-            placeholder="輸入編號"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="text-xs text-slate-500">篩選：學員姓名</span>
-          <input
-            value={String(table.getColumn("fullName")?.getFilterValue() ?? "")}
-            onChange={(event) =>
-              table.getColumn("fullName")?.setFilterValue(event.currentTarget.value)
-            }
-            placeholder="輸入姓名"
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="text-xs text-slate-500">篩選：Email</span>
-          <input
-            value={String(table.getColumn("email")?.getFilterValue() ?? "")}
-            onChange={(event) =>
-              table.getColumn("email")?.setFilterValue(event.currentTarget.value)
-            }
-            placeholder="輸入 Email"
-          />
-        </label>
-      </div>
+      {showFilters && (
+        <div className="grid gap-2 md:grid-cols-3">
+          <label className="space-y-1">
+            <span className="text-xs text-slate-500">篩選：學員編號</span>
+            <input
+              value={String(table.getColumn("personNo")?.getFilterValue() ?? "")}
+              onChange={(event) =>
+                table.getColumn("personNo")?.setFilterValue(event.currentTarget.value)
+              }
+              placeholder="輸入編號"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="text-xs text-slate-500">篩選：學員姓名</span>
+            <input
+              value={String(table.getColumn("fullName")?.getFilterValue() ?? "")}
+              onChange={(event) =>
+                table.getColumn("fullName")?.setFilterValue(event.currentTarget.value)
+              }
+              placeholder="輸入姓名"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="text-xs text-slate-500">篩選：Email</span>
+            <input
+              value={String(table.getColumn("email")?.getFilterValue() ?? "")}
+              onChange={(event) =>
+                table.getColumn("email")?.setFilterValue(event.currentTarget.value)
+              }
+              placeholder="輸入 Email"
+            />
+          </label>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="min-w-full text-left text-sm">
