@@ -14,13 +14,26 @@ import {
   deleteMemberAccounts,
   createRole,
   createRoleAssignment,
+  createTrackingItem,
+  createTrackingSection,
+  createTrackingSubsection,
+  copyTrackingItem,
+  deleteTrackingItem,
+  deleteTrackingSection,
+  deleteTrackingSubsection,
   deleteRoleAssignment,
+  moveTrackingItem,
   updateRoleDefinition,
   updateRoleAssignment,
+  updateTrackingItem,
+  updateTrackingSection,
+  updateTrackingSubsection,
   updateGroupDescription,
   updateGroupMemberDirectoryProfile,
   upsertGroupCoachOwner,
   listGroupIdsByEmail,
+  listMembershipsByEmail,
+  toggleTrackingItemCompletion,
   updateClass,
   updateMemberAccount,
 } from "@/lib/repository";
@@ -35,6 +48,14 @@ function redirectWithMessage(path: string, ok: boolean, message: string): never 
 
 function readText(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
+}
+
+function readOptionalNumber(formData: FormData, key: string): number | null {
+  const raw = readText(formData, key);
+  if (!raw) return null;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return null;
+  return value;
 }
 
 function readReturnTo(formData: FormData): string | null {
@@ -67,6 +88,14 @@ async function requireGroupAccess(groupId: string, redirectPath: string) {
   const groupIds = await listGroupIdsByEmail(session.email);
   if (!groupIds.includes(groupId)) {
     redirectWithMessage(redirectPath, false, "學員僅可管理已被指派的小組。");
+  }
+  return session;
+}
+
+async function requireGroupStructureAccess(groupId: string, redirectPath: string) {
+  const session = await requireGroupAccess(groupId, redirectPath);
+  if (session.role === "member") {
+    redirectWithMessage(redirectPath, false, "學員僅可回報追蹤項目完成狀態。");
   }
   return session;
 }
@@ -498,6 +527,373 @@ export async function updateRoleDefinitionAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/directory`);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);
   redirectWithMessage(returnTo, true, "角色已更新。");
+}
+
+export async function createTrackingSectionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const title = readText(formData, "title");
+  const description = readText(formData, "description");
+  const sortOrder = readOptionalNumber(formData, "sortOrder");
+
+  if (!groupId || !title) {
+    redirectWithMessage(returnTo, false, "請填寫追蹤大項名稱。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await createTrackingSection({
+    groupId,
+    title,
+    description,
+    sortOrder,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤大項已新增。");
+}
+
+export async function updateTrackingSectionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const sectionId = readText(formData, "sectionId");
+  const title = readText(formData, "title");
+  const description = readText(formData, "description");
+  const sortOrder = readOptionalNumber(formData, "sortOrder");
+
+  if (!groupId || !sectionId || !title || sortOrder === null) {
+    redirectWithMessage(returnTo, false, "請填寫追蹤大項資料。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await updateTrackingSection({
+    groupId,
+    sectionId,
+    title,
+    description,
+    sortOrder,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤大項已更新。");
+}
+
+export async function deleteTrackingSectionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const sectionId = readText(formData, "sectionId");
+
+  if (!groupId || !sectionId) {
+    redirectWithMessage(returnTo, false, "缺少追蹤大項識別資料。");
+  }
+
+  await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await deleteTrackingSection({ groupId, sectionId });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤大項已刪除。");
+}
+
+export async function createTrackingSubsectionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const sectionId = readText(formData, "sectionId");
+  const title = readText(formData, "title");
+  const description = readText(formData, "description");
+  const sortOrder = readOptionalNumber(formData, "sortOrder");
+
+  if (!groupId || !sectionId || !title) {
+    redirectWithMessage(returnTo, false, "請填寫追蹤小項資料。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await createTrackingSubsection({
+    groupId,
+    sectionId,
+    title,
+    description,
+    sortOrder,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤小項已新增。");
+}
+
+export async function updateTrackingSubsectionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const subsectionId = readText(formData, "subsectionId");
+  const sectionId = readText(formData, "sectionId");
+  const title = readText(formData, "title");
+  const description = readText(formData, "description");
+  const sortOrder = readOptionalNumber(formData, "sortOrder");
+
+  if (!groupId || !subsectionId || !sectionId || !title || sortOrder === null) {
+    redirectWithMessage(returnTo, false, "請填寫追蹤小項資料。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await updateTrackingSubsection({
+    groupId,
+    subsectionId,
+    sectionId,
+    title,
+    description,
+    sortOrder,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤小項已更新。");
+}
+
+export async function deleteTrackingSubsectionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const subsectionId = readText(formData, "subsectionId");
+
+  if (!groupId || !subsectionId) {
+    redirectWithMessage(returnTo, false, "缺少追蹤小項識別資料。");
+  }
+
+  await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await deleteTrackingSubsection({
+    groupId,
+    subsectionId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤小項已刪除。");
+}
+
+export async function createTrackingItemAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const sectionId = readText(formData, "sectionId");
+  const subsectionId = readText(formData, "subsectionId");
+  const title = readText(formData, "title");
+  const content = readText(formData, "content");
+  const extraData = readText(formData, "extraData");
+  const externalUrl = readText(formData, "externalUrl");
+  const dueDate = readText(formData, "dueDate");
+  const ownerPersonIdRaw = readText(formData, "ownerPersonId");
+  const sortOrder = readOptionalNumber(formData, "sortOrder");
+  const progressPercent = readOptionalNumber(formData, "progressPercent");
+  const isCompleted = readText(formData, "isCompleted") === "true";
+
+  if (!groupId || !sectionId || !subsectionId || !title) {
+    redirectWithMessage(returnTo, false, "請填寫追蹤項目資料。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await createTrackingItem({
+    groupId,
+    sectionId,
+    subsectionId,
+    title,
+    content,
+    extraData,
+    externalUrl,
+    dueDate,
+    ownerPersonId: ownerPersonIdRaw || null,
+    progressPercent,
+    isCompleted,
+    sortOrder,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤項目已新增。");
+}
+
+export async function updateTrackingItemAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const itemId = readText(formData, "itemId");
+  const sectionId = readText(formData, "sectionId");
+  const subsectionId = readText(formData, "subsectionId");
+  const title = readText(formData, "title");
+  const content = readText(formData, "content");
+  const extraData = readText(formData, "extraData");
+  const externalUrl = readText(formData, "externalUrl");
+  const dueDate = readText(formData, "dueDate");
+  const ownerPersonIdRaw = readText(formData, "ownerPersonId");
+  const sortOrder = readOptionalNumber(formData, "sortOrder");
+  const progressPercent = readOptionalNumber(formData, "progressPercent");
+  const isCompleted = readText(formData, "isCompleted") === "true";
+
+  if (
+    !groupId ||
+    !itemId ||
+    !sectionId ||
+    !subsectionId ||
+    !title ||
+    sortOrder === null ||
+    progressPercent === null
+  ) {
+    redirectWithMessage(returnTo, false, "請填寫追蹤項目資料。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await updateTrackingItem({
+    groupId,
+    itemId,
+    sectionId,
+    subsectionId,
+    title,
+    content,
+    extraData,
+    externalUrl,
+    dueDate,
+    ownerPersonId: ownerPersonIdRaw || null,
+    sortOrder,
+    progressPercent,
+    isCompleted,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤項目已更新。");
+}
+
+export async function deleteTrackingItemAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const itemId = readText(formData, "itemId");
+
+  if (!groupId || !itemId) {
+    redirectWithMessage(returnTo, false, "缺少追蹤項目識別資料。");
+  }
+
+  await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await deleteTrackingItem({ groupId, itemId });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤項目已刪除。");
+}
+
+export async function moveTrackingItemAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const itemId = readText(formData, "itemId");
+  const targetSectionId = readText(formData, "targetSectionId");
+  const targetSubsectionId = readText(formData, "targetSubsectionId");
+
+  if (!groupId || !itemId || !targetSectionId || !targetSubsectionId) {
+    redirectWithMessage(returnTo, false, "請選擇要搬移到的追蹤項目位置。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await moveTrackingItem({
+    groupId,
+    itemId,
+    targetSectionId,
+    targetSubsectionId,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤項目已搬移。");
+}
+
+export async function copyTrackingItemAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const itemId = readText(formData, "itemId");
+  const targetSectionId = readText(formData, "targetSectionId");
+  const targetSubsectionId = readText(formData, "targetSubsectionId");
+
+  if (!groupId || !itemId || !targetSectionId || !targetSubsectionId) {
+    redirectWithMessage(returnTo, false, "請選擇要複製到的追蹤項目位置。");
+  }
+
+  const session = await requireGroupStructureAccess(groupId, returnTo);
+
+  const result = await copyTrackingItem({
+    groupId,
+    itemId,
+    targetSectionId,
+    targetSubsectionId,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "追蹤項目已複製。");
+}
+
+export async function toggleTrackingItemCompletionAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const itemId = readText(formData, "itemId");
+  const isCompleted = readText(formData, "isCompleted") === "true";
+
+  if (!groupId || !itemId) {
+    redirectWithMessage(returnTo, false, "缺少追蹤項目識別資料。");
+  }
+
+  const session = await requireGroupAccess(groupId, returnTo);
+
+  let completedByPersonId: string | null = null;
+  if (isCompleted && session.role === "member") {
+    const memberships = await listMembershipsByEmail(session.email);
+    const currentMembership = memberships.find(
+      (membership) =>
+        membership.group_id === groupId && membership.membership_type === "member",
+    );
+
+    if (!currentMembership) {
+      redirectWithMessage(returnTo, false, "學員僅可回報自己所在小組的進度。");
+    }
+
+    completedByPersonId = currentMembership.person_id;
+  }
+
+  const result = await toggleTrackingItemCompletion({
+    groupId,
+    itemId,
+    isCompleted,
+    completedByPersonId,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, isCompleted ? "項目已標記完成。" : "項目已標記為未完成。");
 }
 
 export async function updateGroupMemberDirectoryProfileAction(formData: FormData) {

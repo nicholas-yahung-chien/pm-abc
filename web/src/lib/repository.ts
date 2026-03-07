@@ -1,12 +1,17 @@
-import { getSupabaseAdminClient } from "@/lib/supabase/server";
+﻿import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import type {
   ClassRow,
   GroupRow,
   GroupCoachOwnerRow,
+  GroupTrackingProgressRow,
   MembershipRow,
   PersonRow,
   RoleAssignmentRow,
   RoleDefinitionRow,
+  TrackingItemRow,
+  TrackingSectionProgressRow,
+  TrackingSectionRow,
+  TrackingSubsectionRow,
 } from "@/lib/types";
 
 type MutationResult = { ok: true } | { ok: false; message: string };
@@ -179,6 +184,92 @@ export async function listGroupCoachOwners(): Promise<GroupCoachOwnerRow[]> {
   });
 }
 
+export async function listTrackingSections(): Promise<TrackingSectionRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("tracking_sections")
+    .select("*, group:groups(id, name, code)")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return (data ?? []) as TrackingSectionRow[];
+}
+
+export async function listTrackingSubsections(): Promise<TrackingSubsectionRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("tracking_subsections")
+    .select(
+      "*, group:groups(id, name, code), section:tracking_sections(id, title, sort_order)",
+    )
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return (data ?? []) as TrackingSubsectionRow[];
+}
+
+export async function listTrackingItems(): Promise<TrackingItemRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("tracking_items")
+    .select(
+      [
+        "*",
+        "group:groups(id, name, code)",
+        "section:tracking_sections(id, title, sort_order)",
+        "subsection:tracking_subsections(id, title, sort_order)",
+        "owner:people(id, person_no, full_name, display_name, email)",
+        "completed_by:people(id, person_no, full_name, display_name, email)",
+      ].join(", "),
+    )
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return ((data ?? []) as unknown) as TrackingItemRow[];
+}
+
+export async function listGroupTrackingProgress(): Promise<GroupTrackingProgressRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("v_group_tracking_progress")
+    .select("*")
+    .order("group_id", { ascending: true });
+
+  return ((data ?? []) as GroupTrackingProgressRow[]).map((row) => ({
+    group_id: row.group_id,
+    total_items: Number(row.total_items ?? 0),
+    completed_items: Number(row.completed_items ?? 0),
+    completion_percent: Number(row.completion_percent ?? 0),
+  }));
+}
+
+export async function listTrackingSectionProgress(): Promise<TrackingSectionProgressRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("v_tracking_section_progress")
+    .select("*")
+    .order("group_id", { ascending: true })
+    .order("section_id", { ascending: true });
+
+  return ((data ?? []) as TrackingSectionProgressRow[]).map((row) => ({
+    section_id: row.section_id,
+    group_id: row.group_id,
+    total_items: Number(row.total_items ?? 0),
+    completed_items: Number(row.completed_items ?? 0),
+    completion_percent: Number(row.completion_percent ?? 0),
+  }));
+}
+
 export function getDataLayerStatus(): { ok: boolean; message: string } {
   const db = getClientOrError();
   if (!db.client) {
@@ -249,7 +340,7 @@ export async function deleteClasses(classIds: string[]): Promise<MutationResult>
   const uniqueIds = Array.from(new Set(classIds.map((item) => item.trim()).filter(Boolean)));
 
   if (!uniqueIds.length) {
-    return { ok: false, message: "請至少選擇一個班別。" };
+    return { ok: false, message: "請至少選擇一筆班別。" };
   }
 
   for (const classId of uniqueIds) {
@@ -311,7 +402,7 @@ export async function upsertGroupCoachOwner(input: {
 
   if (coachError) return { ok: false, message: coachError.message };
   if (!coach || coach.role !== "coach" || coach.coach_status !== "approved" || !coach.is_active) {
-    return { ok: false, message: "僅可指派已核准且啟用中的教練。" };
+    return { ok: false, message: "指派的小組教練帳號不存在或尚未通過審核。" };
   }
 
   const { error } = await db.client.from("group_coach_owners").upsert(
@@ -374,7 +465,7 @@ export async function createMemberAccount(input: {
 
   if (existingPeopleError) return { ok: false, message: existingPeopleError.message };
   if (existingPeople?.length) {
-    return { ok: false, message: "此學員 Email 已存在。" };
+    return { ok: false, message: "此 Email 已被使用。" };
   }
 
   const { data: existingAuth, error: existingAuthError } = await db.client
@@ -429,7 +520,7 @@ export async function updateMemberAccount(input: {
     return { ok: false, message: "請輸入有效的 Email。" };
   }
   if (!fullName) {
-    return { ok: false, message: "請輸入學員姓名。" };
+    return { ok: false, message: "請填寫學員姓名。" };
   }
 
   const { data: currentMember, error: currentMemberError } = await db.client
@@ -452,7 +543,7 @@ export async function updateMemberAccount(input: {
 
   if (duplicateMemberError) return { ok: false, message: duplicateMemberError.message };
   if (duplicateMember?.length) {
-    return { ok: false, message: "此學員 Email 已存在。" };
+    return { ok: false, message: "此 Email 已被使用。" };
   }
 
   const { data: targetAuth, error: targetAuthError } = await db.client
@@ -543,7 +634,7 @@ export async function updateGroupMemberDirectoryProfile(input: {
 
   if (membershipError) return { ok: false, message: membershipError.message };
   if (!membership || membership.membership_type !== "member") {
-    return { ok: false, message: "找不到該小組學員資料。" };
+    return { ok: false, message: "找不到該小組成員資料。" };
   }
 
   const { error } = await db.client
@@ -662,7 +753,7 @@ export async function createMembership(input: {
 
   if (personError) return { ok: false, message: personError.message };
   if (!person || person.person_type !== "member") {
-    return { ok: false, message: "小組成員僅能指派學員。" };
+    return { ok: false, message: "小組成員指派僅能選擇學員。" };
   }
 
   const { error } = await db.client.from("group_memberships").insert({
@@ -790,3 +881,460 @@ export async function deleteRoleAssignment(input: {
   if (error) return { ok: false, message: error.message };
   return { ok: true };
 }
+
+export async function createTrackingSection(input: {
+  groupId: string;
+  title: string;
+  description: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("tracking_sections")
+      .select("sort_order")
+      .eq("group_id", input.groupId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("tracking_sections").insert({
+    group_id: input.groupId,
+    title: input.title,
+    description: input.description,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateTrackingSection(input: {
+  groupId: string;
+  sectionId: string;
+  title: string;
+  description: string;
+  sortOrder: number;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("tracking_sections")
+    .update({
+      title: input.title,
+      description: input.description,
+      sort_order: input.sortOrder,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.sectionId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteTrackingSection(input: {
+  groupId: string;
+  sectionId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("tracking_sections")
+    .delete()
+    .eq("id", input.sectionId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function createTrackingSubsection(input: {
+  groupId: string;
+  sectionId: string;
+  title: string;
+  description: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("tracking_subsections")
+      .select("sort_order")
+      .eq("group_id", input.groupId)
+      .eq("section_id", input.sectionId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("tracking_subsections").insert({
+    group_id: input.groupId,
+    section_id: input.sectionId,
+    title: input.title,
+    description: input.description,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateTrackingSubsection(input: {
+  groupId: string;
+  sectionId: string;
+  subsectionId: string;
+  title: string;
+  description: string;
+  sortOrder: number;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("tracking_subsections")
+    .update({
+      section_id: input.sectionId,
+      title: input.title,
+      description: input.description,
+      sort_order: input.sortOrder,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.subsectionId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteTrackingSubsection(input: {
+  groupId: string;
+  subsectionId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("tracking_subsections")
+    .delete()
+    .eq("id", input.subsectionId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function createTrackingItem(input: {
+  groupId: string;
+  sectionId: string;
+  subsectionId: string;
+  title: string;
+  content: string;
+  extraData: string;
+  externalUrl: string;
+  dueDate: string;
+  ownerPersonId: string | null;
+  progressPercent?: number | null;
+  isCompleted?: boolean;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("tracking_items")
+      .select("sort_order")
+      .eq("group_id", input.groupId)
+      .eq("section_id", input.sectionId)
+      .eq("subsection_id", input.subsectionId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const progressPercent = input.progressPercent ?? (input.isCompleted ? 100 : 0);
+
+  const { error } = await db.client.from("tracking_items").insert({
+    group_id: input.groupId,
+    section_id: input.sectionId,
+    subsection_id: input.subsectionId,
+    title: input.title,
+    content: input.content,
+    extra_data: input.extraData,
+    external_url: input.externalUrl,
+    due_date: input.dueDate || null,
+    owner_person_id: input.ownerPersonId,
+    progress_percent: progressPercent,
+    is_completed: input.isCompleted ?? false,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateTrackingItem(input: {
+  groupId: string;
+  itemId: string;
+  sectionId: string;
+  subsectionId: string;
+  title: string;
+  content: string;
+  extraData: string;
+  externalUrl: string;
+  dueDate: string;
+  ownerPersonId: string | null;
+  progressPercent: number;
+  isCompleted: boolean;
+  sortOrder: number;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const completedAt = input.isCompleted ? new Date().toISOString() : null;
+
+  const { error } = await db.client
+    .from("tracking_items")
+    .update({
+      section_id: input.sectionId,
+      subsection_id: input.subsectionId,
+      title: input.title,
+      content: input.content,
+      extra_data: input.extraData,
+      external_url: input.externalUrl,
+      due_date: input.dueDate || null,
+      owner_person_id: input.ownerPersonId,
+      progress_percent: input.progressPercent,
+      is_completed: input.isCompleted,
+      completed_at: completedAt,
+      completed_by_person_id: null,
+      sort_order: input.sortOrder,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteTrackingItem(input: {
+  groupId: string;
+  itemId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("tracking_items")
+    .delete()
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveTrackingItem(input: {
+  groupId: string;
+  itemId: string;
+  targetSectionId: string;
+  targetSubsectionId: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: currentItem, error: currentError } = await db.client
+    .from("tracking_items")
+    .select("id, section_id, subsection_id")
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId)
+    .maybeSingle();
+
+  if (currentError) return { ok: false, message: currentError.message };
+  if (!currentItem) return { ok: false, message: "找不到追蹤項目。" };
+
+  const { data: maxSortRow, error: maxSortError } = await db.client
+    .from("tracking_items")
+    .select("sort_order")
+    .eq("group_id", input.groupId)
+    .eq("section_id", input.targetSectionId)
+    .eq("subsection_id", input.targetSubsectionId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (maxSortError) return { ok: false, message: maxSortError.message };
+  const nextSortOrder =
+    typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+
+  const { error } = await db.client
+    .from("tracking_items")
+    .update({
+      section_id: input.targetSectionId,
+      subsection_id: input.targetSubsectionId,
+      sort_order: nextSortOrder,
+      moved_from_section_id: currentItem.section_id,
+      moved_from_subsection_id: currentItem.subsection_id,
+      moved_at: new Date().toISOString(),
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function copyTrackingItem(input: {
+  groupId: string;
+  itemId: string;
+  targetSectionId: string;
+  targetSubsectionId: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  type SourceItem = {
+    id: string;
+    title: string;
+    content: string;
+    extra_data: string;
+    external_url: string;
+    due_date: string | null;
+    owner_person_id: string | null;
+  };
+
+  const { data: sourceItem, error: sourceError } = await db.client
+    .from("tracking_items")
+    .select(
+      [
+        "id",
+        "title",
+        "content",
+        "extra_data",
+        "external_url",
+        "due_date",
+        "owner_person_id",
+      ].join(", "),
+    )
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId)
+    .maybeSingle();
+
+  if (sourceError) return { ok: false, message: sourceError.message };
+
+  const source = (sourceItem as unknown as SourceItem | null) ?? null;
+  if (!source) return { ok: false, message: "找不到要複製的追蹤項目。" };
+
+  const { data: maxSortRow, error: maxSortError } = await db.client
+    .from("tracking_items")
+    .select("sort_order")
+    .eq("group_id", input.groupId)
+    .eq("section_id", input.targetSectionId)
+    .eq("subsection_id", input.targetSubsectionId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (maxSortError) return { ok: false, message: maxSortError.message };
+  const nextSortOrder =
+    typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+
+  const { error } = await db.client.from("tracking_items").insert({
+    group_id: input.groupId,
+    section_id: input.targetSectionId,
+    subsection_id: input.targetSubsectionId,
+    title: `${source.title}（複製）`,
+    content: source.content,
+    extra_data: source.extra_data,
+    external_url: source.external_url,
+    due_date: source.due_date,
+    owner_person_id: source.owner_person_id,
+    progress_percent: 0,
+    is_completed: false,
+    completed_at: null,
+    completed_by_person_id: null,
+    sort_order: nextSortOrder,
+    copied_from_item_id: source.id,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function toggleTrackingItemCompletion(input: {
+  groupId: string;
+  itemId: string;
+  isCompleted: boolean;
+  completedByPersonId?: string | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const payload = input.isCompleted
+    ? {
+        is_completed: true,
+        progress_percent: 100,
+        completed_at: new Date().toISOString(),
+        completed_by_person_id: input.completedByPersonId ?? null,
+        updated_by_account_id: input.accountId ?? null,
+      }
+    : {
+        is_completed: false,
+        progress_percent: 0,
+        completed_at: null,
+        completed_by_person_id: null,
+        updated_by_account_id: input.accountId ?? null,
+      };
+
+  const { error } = await db.client
+    .from("tracking_items")
+    .update(payload)
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+

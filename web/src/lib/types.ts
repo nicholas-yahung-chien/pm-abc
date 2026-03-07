@@ -111,3 +111,113 @@ export type GroupCoachOwnerRow = {
     is_active: boolean;
   } | null;
 };
+
+export type TrackingSectionRow = {
+  id: string;
+  group_id: string;
+  title: string;
+  description: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  group?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+};
+
+export type TrackingSubsectionRow = {
+  id: string;
+  group_id: string;
+  section_id: string;
+  title: string;
+  description: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  group?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+  section?: {
+    id: string;
+    title: string;
+    sort_order: number;
+  } | null;
+};
+
+export type TrackingItemRow = {
+  id: string;
+  group_id: string;
+  section_id: string;
+  subsection_id: string;
+  title: string;
+  content: string;
+  extra_data: string;
+  external_url: string;
+  due_date: string | null;
+  owner_person_id: string | null;
+  progress_percent: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  completed_by_person_id: string | null;
+  sort_order: number;
+  copied_from_item_id: string | null;
+  moved_from_section_id: string | null;
+  moved_from_subsection_id: string | null;
+  moved_at: string | null;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  group?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+  section?: {
+    id: string;
+    title: string;
+    sort_order: number;
+  } | null;
+  subsection?: {
+    id: string;
+    title: string;
+    sort_order: number;
+  } | null;
+  owner?: {
+    id: string;
+    person_no: string | null;
+    full_name: string;
+    display_name: string;
+    email: string;
+  } | null;
+  completed_by?: {
+    id: string;
+    person_no: string | null;
+    full_name: string;
+    display_name: string;
+    email: string;
+  } | null;
+};
+
+export type GroupTrackingProgressRow = {
+  group_id: string;
+  total_items: number;
+  completed_items: number;
+  completion_percent: number;
+};
+
+export type TrackingSectionProgressRow = {
+  section_id: string;
+  group_id: string;
+  total_items: number;
+  completed_items: number;
+  completion_percent: number;
+};
