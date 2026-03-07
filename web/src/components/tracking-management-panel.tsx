@@ -265,6 +265,36 @@ export function TrackingManagementPanel({
     setEditingSubsectionId(null);
   };
 
+  const submitCreateSection = async (formData: FormData) => {
+    setCreateModal(null);
+    await onCreateSectionAction(formData);
+  };
+
+  const submitCreateSubsection = async (formData: FormData) => {
+    setCreateModal(null);
+    await onCreateSubsectionAction(formData);
+  };
+
+  const submitCreateItem = async (formData: FormData) => {
+    setCreateModal(null);
+    await onCreateItemAction(formData);
+  };
+
+  const submitSectionUpdate = async (formData: FormData) => {
+    setEditingSectionId(null);
+    await onUpdateSectionAction(formData);
+  };
+
+  const submitSubsectionUpdate = async (formData: FormData) => {
+    setEditingSubsectionId(null);
+    await onUpdateSubsectionAction(formData);
+  };
+
+  const submitItemUpdate = async (formData: FormData) => {
+    setEditingItemId(null);
+    await onUpdateItemAction(formData);
+  };
+
   return (
     <section className="space-y-4">
       <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -336,7 +366,7 @@ export function TrackingManagementPanel({
 
               <div className="min-w-0 flex-1">
                 {isEditingSection ? (
-                  <form id={sectionFormId} action={onUpdateSectionAction} className="space-y-2">
+                  <form id={sectionFormId} action={submitSectionUpdate} className="space-y-2">
                     <input type="hidden" name="groupId" value={groupId} />
                     <input type="hidden" name="sectionId" value={section.id} />
                     <input type="hidden" name="returnTo" value={returnTo} />
@@ -445,7 +475,7 @@ export function TrackingManagementPanel({
 
                       <div className="min-w-0 flex-1">
                         {isEditingSubsection ? (
-                          <form id={subsectionFormId} action={onUpdateSubsectionAction} className="space-y-2">
+                          <form id={subsectionFormId} action={submitSubsectionUpdate} className="space-y-2">
                             <input type="hidden" name="groupId" value={groupId} />
                             <input type="hidden" name="subsectionId" value={subsection.id} />
                             <input type="hidden" name="returnTo" value={returnTo} />
@@ -639,7 +669,7 @@ export function TrackingManagementPanel({
 
       {createModal === "section" && (
         <Modal title="新增追蹤大項" onClose={() => setCreateModal(null)}>
-          <form action={onCreateSectionAction} className="space-y-3">
+          <form action={submitCreateSection} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
@@ -668,7 +698,7 @@ export function TrackingManagementPanel({
 
       {createModal === "subsection" && (
         <Modal title="新增追蹤小項" onClose={() => setCreateModal(null)}>
-          <form action={onCreateSubsectionAction} className="space-y-3">
+          <form action={submitCreateSubsection} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
@@ -707,7 +737,7 @@ export function TrackingManagementPanel({
 
       {createModal === "item" && (
         <Modal title="新增追蹤項目" onClose={() => setCreateModal(null)}>
-          <form action={onCreateItemAction} className="space-y-3">
+          <form action={submitCreateItem} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
@@ -762,7 +792,7 @@ export function TrackingManagementPanel({
 
       {editingItem && (
         <Modal title="編輯追蹤項目" onClose={() => setEditingItemId(null)}>
-          <form action={onUpdateItemAction} className="space-y-3">
+          <form action={submitItemUpdate} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="itemId" value={editingItem.id} />
             <input type="hidden" name="returnTo" value={returnTo} />

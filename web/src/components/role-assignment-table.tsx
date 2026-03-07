@@ -104,6 +104,11 @@ export function RoleAssignmentTable({
     });
   };
 
+  const submitAssignmentUpdate = async (formData: FormData) => {
+    setEditingId(null);
+    await onUpdateAction(formData);
+  };
+
   return (
     <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
       <table className="min-w-full text-left text-sm">
@@ -197,7 +202,7 @@ export function RoleAssignmentTable({
                 </td>
                 <td className="px-3 py-2 align-top">
                   <div className="flex items-center gap-2">
-                    <form id={formId} action={onUpdateAction} className="contents">
+                    <form id={formId} action={submitAssignmentUpdate} className="contents">
                       <input type="hidden" name="groupId" value={groupId} />
                       <input type="hidden" name="returnTo" value={returnTo} />
                       <input type="hidden" name="assignmentId" value={item.id} />

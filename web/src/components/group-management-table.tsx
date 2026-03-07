@@ -104,6 +104,11 @@ export function GroupManagementTable({
     setDescriptionEditorGroupId(null);
   };
 
+  const submitGroupDescriptionUpdate = async (formData: FormData) => {
+    setDescriptionEditorGroupId(null);
+    await onUpdateDescriptionAction(formData);
+  };
+
   const columns: ColumnDef<GroupListItem>[] = [
     {
       id: "classCode",
@@ -471,7 +476,7 @@ export function GroupManagementTable({
                 取消
               </button>
 
-              <form action={onUpdateDescriptionAction}>
+              <form action={submitGroupDescriptionUpdate}>
                 <input type="hidden" name="groupId" value={descriptionEditorGroup.id} />
                 <input type="hidden" name="description" value={descriptionEditorDraft} />
                 <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">

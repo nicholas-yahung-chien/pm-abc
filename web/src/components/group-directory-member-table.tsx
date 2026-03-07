@@ -114,6 +114,12 @@ export function GroupDirectoryMemberTable({
     });
   };
 
+  const submitDirectoryUpdate = async (formData: FormData) => {
+    setEditingId(null);
+    setIntroEditorId(null);
+    await onUpdateAction(formData);
+  };
+
   const introEditorMember = introEditorId ? memberById.get(introEditorId) ?? null : null;
   const introEditorDraft = introEditorMember
     ? drafts[introEditorMember.personId] ?? {
@@ -218,7 +224,7 @@ export function GroupDirectoryMemberTable({
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <form id={formId} action={onUpdateAction} className="contents">
+                    <form id={formId} action={submitDirectoryUpdate} className="contents">
                       <input type="hidden" name="groupId" value={groupId} />
                       <input type="hidden" name="personId" value={item.personId} />
                       <input type="hidden" name="intro" value={draft.intro} />

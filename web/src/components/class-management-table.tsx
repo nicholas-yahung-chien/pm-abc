@@ -133,6 +133,12 @@ export function ClassManagementTable({
     setDescriptionEditorId(null);
   };
 
+  const submitClassUpdate = async (formData: FormData) => {
+    setEditingId(null);
+    setDescriptionEditorId(null);
+    await onUpdateAction(formData);
+  };
+
   const updateDraft = (
     classId: string,
     field: "code" | "name" | "startDate" | "endDate" | "description",
@@ -397,7 +403,7 @@ export function ClassManagementTable({
 
         return (
           <div className="flex items-center gap-2">
-            <form id={formId} action={onUpdateAction} className="contents">
+            <form id={formId} action={submitClassUpdate} className="contents">
               <input type="hidden" name="classId" value={item.id} />
               <input type="hidden" name="description" value={draft.description} />
 
@@ -736,7 +742,7 @@ export function ClassManagementTable({
                 取消
               </button>
 
-              <form action={onUpdateAction}>
+              <form action={submitClassUpdate}>
                 <input type="hidden" name="classId" value={descriptionEditorClass.id} />
                 <input type="hidden" name="code" value={descriptionDraft.code} />
                 <input type="hidden" name="name" value={descriptionDraft.name} />
