@@ -14,6 +14,7 @@ type FormModalTriggerProps = {
   formClassName?: string;
   submitClassName?: string;
   actionsClassName?: string;
+  disabled?: boolean;
 };
 
 export function FormModalTrigger({
@@ -27,6 +28,7 @@ export function FormModalTrigger({
   formClassName = "space-y-3",
   submitClassName = "rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700",
   actionsClassName,
+  disabled = false,
 }: FormModalTriggerProps) {
   const [open, setOpen] = useState(false);
 
@@ -40,10 +42,12 @@ export function FormModalTrigger({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={
+        disabled={disabled}
+        className={[
           triggerClassName ??
-          "inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
-        }
+            "inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700",
+          "disabled:cursor-not-allowed disabled:bg-slate-400",
+        ].join(" ")}
       >
         <Plus className="h-4 w-4" />
         {buttonLabel}
@@ -86,7 +90,12 @@ export function FormModalTrigger({
                 >
                   取消
                 </button>
-                <button className={submitClassName}>{submitLabel}</button>
+                <button
+                  disabled={disabled}
+                  className={[submitClassName, "disabled:cursor-not-allowed disabled:bg-slate-400"].join(" ")}
+                >
+                  {submitLabel}
+                </button>
               </div>
             </form>
           </div>

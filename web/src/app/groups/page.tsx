@@ -232,41 +232,53 @@ export default async function GroupsPage({
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">小組成員指派</h3>
-        <form action={createMembershipAction} className="mt-4 grid gap-3 md:grid-cols-3">
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">小組 *</span>
-            <select name="groupId" required defaultValue="">
-              <option value="" disabled>
-                請選擇小組
-              </option>
-              {groups.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.class?.code ?? "N/A"} / {item.code} {item.name}
+        <div className="mt-4">
+          <FormModalTrigger
+            buttonLabel="新增成員指派"
+            modalTitle="新增小組成員指派"
+            modalDescription="將已建立的學員指派到指定小組。"
+            submitLabel="新增成員指派"
+            action={createMembershipAction}
+            formClassName="grid gap-3 md:grid-cols-2"
+            actionsClassName="md:col-span-2"
+            triggerClassName="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900"
+            submitClassName="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900"
+            disabled={!groups.length || !members.length}
+          >
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">小組 *</span>
+              <select name="groupId" required defaultValue="">
+                <option value="" disabled>
+                  請選擇小組
                 </option>
-              ))}
-            </select>
-          </label>
+                {groups.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.class?.code ?? "N/A"} / {item.code} {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">學員 *</span>
-            <select name="personId" required defaultValue="">
-              <option value="" disabled>
-                請選擇學員
-              </option>
-              {members.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.full_name}
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">學員 *</span>
+              <select name="personId" required defaultValue="">
+                <option value="" disabled>
+                  請選擇學員
                 </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="md:self-end">
-            <button className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900">
-              新增成員指派
-            </button>
-          </div>
-        </form>
+                {members.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.full_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </FormModalTrigger>
+        </div>
+        {(!groups.length || !members.length) && (
+          <p className="mt-3 text-sm text-slate-600">
+            請先建立小組並新增學員帳號，才能進行成員指派。
+          </p>
+        )}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

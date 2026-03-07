@@ -8,6 +8,7 @@ import {
   updateRoleDefinitionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { FormModalTrigger } from "@/components/form-modal-trigger";
 import { RoleAssignmentTable } from "@/components/role-assignment-table";
 import { RoleDefinitionTable } from "@/components/role-definition-table";
 import { StatusBanner } from "@/components/status-banner";
@@ -108,79 +109,84 @@ export default async function GroupRolesPage({
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">建立角色</h2>
-        <form action={createRoleAction} className="mt-4 grid gap-3 md:grid-cols-2">
-          <input type="hidden" name="groupId" value={groupId} />
-          <input type="hidden" name="returnTo" value={returnTo} />
+        <div className="mt-4">
+          <FormModalTrigger
+            buttonLabel="新增角色"
+            modalTitle="新增角色"
+            modalDescription="建立小組 R&R 角色，供後續進行成員指派。"
+            submitLabel="新增角色"
+            action={createRoleAction}
+            formClassName="grid gap-3 md:grid-cols-2"
+            actionsClassName="md:col-span-2"
+          >
+            <input type="hidden" name="groupId" value={groupId} />
+            <input type="hidden" name="returnTo" value={returnTo} />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">角色名稱 *</span>
-            <input name="name" placeholder="例如：副組長、場地長、值日生" required />
-          </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">角色名稱 *</span>
+              <input name="name" placeholder="例如：副組長、場地長、值日生" required />
+            </label>
 
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">角色說明</span>
-            <textarea name="description" rows={3} />
-          </label>
-
-          <div className="md:col-span-2">
-            <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              新增角色
-            </button>
-          </div>
-        </form>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-sm font-medium text-slate-700">角色說明</span>
+              <textarea name="description" rows={3} />
+            </label>
+          </FormModalTrigger>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">角色指派</h2>
-        <form
-          action={createRoleAssignmentAction}
-          className="mt-4 grid gap-3 md:grid-cols-2"
-        >
-          <input type="hidden" name="groupId" value={groupId} />
-          <input type="hidden" name="returnTo" value={returnTo} />
+        <div className="mt-4">
+          <FormModalTrigger
+            buttonLabel="新增指派"
+            modalTitle="新增角色指派"
+            modalDescription="將角色指派給小組學員。"
+            submitLabel="新增指派"
+            action={createRoleAssignmentAction}
+            formClassName="grid gap-3 md:grid-cols-2"
+            actionsClassName="md:col-span-2"
+            triggerClassName="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900"
+            submitClassName="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900"
+            disabled={!groupRoles.length || !memberOptions.size}
+          >
+            <input type="hidden" name="groupId" value={groupId} />
+            <input type="hidden" name="returnTo" value={returnTo} />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">角色 *</span>
-            <select name="roleId" required defaultValue="">
-              <option value="" disabled>
-                請選擇角色
-              </option>
-              {groupRoles.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">角色 *</span>
+              <select name="roleId" required defaultValue="">
+                <option value="" disabled>
+                  請選擇角色
                 </option>
-              ))}
-            </select>
-          </label>
+                {groupRoles.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">學員 *</span>
-            <select name="personId" required defaultValue="">
-              <option value="" disabled>
-                請選擇學員
-              </option>
-              {Array.from(memberOptions.values()).map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.displayName || person.fullName}
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">學員 *</span>
+              <select name="personId" required defaultValue="">
+                <option value="" disabled>
+                  請選擇學員
                 </option>
-              ))}
-            </select>
-          </label>
+                {Array.from(memberOptions.values()).map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.displayName || person.fullName}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">備註</span>
-            <input name="note" placeholder="例如：本期負責第一章導讀" />
-          </label>
-
-          <div className="md:col-span-2">
-            <button
-              disabled={!groupRoles.length || !memberOptions.size}
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              新增指派
-            </button>
-          </div>
-        </form>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-sm font-medium text-slate-700">備註</span>
+              <input name="note" placeholder="例如：本期負責第一章導讀" />
+            </label>
+          </FormModalTrigger>
+        </div>
         {(!groupRoles.length || !memberOptions.size) && (
           <p className="mt-3 text-sm text-slate-600">
             請先建立角色，並確認小組中已有可指派成員。
