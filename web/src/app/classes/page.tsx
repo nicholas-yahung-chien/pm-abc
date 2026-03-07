@@ -7,6 +7,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ClassManagementTable } from "@/components/class-management-table";
+import { FormModalTrigger } from "@/components/form-modal-trigger";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import { listClasses } from "@/lib/repository";
@@ -49,38 +50,42 @@ export default async function ClassesPage({
           <StatusBanner status={status} message={message} />
         </div>
 
-        <form action={createClassAction} className="mt-4 grid gap-3 md:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">班別代碼 *</span>
-            <input name="code" placeholder="例如：PMP北201" required />
-          </label>
+        <div className="mt-4">
+          <FormModalTrigger
+            buttonLabel="新增班別"
+            modalTitle="新增班別"
+            modalDescription="建立課程班別基本資料，供後續小組與學員管理使用。"
+            submitLabel="新增班別"
+            action={createClassAction}
+            formClassName="grid gap-3 md:grid-cols-2"
+            actionsClassName="md:col-span-2"
+          >
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">班別代碼 *</span>
+              <input name="code" placeholder="例如：PMP北201" required />
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">班別名稱 *</span>
-            <input name="name" placeholder="例如：PMP 專案管理衝刺班" required />
-          </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">班別名稱 *</span>
+              <input name="name" placeholder="例如：PMP 專案管理衝刺班" required />
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">開始日期</span>
-            <input type="date" name="startDate" />
-          </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">開始日期</span>
+              <input type="date" name="startDate" />
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">結束日期</span>
-            <input type="date" name="endDate" />
-          </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">結束日期</span>
+              <input type="date" name="endDate" />
+            </label>
 
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">說明</span>
-            <textarea name="description" rows={3} placeholder="班別補充資訊" />
-          </label>
-
-          <div className="md:col-span-2">
-            <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              新增班別
-            </button>
-          </div>
-        </form>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-sm font-medium text-slate-700">說明</span>
+              <textarea name="description" rows={3} placeholder="班別補充資訊" />
+            </label>
+          </FormModalTrigger>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

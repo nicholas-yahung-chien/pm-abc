@@ -58,7 +58,7 @@ function iconButton(kind: "edit" | "save" | "cancel" | "delete"): string {
 }
 
 function moveButton(): string {
-  return "rounded-md border border-slate-300 bg-white p-1.5 text-slate-700 transition hover:bg-slate-100";
+  return "inline-flex h-5 w-5 items-center justify-center rounded border border-slate-300 bg-white p-0 text-slate-700 transition hover:bg-slate-100";
 }
 
 function Modal({
@@ -350,7 +350,7 @@ export function TrackingManagementPanel({
                   <input type="hidden" name="direction" value="up" />
                   <input type="hidden" name="returnTo" value={returnTo} />
                   <button className={moveButton()} title="上移大項">
-                    <ArrowUp className="h-4 w-4" />
+                    <ArrowUp className="h-3 w-3" />
                   </button>
                 </form>
                 <form action={onMoveSectionAction}>
@@ -359,7 +359,7 @@ export function TrackingManagementPanel({
                   <input type="hidden" name="direction" value="down" />
                   <input type="hidden" name="returnTo" value={returnTo} />
                   <button className={moveButton()} title="下移大項">
-                    <ArrowDown className="h-4 w-4" />
+                    <ArrowDown className="h-3 w-3" />
                   </button>
                 </form>
               </div>
@@ -458,7 +458,7 @@ export function TrackingManagementPanel({
                           <input type="hidden" name="direction" value="up" />
                           <input type="hidden" name="returnTo" value={returnTo} />
                           <button className={moveButton()} title="上移小項">
-                            <ArrowUp className="h-4 w-4" />
+                            <ArrowUp className="h-3 w-3" />
                           </button>
                         </form>
                         <form action={onMoveSubsectionAction}>
@@ -468,7 +468,7 @@ export function TrackingManagementPanel({
                           <input type="hidden" name="direction" value="down" />
                           <input type="hidden" name="returnTo" value={returnTo} />
                           <button className={moveButton()} title="下移小項">
-                            <ArrowDown className="h-4 w-4" />
+                            <ArrowDown className="h-3 w-3" />
                           </button>
                         </form>
                       </div>
@@ -594,7 +594,7 @@ export function TrackingManagementPanel({
                                     <input type="hidden" name="direction" value="up" />
                                     <input type="hidden" name="returnTo" value={returnTo} />
                                     <button className={moveButton()} title="上移項目">
-                                      <ArrowUp className="h-4 w-4" />
+                                      <ArrowUp className="h-3 w-3" />
                                     </button>
                                   </form>
                                   <form action={onMoveItemOrderAction}>
@@ -605,7 +605,7 @@ export function TrackingManagementPanel({
                                     <input type="hidden" name="direction" value="down" />
                                     <input type="hidden" name="returnTo" value={returnTo} />
                                     <button className={moveButton()} title="下移項目">
-                                      <ArrowDown className="h-4 w-4" />
+                                      <ArrowDown className="h-3 w-3" />
                                     </button>
                                   </form>
                                 </div>

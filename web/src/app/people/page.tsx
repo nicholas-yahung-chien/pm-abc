@@ -6,6 +6,7 @@
 } from "@/app/actions";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { FormModalTrigger } from "@/components/form-modal-trigger";
 import { MemberManagementTable } from "@/components/member-management-table";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
@@ -49,26 +50,26 @@ export default async function PeoplePage({
           <StatusBanner status={status} message={message} />
         </div>
 
-        <form
-          action={createMemberAccountAction}
-          className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]"
-        >
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">學員 Email *</span>
-            <input
-              name="email"
-              type="email"
-              placeholder="member@example.com"
-              required
-            />
-          </label>
-
-          <div className="md:self-end">
-            <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              新增學員帳號
-            </button>
-          </div>
-        </form>
+        <div className="mt-4">
+          <FormModalTrigger
+            buttonLabel="新增學員帳號"
+            modalTitle="新增學員帳號"
+            modalDescription="僅需輸入學員 Email 建立帳號，其他通訊錄資料由學員在小組通訊錄維護。"
+            submitLabel="新增學員帳號"
+            action={createMemberAccountAction}
+            formClassName="space-y-3"
+          >
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">學員 Email *</span>
+              <input
+                name="email"
+                type="email"
+                placeholder="member@example.com"
+                required
+              />
+            </label>
+          </FormModalTrigger>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

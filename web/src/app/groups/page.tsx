@@ -8,6 +8,7 @@ import {
   updateGroupDescriptionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { FormModalTrigger } from "@/components/form-modal-trigger";
 import { GroupMembershipList } from "@/components/group-membership-list";
 import { GroupManagementTable } from "@/components/group-management-table";
 import { StatusBanner } from "@/components/status-banner";
@@ -187,42 +188,46 @@ export default async function GroupsPage({
           <StatusBanner status={status} message={message} />
         </div>
 
-        <form action={createGroupAction} className="mt-4 grid gap-3 md:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">所屬班別 *</span>
-            <select name="classId" required defaultValue="">
-              <option value="" disabled>
-                請選擇班別
-              </option>
-              {classes.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.code} / {item.name}
+        <div className="mt-4">
+          <FormModalTrigger
+            buttonLabel="新增小組"
+            modalTitle="新增小組"
+            modalDescription="在班別底下建立小組，並由小組入口進行組內功能管理。"
+            submitLabel="新增小組"
+            action={createGroupAction}
+            formClassName="grid gap-3 md:grid-cols-2"
+            actionsClassName="md:col-span-2"
+          >
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">所屬班別 *</span>
+              <select name="classId" required defaultValue="">
+                <option value="" disabled>
+                  請選擇班別
                 </option>
-              ))}
-            </select>
-          </label>
+                {classes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.code} / {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">小組代碼 *</span>
-            <input name="code" placeholder="例如：G1" required />
-          </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">小組代碼 *</span>
+              <input name="code" placeholder="例如：G1" required />
+            </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">小組名稱 *</span>
-            <input name="name" placeholder="例如：共好學習組" required />
-          </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">小組名稱 *</span>
+              <input name="name" placeholder="例如：共好學習組" required />
+            </label>
 
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-medium text-slate-700">說明</span>
-            <textarea name="description" rows={3} placeholder="小組補充資訊" />
-          </label>
-
-          <div className="md:col-span-2">
-            <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-              新增小組
-            </button>
-          </div>
-        </form>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-sm font-medium text-slate-700">說明</span>
+              <textarea name="description" rows={3} placeholder="小組補充資訊" />
+            </label>
+          </FormModalTrigger>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
