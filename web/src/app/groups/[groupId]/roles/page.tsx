@@ -3,9 +3,12 @@ import { redirect } from "next/navigation";
 import {
   createRoleAction,
   createRoleAssignmentAction,
+  deleteRoleAssignmentAction,
+  updateRoleAssignmentAction,
   updateRoleDefinitionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { RoleAssignmentTable } from "@/components/role-assignment-table";
 import { RoleDefinitionTable } from "@/components/role-definition-table";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
@@ -201,37 +204,25 @@ export default async function GroupRolesPage({
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">角色指派列表</h2>
-        <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-3 py-2">角色</th>
-                <th className="px-3 py-2">學員</th>
-                <th className="px-3 py-2">備註</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupAssignments.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2">{item.role?.name || "-"}</td>
-                  <td className="px-3 py-2">
-                    {item.person?.display_name || item.person?.full_name || "-"}
-                  </td>
-                  <td className="px-3 py-2 whitespace-pre-wrap break-words">
-                    {item.note || "-"}
-                  </td>
-                </tr>
-              ))}
-              {!groupAssignments.length && (
-                <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                    目前尚無角色指派資料。
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <RoleAssignmentTable
+          groupId={groupId}
+          returnTo={returnTo}
+          roles={groupRoles.map((item) => ({ id: item.id, name: item.name }))}
+          members={Array.from(memberOptions.values()).map((person) => ({
+            id: person.id,
+            label: person.displayName || person.fullName,
+          }))}
+          assignments={groupAssignments.map((item) => ({
+            id: item.id,
+            roleId: item.role_id,
+            roleName: item.role?.name || "",
+            personId: item.person_id,
+            personLabel: item.person?.display_name || item.person?.full_name || "",
+            note: item.note || "",
+          }))}
+          onUpdateAction={updateRoleAssignmentAction}
+          onDeleteAction={deleteRoleAssignmentAction}
+        />
       </section>
     </AppShell>
   );

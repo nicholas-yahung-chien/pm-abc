@@ -14,7 +14,9 @@ import {
   deleteMemberAccounts,
   createRole,
   createRoleAssignment,
+  deleteRoleAssignment,
   updateRoleDefinition,
+  updateRoleAssignment,
   updateGroupDescription,
   updateGroupMemberDirectoryProfile,
   upsertGroupCoachOwner,
@@ -414,6 +416,60 @@ export async function createRoleAssignmentAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/directory`);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);
   redirectWithMessage(returnTo, true, "角色指派成功。");
+}
+
+export async function updateRoleAssignmentAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const assignmentId = readText(formData, "assignmentId");
+  const roleId = readText(formData, "roleId");
+  const personId = readText(formData, "personId");
+  const note = readText(formData, "note");
+
+  if (!groupId || !assignmentId || !roleId || !personId) {
+    redirectWithMessage(returnTo, false, "請填寫角色與學員。");
+  }
+
+  await requireGroupAccess(groupId, returnTo);
+
+  const result = await updateRoleAssignment({
+    assignmentId,
+    groupId,
+    roleId,
+    personId,
+    note,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/roles`);
+  revalidatePath(`/groups/${groupId}/directory`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "角色指派已更新。");
+}
+
+export async function deleteRoleAssignmentAction(formData: FormData) {
+  const returnTo = readReturnTo(formData) ?? "/groups";
+  const groupId = readText(formData, "groupId");
+  const assignmentId = readText(formData, "assignmentId");
+
+  if (!groupId || !assignmentId) {
+    redirectWithMessage(returnTo, false, "缺少角色指派識別資料。");
+  }
+
+  await requireGroupAccess(groupId, returnTo);
+
+  const result = await deleteRoleAssignment({
+    assignmentId,
+    groupId,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/roles`);
+  revalidatePath(`/groups/${groupId}/directory`);
+  if (!result.ok) redirectWithMessage(returnTo, false, result.message);
+  redirectWithMessage(returnTo, true, "角色指派已刪除。");
 }
 
 export async function updateRoleDefinitionAction(formData: FormData) {

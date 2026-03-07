@@ -749,3 +749,44 @@ export async function createRoleAssignment(input: {
   if (error) return { ok: false, message: error.message };
   return { ok: true };
 }
+
+export async function updateRoleAssignment(input: {
+  assignmentId: string;
+  groupId: string;
+  roleId: string;
+  personId: string;
+  note: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("role_assignments")
+    .update({
+      role_id: input.roleId,
+      person_id: input.personId,
+      note: input.note,
+    })
+    .eq("id", input.assignmentId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteRoleAssignment(input: {
+  assignmentId: string;
+  groupId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("role_assignments")
+    .delete()
+    .eq("id", input.assignmentId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
