@@ -8,11 +8,14 @@ import {
   createMemberAccount,
   createMembership,
   createPerson,
+  deleteClass,
+  deleteClasses,
   deleteMemberAccount,
   deleteMemberAccounts,
   createRole,
   createRoleAssignment,
   listGroupIdsByEmail,
+  updateClass,
   updateMemberAccount,
 } from "@/lib/repository";
 import { getCurrentSession } from "@/lib/auth/session";
@@ -87,6 +90,69 @@ export async function createClassAction(formData: FormData) {
   revalidatePath("/groups");
   if (!result.ok) redirectWithMessage("/classes", false, result.message);
   redirectWithMessage("/classes", true, "班別新增成功。");
+}
+
+export async function updateClassAction(formData: FormData) {
+  await requireCoachOrAdmin("/classes");
+
+  const classId = readText(formData, "classId");
+  const code = readText(formData, "code");
+  const name = readText(formData, "name");
+  const description = readText(formData, "description");
+  const startDate = readText(formData, "startDate");
+  const endDate = readText(formData, "endDate");
+
+  if (!classId || !code || !name) {
+    redirectWithMessage("/classes", false, "請填寫班別代碼與班別名稱。");
+  }
+
+  const result = await updateClass({
+    classId,
+    code,
+    name,
+    description,
+    startDate,
+    endDate,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath("/groups");
+  if (!result.ok) redirectWithMessage("/classes", false, result.message);
+  redirectWithMessage("/classes", true, "班別資料已更新。");
+}
+
+export async function deleteClassAction(formData: FormData) {
+  await requireCoachOrAdmin("/classes");
+
+  const classId = readText(formData, "classId");
+  if (!classId) {
+    redirectWithMessage("/classes", false, "缺少班別識別資料。");
+  }
+
+  const result = await deleteClass(classId);
+  revalidatePath("/classes");
+  revalidatePath("/groups");
+  if (!result.ok) redirectWithMessage("/classes", false, result.message);
+  redirectWithMessage("/classes", true, "班別已刪除。");
+}
+
+export async function batchDeleteClassesAction(formData: FormData) {
+  await requireCoachOrAdmin("/classes");
+
+  const classIds = readText(formData, "classIds")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (!classIds.length) {
+    redirectWithMessage("/classes", false, "請先勾選要刪除的班別。");
+  }
+
+  const result = await deleteClasses(classIds);
+  revalidatePath("/classes");
+  revalidatePath("/groups");
+  if (!result.ok) redirectWithMessage("/classes", false, result.message);
+  redirectWithMessage("/classes", true, `已批次刪除 ${classIds.length} 個班別。`);
 }
 
 export async function createGroupAction(formData: FormData) {

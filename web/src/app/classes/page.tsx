@@ -1,6 +1,12 @@
-﻿import { createClassAction } from "@/app/actions";
+﻿import {
+  batchDeleteClassesAction,
+  createClassAction,
+  deleteClassAction,
+  updateClassAction,
+} from "@/app/actions";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { ClassManagementTable } from "@/components/class-management-table";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import { listClasses } from "@/lib/repository";
@@ -80,47 +86,19 @@ export default async function ClassesPage({
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">班別列表</h3>
 
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-3 py-2">代碼</th>
-                <th className="px-3 py-2">名稱</th>
-                <th className="px-3 py-2">開始日期</th>
-                <th className="px-3 py-2">結束日期</th>
-                <th className="px-3 py-2">說明</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classes.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-mono text-xs text-slate-700">
-                    {item.code}
-                  </td>
-                  <td className="px-3 py-2 font-medium text-slate-900">
-                    {item.name}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {item.start_date ?? "-"}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {item.end_date ?? "-"}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {item.description || "-"}
-                  </td>
-                </tr>
-              ))}
-              {!classes.length && (
-                <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={5}>
-                    目前尚無班別資料，請先新增班別。
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ClassManagementTable
+          classes={classes.map((item) => ({
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            startDate: item.start_date ?? "",
+            endDate: item.end_date ?? "",
+            description: item.description || "",
+          }))}
+          onUpdateAction={updateClassAction}
+          onDeleteAction={deleteClassAction}
+          onBatchDeleteAction={batchDeleteClassesAction}
+        />
       </section>
     </AppShell>
   );

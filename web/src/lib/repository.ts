@@ -183,6 +183,56 @@ export async function createClass(input: {
   return { ok: true };
 }
 
+export async function updateClass(input: {
+  classId: string;
+  code: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("classes")
+    .update({
+      code: input.code,
+      name: input.name,
+      description: input.description,
+      start_date: input.startDate || null,
+      end_date: input.endDate || null,
+    })
+    .eq("id", input.classId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteClass(classId: string): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client.from("classes").delete().eq("id", classId);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteClasses(classIds: string[]): Promise<MutationResult> {
+  const uniqueIds = Array.from(new Set(classIds.map((item) => item.trim()).filter(Boolean)));
+
+  if (!uniqueIds.length) {
+    return { ok: false, message: "請至少選擇一個班別。" };
+  }
+
+  for (const classId of uniqueIds) {
+    const result = await deleteClass(classId);
+    if (!result.ok) return result;
+  }
+
+  return { ok: true };
+}
+
 export async function createGroup(input: {
   classId: string;
   code: string;

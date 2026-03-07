@@ -76,6 +76,10 @@
   - DataTable 採 React 生態可維護方案（建議 `@tanstack/react-table`）。
   - icon 採可客製與可存取方案（建議 `lucide-react` 或同級方案）。
   - 維持目前 Tailwind 設計 token，不引入 jQuery 依賴。
+- [x] UX-6. 班別列表升級：
+  - 班別列表改為 DataTable（勾選、排序、篩選、搜尋、分頁、跳頁）。
+  - 單筆操作 icon 化與批次刪除。
+  - 說明欄位改為預覽顯示，點擊後以浮動框（modal）編輯全文。
 
 驗收重點：
 - 登入頁視覺節奏改善，按鈕不再緊貼輸入欄。
