@@ -280,6 +280,22 @@ export async function createGroup(input: {
   return { ok: true };
 }
 
+export async function updateGroupDescription(input: {
+  groupId: string;
+  description: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("groups")
+    .update({ description: input.description })
+    .eq("id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
 export async function upsertGroupCoachOwner(input: {
   groupId: string;
   coachAccountId: string;
@@ -504,6 +520,44 @@ export async function updateMemberAccount(input: {
     if (insertAuthError) return { ok: false, message: insertAuthError.message };
   }
 
+  return { ok: true };
+}
+
+export async function updateGroupMemberDirectoryProfile(input: {
+  groupId: string;
+  personId: string;
+  displayName: string;
+  phone: string;
+  lineId: string;
+  intro: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: membership, error: membershipError } = await db.client
+    .from("group_memberships")
+    .select("id, membership_type")
+    .eq("group_id", input.groupId)
+    .eq("person_id", input.personId)
+    .maybeSingle();
+
+  if (membershipError) return { ok: false, message: membershipError.message };
+  if (!membership || membership.membership_type !== "member") {
+    return { ok: false, message: "找不到該小組學員資料。" };
+  }
+
+  const { error } = await db.client
+    .from("people")
+    .update({
+      display_name: input.displayName,
+      phone: input.phone,
+      line_id: input.lineId,
+      intro: input.intro,
+    })
+    .eq("id", input.personId)
+    .eq("person_type", "member");
+
+  if (error) return { ok: false, message: error.message };
   return { ok: true };
 }
 

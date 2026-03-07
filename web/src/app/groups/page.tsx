@@ -5,10 +5,12 @@ import {
   assignGroupCoachOwnerAction,
   createGroupAction,
   createMembershipAction,
+  updateGroupDescriptionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { GroupManagementTable } from "@/components/group-management-table";
 import { StatusBanner } from "@/components/status-banner";
+import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
 import { getCurrentSession } from "@/lib/auth/session";
 import { listCoachAccounts } from "@/lib/auth/repository";
 import {
@@ -83,7 +85,13 @@ export default async function GroupsPage({
                     <td className="px-3 py-2">{item.class?.code ?? "-"}</td>
                     <td className="px-3 py-2 font-mono text-xs">{item.code}</td>
                     <td className="px-3 py-2 font-medium">{item.name}</td>
-                    <td className="px-3 py-2">{item.description || "-"}</td>
+                    <td className="px-3 py-2">
+                      <TextPreviewDialogButton
+                        title={`小組說明：${item.code} ${item.name}`}
+                        text={item.description || ""}
+                        placeholder="查看小組說明"
+                      />
+                    </td>
                     <td className="px-3 py-2">
                       <Link
                         href={`/groups/${item.id}`}
@@ -253,6 +261,7 @@ export default async function GroupsPage({
             email: item.email,
           }))}
           onAssignCoachAction={assignGroupCoachOwnerAction}
+          onUpdateDescriptionAction={updateGroupDescriptionAction}
         />
       </section>
 

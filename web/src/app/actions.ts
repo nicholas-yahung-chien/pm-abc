@@ -14,6 +14,8 @@ import {
   deleteMemberAccounts,
   createRole,
   createRoleAssignment,
+  updateGroupDescription,
+  updateGroupMemberDirectoryProfile,
   upsertGroupCoachOwner,
   listGroupIdsByEmail,
   updateClass,
@@ -173,6 +175,26 @@ export async function createGroupAction(formData: FormData) {
 
   if (!result.ok) redirectWithMessage("/groups", false, result.message);
   redirectWithMessage("/groups", true, "小組新增成功。");
+}
+
+export async function updateGroupDescriptionAction(formData: FormData) {
+  await requireCoachOrAdmin("/groups");
+
+  const groupId = readText(formData, "groupId");
+  const description = readText(formData, "description");
+  if (!groupId) {
+    redirectWithMessage("/groups", false, "缺少小組識別資料。");
+  }
+
+  const result = await updateGroupDescription({
+    groupId,
+    description,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  if (!result.ok) redirectWithMessage("/groups", false, result.message);
+  redirectWithMessage("/groups", true, "小組說明已更新。");
 }
 
 export async function createPersonAction(formData: FormData) {
@@ -394,4 +416,34 @@ export async function createRoleAssignmentAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}/directory`);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);
   redirectWithMessage(returnTo, true, "角色指派成功。");
+}
+
+export async function updateGroupMemberDirectoryProfileAction(formData: FormData) {
+  const groupId = readText(formData, "groupId");
+  const personId = readText(formData, "personId");
+  const displayName = readText(formData, "displayName");
+  const phone = readText(formData, "phone");
+  const lineId = readText(formData, "lineId");
+  const intro = readText(formData, "intro");
+
+  const redirectPath = groupId ? `/groups/${groupId}/directory` : "/groups";
+  if (!groupId || !personId) {
+    redirectWithMessage(redirectPath, false, "缺少小組或學員識別資料。");
+  }
+
+  await requireGroupAccess(groupId, redirectPath);
+
+  const result = await updateGroupMemberDirectoryProfile({
+    groupId,
+    personId,
+    displayName,
+    phone,
+    lineId,
+    intro,
+  });
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/directory`);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "學員通訊錄資料已更新。");
 }
