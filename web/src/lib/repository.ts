@@ -223,8 +223,8 @@ export async function listTrackingItems(): Promise<TrackingItemRow[]> {
       [
         "*",
         "group:groups(id, name, code)",
-        "section:tracking_sections(id, title, sort_order)",
-        "subsection:tracking_subsections(id, title, sort_order)",
+        "section:tracking_sections!tracking_items_section_id_fkey(id, title, sort_order)",
+        "subsection:tracking_subsections!tracking_items_subsection_id_fkey(id, title, sort_order)",
         "owner:people!tracking_items_owner_person_id_fkey(id, person_no, full_name, display_name, email)",
         "completed_by:people!tracking_items_completed_by_person_id_fkey(id, person_no, full_name, display_name, email)",
       ].join(", "),

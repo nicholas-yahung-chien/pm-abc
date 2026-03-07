@@ -262,7 +262,7 @@ export default async function GroupTrackingPage({
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="min-w-[1080px] border-collapse text-left text-sm">
+          <table className="min-w-full border-collapse text-left text-sm">
             <thead>
               <tr className="bg-emerald-100 text-slate-800">
                 <th className="border-b border-slate-300 px-3 py-3">編號</th>

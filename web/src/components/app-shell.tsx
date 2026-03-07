@@ -66,7 +66,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </form>
       </aside>
 
-      <main className="space-y-5">{children}</main>
+      <main className="min-w-0 space-y-5">{children}</main>
     </div>
   );
 }
