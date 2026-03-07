@@ -108,8 +108,8 @@ export default async function GroupRolesPage({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">建立角色</h2>
-        <div className="mt-4">
+        <h2 className="text-lg font-semibold text-slate-900">角色設定與指派</h2>
+        <div className="mt-4 flex flex-wrap gap-2">
           <FormModalTrigger
             buttonLabel="新增角色"
             modalTitle="新增角色"
@@ -132,12 +132,7 @@ export default async function GroupRolesPage({
               <textarea name="description" rows={3} />
             </label>
           </FormModalTrigger>
-        </div>
-      </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">角色指派</h2>
-        <div className="mt-4">
           <FormModalTrigger
             buttonLabel="新增指派"
             modalTitle="新增角色指派"

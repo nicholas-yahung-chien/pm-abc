@@ -188,7 +188,7 @@ export default async function GroupsPage({
           <StatusBanner status={status} message={message} />
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           <FormModalTrigger
             buttonLabel="新增小組"
             modalTitle="新增小組"
@@ -227,12 +227,7 @@ export default async function GroupsPage({
               <textarea name="description" rows={3} placeholder="小組補充資訊" />
             </label>
           </FormModalTrigger>
-        </div>
-      </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">小組成員指派</h3>
-        <div className="mt-4">
           <FormModalTrigger
             buttonLabel="新增成員指派"
             modalTitle="新增小組成員指派"
