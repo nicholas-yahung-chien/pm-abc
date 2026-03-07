@@ -1,4 +1,4 @@
-﻿-- Phase 3 (M3-S1-1): tracking board schema for section/subsection/item hierarchy
+-- Phase 3 (M3-S1-1): tracking board schema for section/subsection/item hierarchy
 create extension if not exists pgcrypto;
 
 create table if not exists public.tracking_sections (

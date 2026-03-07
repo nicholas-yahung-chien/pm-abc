@@ -1,7 +1,13 @@
 ﻿import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { GroupQuickEntry } from "@/components/group-quick-entry";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
+import {
+  listGroupCoachOwners,
+  listGroups,
+  listMembershipsByEmail,
+} from "@/lib/repository";
 import { pickSearchParam } from "@/lib/search";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -20,6 +26,43 @@ export default async function DashboardPage({
   const params = await searchParams;
   const status = pickSearchParam(params.status);
   const message = pickSearchParam(params.message);
+
+  const [groups, coachOwners, memberMemberships] = await Promise.all([
+    listGroups(),
+    session.role === "coach" ? listGroupCoachOwners() : Promise.resolve([]),
+    session.role === "member" ? listMembershipsByEmail(session.email) : Promise.resolve([]),
+  ]);
+
+  const accessibleGroupIds = new Set<string>();
+  if (session.role === "admin") {
+    for (const group of groups) {
+      accessibleGroupIds.add(group.id);
+    }
+  } else if (session.role === "coach") {
+    for (const owner of coachOwners) {
+      if (owner.coach_account_id === session.accountId) {
+        accessibleGroupIds.add(owner.group_id);
+      }
+    }
+  } else {
+    for (const membership of memberMemberships) {
+      if (membership.membership_type === "member") {
+        accessibleGroupIds.add(membership.group_id);
+      }
+    }
+  }
+
+  const quickEntryOptions = groups
+    .filter((group) => accessibleGroupIds.has(group.id))
+    .sort((a, b) => {
+      const aLabel = `${a.class?.code ?? ""}-${a.code}-${a.name}`;
+      const bLabel = `${b.class?.code ?? ""}-${b.code}-${b.name}`;
+      return aLabel.localeCompare(bLabel, "zh-Hant");
+    })
+    .map((group) => ({
+      id: group.id,
+      label: `${group.class?.code ?? "N/A"} / ${group.code} ${group.name}`,
+    }));
 
   const roleLabel =
     session.role === "admin" ? "管理員" : session.role === "coach" ? "教練" : "學員";
@@ -43,6 +86,24 @@ export default async function DashboardPage({
           <StatusBanner status={status} message={message} />
         </div>
       </section>
+
+      <GroupQuickEntry
+        title={
+          session.role === "coach"
+            ? "快速進入我負責的小組"
+            : session.role === "member"
+              ? "快速進入我被分派的小組"
+              : "快速進入小組"
+        }
+        description={
+          session.role === "coach"
+            ? "可直接選擇你擔任擁有者的小組並進入追蹤表。"
+            : session.role === "member"
+              ? "可直接選擇你被分派的小組並進入追蹤表。"
+              : "管理員可直接選擇任一小組進入追蹤表。"
+        }
+        options={quickEntryOptions}
+      />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">操作指引</h2>
