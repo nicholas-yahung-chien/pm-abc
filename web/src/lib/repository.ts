@@ -680,16 +680,28 @@ export async function createRole(input: {
   groupId: string;
   name: string;
   description: string;
-  sortOrder: number;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
+
+  const { data: maxSortRow, error: maxSortError } = await db.client
+    .from("role_definitions")
+    .select("sort_order")
+    .eq("group_id", input.groupId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (maxSortError) return { ok: false, message: maxSortError.message };
+
+  const nextSortOrder =
+    typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
 
   const { error } = await db.client.from("role_definitions").insert({
     group_id: input.groupId,
     name: input.name,
     description: input.description,
-    sort_order: input.sortOrder,
+    sort_order: nextSortOrder,
   });
 
   if (error) return { ok: false, message: error.message };

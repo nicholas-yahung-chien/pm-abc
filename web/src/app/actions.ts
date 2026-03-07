@@ -366,8 +366,6 @@ export async function createRoleAction(formData: FormData) {
   const groupId = readText(formData, "groupId");
   const name = readText(formData, "name");
   const description = readText(formData, "description");
-  const sortOrderRaw = readText(formData, "sortOrder");
-  const sortOrder = sortOrderRaw ? Number(sortOrderRaw) : 100;
 
   if (!groupId || !name) {
     redirectWithMessage(returnTo, false, "請填寫小組與角色名稱。");
@@ -379,7 +377,6 @@ export async function createRoleAction(formData: FormData) {
     groupId,
     name,
     description,
-    sortOrder: Number.isNaN(sortOrder) ? 100 : sortOrder,
   });
 
   revalidatePath("/groups");

@@ -109,10 +109,9 @@ export default async function GroupRolesPage({
             <input name="name" placeholder="例如：副組長、場地長、值日生" required />
           </label>
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700">排序</span>
-            <input name="sortOrder" type="number" defaultValue="100" />
-          </label>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            排序由系統自動處理：首筆為 100，後續依目前最大值每次 +10。
+          </div>
 
           <label className="space-y-1 md:col-span-2">
             <span className="text-sm font-medium text-slate-700">角色說明</span>
