@@ -24,7 +24,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 type MemberListItem = {
   id: string;
@@ -46,15 +46,7 @@ export function MemberManagementTable({
   onDeleteAction,
   onBatchDeleteAction,
 }: MemberManagementTableProps) {
-  const memberById = useMemo(
-    () => new Map(members.map((item) => [item.id, item])),
-    [members],
-  );
-
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<
-    Record<string, { personNo: string; fullName: string; email: string }>
-  >({});
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -66,54 +58,11 @@ export function MemberManagementTable({
   const [showFilters, setShowFilters] = useState(false);
 
   const startEdit = (memberId: string) => {
-    const source = memberById.get(memberId);
-    if (!source) return;
-    setDrafts((prev) => ({
-      ...prev,
-      [memberId]: {
-        personNo: source.personNo,
-        fullName: source.fullName,
-        email: source.email,
-      },
-    }));
     setEditingId(memberId);
   };
 
-  const cancelEdit = (memberId: string) => {
-    const source = memberById.get(memberId);
-    if (!source) {
-      setEditingId(null);
-      return;
-    }
-
-    setDrafts((prev) => ({
-      ...prev,
-      [memberId]: {
-        personNo: source.personNo,
-        fullName: source.fullName,
-        email: source.email,
-      },
-    }));
+  const cancelEdit = () => {
     setEditingId(null);
-  };
-
-  const updateDraft = (
-    memberId: string,
-    field: "personNo" | "fullName" | "email",
-    value: string,
-  ) => {
-    const source = memberById.get(memberId);
-    setDrafts((prev) => {
-      const base = prev[memberId] ?? {
-        personNo: source?.personNo ?? "",
-        fullName: source?.fullName ?? "",
-        email: source?.email ?? "",
-      };
-      return {
-        ...prev,
-        [memberId]: { ...base, [field]: value },
-      };
-    });
   };
 
   const columns: ColumnDef<MemberListItem>[] = [
@@ -163,21 +112,13 @@ export function MemberManagementTable({
         const item = row.original;
         const isEditing = editingId === item.id;
         const formId = `member-update-${item.id}`;
-        const draft = drafts[item.id] ?? {
-          personNo: item.personNo,
-          fullName: item.fullName,
-          email: item.email,
-        };
 
         if (isEditing) {
           return (
             <input
               form={formId}
               name="personNo"
-              value={draft.personNo}
-              onChange={(event) =>
-                updateDraft(item.id, "personNo", event.currentTarget.value)
-              }
+              defaultValue={item.personNo}
               placeholder="例如 2508"
               className="min-w-24"
             />
@@ -204,21 +145,13 @@ export function MemberManagementTable({
         const item = row.original;
         const isEditing = editingId === item.id;
         const formId = `member-update-${item.id}`;
-        const draft = drafts[item.id] ?? {
-          personNo: item.personNo,
-          fullName: item.fullName,
-          email: item.email,
-        };
 
         if (isEditing) {
           return (
             <input
               form={formId}
               name="fullName"
-              value={draft.fullName}
-              onChange={(event) =>
-                updateDraft(item.id, "fullName", event.currentTarget.value)
-              }
+              defaultValue={item.fullName}
               placeholder="請輸入學員姓名"
               required
               className="min-w-32"
@@ -246,11 +179,6 @@ export function MemberManagementTable({
         const item = row.original;
         const isEditing = editingId === item.id;
         const formId = `member-update-${item.id}`;
-        const draft = drafts[item.id] ?? {
-          personNo: item.personNo,
-          fullName: item.fullName,
-          email: item.email,
-        };
 
         if (isEditing) {
           return (
@@ -258,10 +186,7 @@ export function MemberManagementTable({
               form={formId}
               name="email"
               type="email"
-              value={draft.email}
-              onChange={(event) =>
-                updateDraft(item.id, "email", event.currentTarget.value)
-              }
+              defaultValue={item.email}
               required
               className="min-w-64"
             />
@@ -297,7 +222,7 @@ export function MemberManagementTable({
                   </button>
                   <button
                     type="button"
-                    onClick={() => cancelEdit(item.id)}
+                    onClick={cancelEdit}
                     title="取消"
                     className="rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-700 transition hover:bg-amber-100"
                   >

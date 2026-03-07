@@ -70,7 +70,7 @@ jobs:
           set -euo pipefail
           echo "Checking preview URL: $HEALTH_URL"
           for i in $(seq 1 12); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+            STATUS=$(curl -s -L --max-redirs 5 -o /dev/null -w "%{http_code}" "$HEALTH_URL")
             if [ "$STATUS" = "200" ]; then
               echo "Preview health check passed."
               exit 0
@@ -151,7 +151,7 @@ jobs:
           set -euo pipefail
           echo "Checking production URL: $PRODUCTION_SITE_URL"
           for i in $(seq 1 12); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PRODUCTION_SITE_URL")
+            STATUS=$(curl -s -L --max-redirs 5 -o /dev/null -w "%{http_code}" "$PRODUCTION_SITE_URL")
             if [ "$STATUS" = "200" ]; then
               echo "Production health check passed."
               exit 0
