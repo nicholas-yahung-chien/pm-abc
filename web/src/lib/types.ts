@@ -207,6 +207,18 @@ export type TrackingItemRow = {
   } | null;
 };
 
+export type TrackingItemMemberCompletionRow = {
+  id: string;
+  group_id: string;
+  item_id: string;
+  person_id: string;
+  is_completed: boolean;
+  completed_at: string | null;
+  completed_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type GroupTrackingProgressRow = {
   group_id: string;
   total_items: number;

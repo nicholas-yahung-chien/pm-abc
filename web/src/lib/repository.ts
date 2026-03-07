@@ -9,6 +9,7 @@ import type {
   RoleAssignmentRow,
   RoleDefinitionRow,
   TrackingItemRow,
+  TrackingItemMemberCompletionRow,
   TrackingSectionProgressRow,
   TrackingSectionRow,
   TrackingSubsectionRow,
@@ -232,6 +233,20 @@ export async function listTrackingItems(): Promise<TrackingItemRow[]> {
     .order("created_at", { ascending: true });
 
   return ((data ?? []) as unknown) as TrackingItemRow[];
+}
+
+export async function listTrackingItemMemberCompletions(): Promise<
+  TrackingItemMemberCompletionRow[]
+> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("tracking_item_member_completions")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  return ((data ?? []) as unknown) as TrackingItemMemberCompletionRow[];
 }
 
 export async function listGroupTrackingProgress(): Promise<GroupTrackingProgressRow[]> {
@@ -882,6 +897,73 @@ export async function deleteRoleAssignment(input: {
   return { ok: true };
 }
 
+type MoveDirection = "up" | "down";
+
+function reorderIds(ids: string[], currentId: string, direction: MoveDirection): string[] | null {
+  const currentIndex = ids.findIndex((id) => id === currentId);
+  if (currentIndex < 0) return null;
+
+  const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+  if (targetIndex < 0 || targetIndex >= ids.length) return [];
+
+  const next = ids.slice();
+  const [current] = next.splice(currentIndex, 1);
+  next.splice(targetIndex, 0, current);
+  return next;
+}
+
+async function resequenceTrackingSections(input: {
+  groupId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("tracking_sections")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("group_id", input.groupId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+async function resequenceTrackingSubsections(input: {
+  groupId: string;
+  sectionId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("tracking_subsections")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("group_id", input.groupId)
+      .eq("section_id", input.sectionId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
 export async function createTrackingSection(input: {
   groupId: string;
   title: string;
@@ -925,7 +1007,6 @@ export async function updateTrackingSection(input: {
   sectionId: string;
   title: string;
   description: string;
-  sortOrder: number;
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
@@ -936,7 +1017,6 @@ export async function updateTrackingSection(input: {
     .update({
       title: input.title,
       description: input.description,
-      sort_order: input.sortOrder,
       updated_by_account_id: input.accountId ?? null,
     })
     .eq("id", input.sectionId)
@@ -961,6 +1041,36 @@ export async function deleteTrackingSection(input: {
 
   if (error) return { ok: false, message: error.message };
   return { ok: true };
+}
+
+export async function moveTrackingSection(input: {
+  groupId: string;
+  sectionId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("tracking_sections")
+    .select("id")
+    .eq("group_id", input.groupId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.sectionId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "找不到追蹤大項。" };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceTrackingSections({
+    groupId: input.groupId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
 }
 
 export async function createTrackingSubsection(input: {
@@ -1010,7 +1120,6 @@ export async function updateTrackingSubsection(input: {
   subsectionId: string;
   title: string;
   description: string;
-  sortOrder: number;
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
@@ -1022,7 +1131,6 @@ export async function updateTrackingSubsection(input: {
       section_id: input.sectionId,
       title: input.title,
       description: input.description,
-      sort_order: input.sortOrder,
       updated_by_account_id: input.accountId ?? null,
     })
     .eq("id", input.subsectionId)
@@ -1049,6 +1157,39 @@ export async function deleteTrackingSubsection(input: {
   return { ok: true };
 }
 
+export async function moveTrackingSubsection(input: {
+  groupId: string;
+  sectionId: string;
+  subsectionId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("tracking_subsections")
+    .select("id")
+    .eq("group_id", input.groupId)
+    .eq("section_id", input.sectionId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.subsectionId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "找不到追蹤小項。" };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceTrackingSubsections({
+    groupId: input.groupId,
+    sectionId: input.sectionId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
+}
+
 export async function createTrackingItem(input: {
   groupId: string;
   sectionId: string;
@@ -1058,9 +1199,6 @@ export async function createTrackingItem(input: {
   extraData: string;
   externalUrl: string;
   dueDate: string;
-  ownerPersonId: string | null;
-  progressPercent?: number | null;
-  isCompleted?: boolean;
   sortOrder?: number | null;
   accountId?: string | null;
 }): Promise<MutationResult> {
@@ -1084,8 +1222,6 @@ export async function createTrackingItem(input: {
       typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
   }
 
-  const progressPercent = input.progressPercent ?? (input.isCompleted ? 100 : 0);
-
   const { error } = await db.client.from("tracking_items").insert({
     group_id: input.groupId,
     section_id: input.sectionId,
@@ -1095,9 +1231,9 @@ export async function createTrackingItem(input: {
     extra_data: input.extraData,
     external_url: input.externalUrl,
     due_date: input.dueDate || null,
-    owner_person_id: input.ownerPersonId,
-    progress_percent: progressPercent,
-    is_completed: input.isCompleted ?? false,
+    owner_person_id: null,
+    progress_percent: 0,
+    is_completed: false,
     sort_order: sortOrder,
     created_by_account_id: input.accountId ?? null,
     updated_by_account_id: input.accountId ?? null,
@@ -1117,16 +1253,10 @@ export async function updateTrackingItem(input: {
   extraData: string;
   externalUrl: string;
   dueDate: string;
-  ownerPersonId: string | null;
-  progressPercent: number;
-  isCompleted: boolean;
-  sortOrder: number;
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
-
-  const completedAt = input.isCompleted ? new Date().toISOString() : null;
 
   const { error } = await db.client
     .from("tracking_items")
@@ -1138,12 +1268,6 @@ export async function updateTrackingItem(input: {
       extra_data: input.extraData,
       external_url: input.externalUrl,
       due_date: input.dueDate || null,
-      owner_person_id: input.ownerPersonId,
-      progress_percent: input.progressPercent,
-      is_completed: input.isCompleted,
-      completed_at: completedAt,
-      completed_by_person_id: null,
-      sort_order: input.sortOrder,
       updated_by_account_id: input.accountId ?? null,
     })
     .eq("id", input.itemId)
@@ -1239,7 +1363,6 @@ export async function copyTrackingItem(input: {
     extra_data: string;
     external_url: string;
     due_date: string | null;
-    owner_person_id: string | null;
   };
 
   const { data: sourceItem, error: sourceError } = await db.client
@@ -1252,7 +1375,6 @@ export async function copyTrackingItem(input: {
         "extra_data",
         "external_url",
         "due_date",
-        "owner_person_id",
       ].join(", "),
     )
     .eq("id", input.itemId)
@@ -1287,7 +1409,7 @@ export async function copyTrackingItem(input: {
     extra_data: source.extra_data,
     external_url: source.external_url,
     due_date: source.due_date,
-    owner_person_id: source.owner_person_id,
+    owner_person_id: null,
     progress_percent: 0,
     is_completed: false,
     completed_at: null,
@@ -1302,37 +1424,39 @@ export async function copyTrackingItem(input: {
   return { ok: true };
 }
 
-export async function toggleTrackingItemCompletion(input: {
+export async function setTrackingItemMemberCompletion(input: {
   groupId: string;
   itemId: string;
+  personId: string;
   isCompleted: boolean;
-  completedByPersonId?: string | null;
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
 
-  const payload = input.isCompleted
-    ? {
+  if (input.isCompleted) {
+    const { error } = await db.client.from("tracking_item_member_completions").upsert(
+      {
+        group_id: input.groupId,
+        item_id: input.itemId,
+        person_id: input.personId,
         is_completed: true,
-        progress_percent: 100,
         completed_at: new Date().toISOString(),
-        completed_by_person_id: input.completedByPersonId ?? null,
-        updated_by_account_id: input.accountId ?? null,
-      }
-    : {
-        is_completed: false,
-        progress_percent: 0,
-        completed_at: null,
-        completed_by_person_id: null,
-        updated_by_account_id: input.accountId ?? null,
-      };
+        completed_by_account_id: input.accountId ?? null,
+      },
+      { onConflict: "item_id,person_id" },
+    );
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  }
 
   const { error } = await db.client
-    .from("tracking_items")
-    .update(payload)
-    .eq("id", input.itemId)
-    .eq("group_id", input.groupId);
+    .from("tracking_item_member_completions")
+    .delete()
+    .eq("group_id", input.groupId)
+    .eq("item_id", input.itemId)
+    .eq("person_id", input.personId);
 
   if (error) return { ok: false, message: error.message };
   return { ok: true };
