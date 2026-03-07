@@ -101,7 +101,7 @@ export default async function GroupTrackingPage({
   }
 
   const returnTo = `/groups/${groupId}`;
-  const canManageStructure = session.role !== "member";
+  const canManageStructure = session.role === "coach";
 
   const currentMemberPersonId =
     session.role === "member"
@@ -255,125 +255,6 @@ export default async function GroupTrackingPage({
         </div>
       </section>
 
-      {canManageStructure ? (
-        <section className="grid gap-4 xl:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">新增追蹤大項</h2>
-            <form action={createTrackingSectionAction} className="mt-3 space-y-3">
-              <input type="hidden" name="groupId" value={groupId} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">大項名稱 *</span>
-                <input name="title" required placeholder="例如：課程準備" />
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">說明</span>
-                <textarea name="description" rows={3} />
-              </label>
-              <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-                新增大項
-              </button>
-            </form>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">新增追蹤小項</h2>
-            <form action={createTrackingSubsectionAction} className="mt-3 space-y-3">
-              <input type="hidden" name="groupId" value={groupId} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-                <select name="sectionId" defaultValue="" required>
-                  <option value="" disabled>
-                    請選擇大項
-                  </option>
-                  {groupSections.map((section) => (
-                    <option key={section.id} value={section.id}>
-                      {section.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">小項名稱 *</span>
-                <input name="title" required placeholder="例如：讀書會任務" />
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">說明</span>
-                <textarea name="description" rows={3} />
-              </label>
-              <button
-                disabled={!groupSections.length}
-                className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                新增小項
-              </button>
-            </form>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">新增追蹤項目</h2>
-            <form action={createTrackingItemAction} className="mt-3 space-y-3">
-              <input type="hidden" name="groupId" value={groupId} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-                <select name="sectionId" defaultValue="" required>
-                  <option value="" disabled>
-                    請選擇大項
-                  </option>
-                  {groupSections.map((section) => (
-                    <option key={section.id} value={section.id}>
-                      {section.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">所屬小項 *</span>
-                <select name="subsectionId" defaultValue="" required>
-                  <option value="" disabled>
-                    請選擇小項
-                  </option>
-                  {subsectionOptions.map((subsection) => (
-                    <option key={subsection.id} value={subsection.id}>
-                      {subsection.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">項目名稱 *</span>
-                <input name="title" required placeholder="例如：完成第 1 章題庫" />
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">內容</span>
-                <textarea name="content" rows={2} />
-              </label>
-              <label className="space-y-1">
-                <span className="text-sm font-medium text-slate-700">到期日</span>
-                <input name="dueDate" type="date" />
-              </label>
-              <input type="hidden" name="extraData" value="" />
-              <input type="hidden" name="externalUrl" value="" />
-              <button
-                disabled={!groupSubsections.length}
-                className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
-              >
-                新增追蹤項目
-              </button>
-            </form>
-          </div>
-        </section>
-      ) : (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">學員回報規則</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            請在追蹤矩陣中勾選你完成的項目；僅能勾選自己的欄位。
-          </p>
-        </section>
-      )}
-
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣</h2>
         <p className="mt-1 text-sm text-slate-600">
@@ -507,7 +388,7 @@ export default async function GroupTrackingPage({
                                     buildCompletionKey(item.id, member.id),
                                   );
                                   const canToggle =
-                                    session.role !== "member" || currentMemberPersonId === member.id;
+                                    session.role === "coach" || currentMemberPersonId === member.id;
 
                                   return (
                                     <td key={`${item.id}:${member.id}`} className="px-2 py-2 text-center">
@@ -585,6 +466,123 @@ export default async function GroupTrackingPage({
 
       {canManageStructure && (
         <section className="space-y-4">
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣管理（教練）</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              此區塊僅供教練新增與維護追蹤大項、小項與追蹤項目；學員僅可查看上方追蹤矩陣並回報自己的完成狀態。
+            </p>
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">新增追蹤大項</h3>
+                <form action={createTrackingSectionAction} className="mt-3 space-y-3">
+                  <input type="hidden" name="groupId" value={groupId} />
+                  <input type="hidden" name="returnTo" value={returnTo} />
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">大項名稱 *</span>
+                    <input name="title" required placeholder="例如：課程準備" />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">說明</span>
+                    <textarea name="description" rows={3} />
+                  </label>
+                  <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                    新增大項
+                  </button>
+                </form>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">新增追蹤小項</h3>
+                <form action={createTrackingSubsectionAction} className="mt-3 space-y-3">
+                  <input type="hidden" name="groupId" value={groupId} />
+                  <input type="hidden" name="returnTo" value={returnTo} />
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
+                    <select name="sectionId" defaultValue="" required>
+                      <option value="" disabled>
+                        請選擇大項
+                      </option>
+                      {groupSections.map((section) => (
+                        <option key={section.id} value={section.id}>
+                          {section.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">小項名稱 *</span>
+                    <input name="title" required placeholder="例如：讀書會任務" />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">說明</span>
+                    <textarea name="description" rows={3} />
+                  </label>
+                  <button
+                    disabled={!groupSections.length}
+                    className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  >
+                    新增小項
+                  </button>
+                </form>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">新增追蹤項目</h3>
+                <form action={createTrackingItemAction} className="mt-3 space-y-3">
+                  <input type="hidden" name="groupId" value={groupId} />
+                  <input type="hidden" name="returnTo" value={returnTo} />
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
+                    <select name="sectionId" defaultValue="" required>
+                      <option value="" disabled>
+                        請選擇大項
+                      </option>
+                      {groupSections.map((section) => (
+                        <option key={section.id} value={section.id}>
+                          {section.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">所屬小項 *</span>
+                    <select name="subsectionId" defaultValue="" required>
+                      <option value="" disabled>
+                        請選擇小項
+                      </option>
+                      {subsectionOptions.map((subsection) => (
+                        <option key={subsection.id} value={subsection.id}>
+                          {subsection.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">項目名稱 *</span>
+                    <input name="title" required placeholder="例如：完成第 1 章題庫" />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">內容</span>
+                    <textarea name="content" rows={2} />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">到期日</span>
+                    <input name="dueDate" type="date" />
+                  </label>
+                  <input type="hidden" name="extraData" value="" />
+                  <input type="hidden" name="externalUrl" value="" />
+                  <button
+                    disabled={!groupSubsections.length}
+                    className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                  >
+                    新增追蹤項目
+                  </button>
+                </form>
+              </div>
+            </div>
+          </article>
+
           {groupSections.map((section) => {
             const subsectionRows = groupSubsections.filter((item) => item.section_id === section.id);
 

@@ -217,7 +217,7 @@ export async function listTrackingItems(): Promise<TrackingItemRow[]> {
   const db = getClientOrError();
   if (!db.client) return [];
 
-  const { data } = await db.client
+  const { data, error } = await db.client
     .from("tracking_items")
     .select(
       [
@@ -225,12 +225,17 @@ export async function listTrackingItems(): Promise<TrackingItemRow[]> {
         "group:groups(id, name, code)",
         "section:tracking_sections(id, title, sort_order)",
         "subsection:tracking_subsections(id, title, sort_order)",
-        "owner:people(id, person_no, full_name, display_name, email)",
-        "completed_by:people(id, person_no, full_name, display_name, email)",
+        "owner:people!tracking_items_owner_person_id_fkey(id, person_no, full_name, display_name, email)",
+        "completed_by:people!tracking_items_completed_by_person_id_fkey(id, person_no, full_name, display_name, email)",
       ].join(", "),
     )
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("listTrackingItems query failed:", error.message);
+    return [];
+  }
 
   return ((data ?? []) as unknown) as TrackingItemRow[];
 }
