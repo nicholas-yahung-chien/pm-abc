@@ -19,8 +19,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Pencil,
   Search,
   SlidersHorizontal,
+  Trash2,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -45,6 +47,8 @@ type GroupManagementTableProps = {
   groups: GroupListItem[];
   coaches: CoachOption[];
   onAssignCoachAction: (formData: FormData) => void | Promise<void>;
+  onUpdateGroupAction: (formData: FormData) => void | Promise<void>;
+  onDeleteGroupAction: (formData: FormData) => void | Promise<void>;
   onUpdateDescriptionAction: (formData: FormData) => void | Promise<void>;
 };
 
@@ -59,6 +63,8 @@ export function GroupManagementTable({
   groups,
   coaches,
   onAssignCoachAction,
+  onUpdateGroupAction,
+  onDeleteGroupAction,
   onUpdateDescriptionAction,
 }: GroupManagementTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
@@ -76,6 +82,10 @@ export function GroupManagementTable({
   const [descriptionEditorGroupId, setDescriptionEditorGroupId] = useState<string | null>(
     null,
   );
+  const [groupEditorId, setGroupEditorId] = useState<string | null>(null);
+  const [groupDraftById, setGroupDraftById] = useState<
+    Record<string, { code: string; name: string }>
+  >({});
 
   const groupById = useMemo(
     () => new Map(groups.map((item) => [item.id, item])),
@@ -107,6 +117,28 @@ export function GroupManagementTable({
   const submitGroupDescriptionUpdate = async (formData: FormData) => {
     setDescriptionEditorGroupId(null);
     await onUpdateDescriptionAction(formData);
+  };
+
+  const openGroupEditor = (groupId: string) => {
+    const source = groupById.get(groupId);
+    if (!source) return;
+    setGroupDraftById((prev) => ({
+      ...prev,
+      [groupId]: prev[groupId] ?? {
+        code: source.code,
+        name: source.name,
+      },
+    }));
+    setGroupEditorId(groupId);
+  };
+
+  const closeGroupEditor = () => {
+    setGroupEditorId(null);
+  };
+
+  const submitGroupUpdate = async (formData: FormData) => {
+    setGroupEditorId(null);
+    await onUpdateGroupAction(formData);
   };
 
   const columns: ColumnDef<GroupListItem>[] = [
@@ -221,6 +253,45 @@ export function GroupManagementTable({
       },
     },
     {
+      id: "operation",
+      header: () => <span className="font-semibold">操作</span>,
+      enableSorting: false,
+      enableColumnFilter: false,
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openGroupEditor(item.id)}
+              title="編輯小組"
+              className="rounded-md border border-slate-300 bg-white p-2 text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+
+            <form
+              action={onDeleteGroupAction}
+              onSubmit={(event) => {
+                const confirmed = window.confirm(
+                  `確定要刪除小組「${item.code} ${item.name}」嗎？此操作會刪除該小組所有關聯資料且無法復原。`,
+                );
+                if (!confirmed) event.preventDefault();
+              }}
+            >
+              <input type="hidden" name="groupId" value={item.id} />
+              <button
+                title="刪除小組"
+                className="rounded-md border border-rose-300 bg-rose-50 p-2 text-rose-700 transition hover:bg-rose-100"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        );
+      },
+    },
+    {
       id: "entry",
       header: () => <span className="font-semibold">管理入口</span>,
       enableSorting: false,
@@ -265,6 +336,16 @@ export function GroupManagementTable({
   const descriptionEditorDraft = descriptionEditorGroup
     ? descriptionDraftByGroupId[descriptionEditorGroup.id] ?? descriptionEditorGroup.description
     : "";
+  const groupEditor = groupEditorId ? groupById.get(groupEditorId) ?? null : null;
+  const groupEditorDraft = groupEditor
+    ? groupDraftById[groupEditor.id] ?? {
+        code: groupEditor.code,
+        name: groupEditor.name,
+      }
+    : {
+        code: "",
+        name: "",
+      };
 
   return (
     <div className="mt-4 space-y-4">
@@ -361,7 +442,10 @@ export function GroupManagementTable({
             ))}
             {!table.getRowModel().rows.length && (
               <tr>
-                <td className="px-3 py-4 text-slate-500" colSpan={6}>
+                <td
+                  className="px-3 py-4 text-slate-500"
+                  colSpan={table.getVisibleLeafColumns().length}
+                >
                   目前尚無符合條件的小組資料。
                 </td>
               </tr>
@@ -429,6 +513,88 @@ export function GroupManagementTable({
           </label>
         </div>
       </div>
+
+      {groupEditor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4"
+          onClick={closeGroupEditor}
+        >
+          <div
+            className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h4 className="text-lg font-semibold text-slate-900">編輯小組</h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  {groupEditor.classCode} / {groupEditor.code} {groupEditor.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeGroupEditor}
+                className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
+                title="關閉"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form action={submitGroupUpdate} className="mt-4 space-y-3">
+              <input type="hidden" name="groupId" value={groupEditor.id} />
+
+              <label className="space-y-1">
+                <span className="text-sm font-medium text-slate-700">小組代碼 *</span>
+                <input
+                  name="code"
+                  required
+                  value={groupEditorDraft.code}
+                  onChange={(event) =>
+                    setGroupDraftById((prev) => ({
+                      ...prev,
+                      [groupEditor.id]: {
+                        code: event.currentTarget.value,
+                        name: prev[groupEditor.id]?.name ?? groupEditor.name,
+                      },
+                    }))
+                  }
+                />
+              </label>
+
+              <label className="space-y-1">
+                <span className="text-sm font-medium text-slate-700">小組名稱 *</span>
+                <input
+                  name="name"
+                  required
+                  value={groupEditorDraft.name}
+                  onChange={(event) =>
+                    setGroupDraftById((prev) => ({
+                      ...prev,
+                      [groupEditor.id]: {
+                        code: prev[groupEditor.id]?.code ?? groupEditor.code,
+                        name: event.currentTarget.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={closeGroupEditor}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  取消
+                </button>
+                <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                  儲存小組
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {descriptionEditorGroup && (
         <div

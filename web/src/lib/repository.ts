@@ -391,6 +391,35 @@ export async function createGroup(input: {
   return { ok: true };
 }
 
+export async function updateGroup(input: {
+  groupId: string;
+  code: string;
+  name: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("groups")
+    .update({
+      code: input.code,
+      name: input.name,
+    })
+    .eq("id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteGroup(groupId: string): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client.from("groups").delete().eq("id", groupId);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
 export async function updateGroupDescription(input: {
   groupId: string;
   description: string;

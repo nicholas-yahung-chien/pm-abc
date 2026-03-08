@@ -10,6 +10,7 @@ import {
   createPerson,
   deleteClass,
   deleteClasses,
+  deleteGroup,
   deleteMemberAccount,
   deleteMemberAccounts,
   createRole,
@@ -32,6 +33,7 @@ import {
   updateTrackingItem,
   updateTrackingSection,
   updateTrackingSubsection,
+  updateGroup,
   updateGroupDescription,
   updateGroupMemberDirectoryProfile,
   upsertGroupCoachOwner,
@@ -202,6 +204,45 @@ export async function createGroupAction(formData: FormData) {
 
   if (!result.ok) redirectWithMessage("/groups", false, result.message);
   redirectWithMessage("/groups", true, "小組新增成功。");
+}
+
+export async function updateGroupAction(formData: FormData) {
+  await requireCoachOrAdmin("/groups");
+
+  const groupId = readText(formData, "groupId");
+  const code = readText(formData, "code");
+  const name = readText(formData, "name");
+
+  if (!groupId || !code || !name) {
+    redirectWithMessage("/groups", false, "請填寫小組代碼與小組名稱。");
+  }
+
+  const result = await updateGroup({
+    groupId,
+    code,
+    name,
+  });
+
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/dashboard");
+  if (!result.ok) redirectWithMessage("/groups", false, result.message);
+  redirectWithMessage("/groups", true, "小組資料已更新。");
+}
+
+export async function deleteGroupAction(formData: FormData) {
+  await requireCoachOrAdmin("/groups");
+
+  const groupId = readText(formData, "groupId");
+  if (!groupId) {
+    redirectWithMessage("/groups", false, "缺少小組識別資料。");
+  }
+
+  const result = await deleteGroup(groupId);
+  revalidatePath("/groups");
+  revalidatePath("/dashboard");
+  if (!result.ok) redirectWithMessage("/groups", false, result.message);
+  redirectWithMessage("/groups", true, "小組已刪除。");
 }
 
 export async function updateGroupDescriptionAction(formData: FormData) {

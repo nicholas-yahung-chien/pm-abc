@@ -5,6 +5,8 @@ import {
   assignGroupCoachOwnerAction,
   createGroupAction,
   createMembershipAction,
+  deleteGroupAction,
+  updateGroupAction,
   updateGroupDescriptionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
@@ -293,6 +295,8 @@ export default async function GroupsPage({
             email: item.email,
           }))}
           onAssignCoachAction={assignGroupCoachOwnerAction}
+          onUpdateGroupAction={updateGroupAction}
+          onDeleteGroupAction={deleteGroupAction}
           onUpdateDescriptionAction={updateGroupDescriptionAction}
         />
       </section>
