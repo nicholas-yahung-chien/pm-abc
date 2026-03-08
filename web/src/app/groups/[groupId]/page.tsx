@@ -387,7 +387,18 @@ export default async function GroupTrackingPage({
                                 <td className="sticky left-0 z-10 w-24 min-w-24 bg-white px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
                                 <td className="sticky left-24 z-10 w-56 min-w-56 bg-white px-3 py-2 text-slate-500">-</td>
                                 <td className="sticky left-80 z-10 w-80 min-w-80 bg-white px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
-                                  <p className="font-medium text-slate-900">{item.title}</p>
+                                  {item.external_url ? (
+                                    <a
+                                      href={item.external_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 transition hover:text-blue-800"
+                                    >
+                                      {item.title}
+                                    </a>
+                                  ) : (
+                                    <p className="font-medium text-slate-900">{item.title}</p>
+                                  )}
                                   <div className="mt-1">
                                     <TextPreviewDialogButton
                                       title={item.title}

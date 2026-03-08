@@ -667,7 +667,6 @@ export async function updateGroupMemberDirectoryProfile(input: {
   groupId: string;
   personId: string;
   displayName: string;
-  phone: string;
   lineId: string;
   intro: string;
 }): Promise<MutationResult> {
@@ -690,7 +689,6 @@ export async function updateGroupMemberDirectoryProfile(input: {
     .from("people")
     .update({
       display_name: input.displayName,
-      phone: input.phone,
       line_id: input.lineId,
       intro: input.intro,
     })

@@ -9,7 +9,6 @@ type GroupDirectoryMemberItem = {
   fullName: string;
   displayName: string;
   rolesLabel: string;
-  phone: string;
   email: string;
   lineId: string;
   intro: string;
@@ -41,7 +40,7 @@ export function GroupDirectoryMemberTable({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [introEditorId, setIntroEditorId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<
-    Record<string, { displayName: string; phone: string; lineId: string; intro: string }>
+    Record<string, { displayName: string; lineId: string; intro: string }>
   >({});
 
   const ensureDraft = (personId: string) => {
@@ -51,7 +50,6 @@ export function GroupDirectoryMemberTable({
       ...prev,
       [personId]: prev[personId] ?? {
         displayName: source.displayName,
-        phone: source.phone,
         lineId: source.lineId,
         intro: source.intro,
       },
@@ -74,7 +72,6 @@ export function GroupDirectoryMemberTable({
       ...prev,
       [personId]: {
         displayName: source.displayName,
-        phone: source.phone,
         lineId: source.lineId,
         intro: source.intro,
       },
@@ -96,14 +93,13 @@ export function GroupDirectoryMemberTable({
 
   const updateDraft = (
     personId: string,
-    field: "displayName" | "phone" | "lineId" | "intro",
+    field: "displayName" | "lineId" | "intro",
     value: string,
   ) => {
     const source = memberById.get(personId);
     setDrafts((prev) => {
       const base = prev[personId] ?? {
         displayName: source?.displayName ?? "",
-        phone: source?.phone ?? "",
         lineId: source?.lineId ?? "",
         intro: source?.intro ?? "",
       };
@@ -124,7 +120,6 @@ export function GroupDirectoryMemberTable({
   const introEditorDraft = introEditorMember
     ? drafts[introEditorMember.personId] ?? {
         displayName: introEditorMember.displayName,
-        phone: introEditorMember.phone,
         lineId: introEditorMember.lineId,
         intro: introEditorMember.intro,
       }
@@ -139,7 +134,6 @@ export function GroupDirectoryMemberTable({
             <th className="px-3 py-2">姓名</th>
             <th className="px-3 py-2">組內角色</th>
             <th className="px-3 py-2">希望別人怎麼稱呼</th>
-            <th className="px-3 py-2">電話</th>
             <th className="px-3 py-2">Email</th>
             <th className="px-3 py-2">LINE ID</th>
             <th className="px-3 py-2">自我介紹</th>
@@ -152,7 +146,6 @@ export function GroupDirectoryMemberTable({
             const formId = `directory-member-${item.personId}`;
             const draft = drafts[item.personId] ?? {
               displayName: item.displayName,
-              phone: item.phone,
               lineId: item.lineId,
               intro: item.intro,
             };
@@ -176,22 +169,6 @@ export function GroupDirectoryMemberTable({
                     />
                   ) : (
                     item.displayName || "-"
-                  )}
-                </td>
-                <td className="px-3 py-2">
-                  {isEditing ? (
-                    <input
-                      form={formId}
-                      name="phone"
-                      value={draft.phone}
-                      onChange={(event) =>
-                        updateDraft(item.personId, "phone", event.currentTarget.value)
-                      }
-                      placeholder="電話"
-                      className="min-w-36"
-                    />
-                  ) : (
-                    item.phone || "-"
                   )}
                 </td>
                 <td className="px-3 py-2">{item.email || "-"}</td>
@@ -232,7 +209,6 @@ export function GroupDirectoryMemberTable({
                       {!isEditing && (
                         <>
                           <input type="hidden" name="displayName" value={item.displayName} />
-                          <input type="hidden" name="phone" value={item.phone} />
                           <input type="hidden" name="lineId" value={item.lineId} />
                         </>
                       )}
@@ -273,8 +249,8 @@ export function GroupDirectoryMemberTable({
           })}
           {!members.length && (
             <tr>
-              <td className="px-3 py-4 text-slate-500" colSpan={9}>
-                目前此小組尚無學員資料。
+              <td className="px-3 py-4 text-slate-500" colSpan={8}>
+                目前沒有小組學員資料。
               </td>
             </tr>
           )}

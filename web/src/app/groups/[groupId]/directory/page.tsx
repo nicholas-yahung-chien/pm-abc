@@ -37,8 +37,8 @@ export default async function GroupDirectoryPage({
   const status = pickSearchParam(paramValues.status);
   const message = pickSearchParam(paramValues.message);
 
-  const [groups, memberships, people, assignments, myMemberships, coachOwners] = await Promise.all(
-    [
+  const [groups, memberships, people, assignments, myMemberships, coachOwners] =
+    await Promise.all([
       listGroups(),
       listMemberships(),
       listPeople(),
@@ -47,8 +47,7 @@ export default async function GroupDirectoryPage({
         ? listMembershipsByEmail(session.email)
         : Promise.resolve([]),
       listGroupCoachOwners(),
-    ],
-  );
+    ]);
 
   if (
     session.role === "member" &&
@@ -100,7 +99,6 @@ export default async function GroupDirectoryPage({
         fullName: person.full_name || "",
         displayName: person.display_name || "",
         rolesLabel: (rolesByPerson.get(person.id) ?? []).join("、"),
-        phone: person.phone || "",
         email: person.email || "",
         lineId: person.line_id || "",
         intro: person.intro || "",
@@ -118,7 +116,7 @@ export default async function GroupDirectoryPage({
           {group.class?.code} / {group.code} {group.name}
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          教練資訊顯示於頂端，學員資訊可於下方通訊錄直接編輯。
+          教練資訊顯示於頂端，學員資料可於下方列表直接編輯。
         </p>
         <div className="mt-4">
           <StatusBanner status={status} message={message} />
@@ -128,7 +126,7 @@ export default async function GroupDirectoryPage({
             回到小組總覽
           </Link>
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            前往 R&R 管理
+            前往 R&amp;R 管理
           </Link>
         </div>
       </section>
@@ -152,7 +150,9 @@ export default async function GroupDirectoryPage({
             <tbody>
               {coachOwner?.coach && (
                 <tr className="border-t border-slate-100 bg-amber-50/30">
-                  <td className="px-3 py-2">{coachPerson?.full_name || coachOwner.coach.display_name || "-"}</td>
+                  <td className="px-3 py-2">
+                    {coachPerson?.full_name || coachOwner.coach.display_name || "-"}
+                  </td>
                   <td className="px-3 py-2">
                     {coachPerson?.display_name || coachOwner.coach.display_name || "-"}
                   </td>
@@ -185,7 +185,7 @@ export default async function GroupDirectoryPage({
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">小組學員通訊錄</h2>
         <p className="mt-1 text-sm text-slate-600">
-          可直接編輯「希望別人怎麼稱呼」、「電話」、「LINE ID」與「自我介紹」。
+          可直接編輯「希望別人怎麼稱呼」、「LINE ID」與「自我介紹」。
         </p>
         <GroupDirectoryMemberTable
           groupId={groupId}

@@ -982,7 +982,6 @@ export async function updateGroupMemberDirectoryProfileAction(formData: FormData
   const groupId = readText(formData, "groupId");
   const personId = readText(formData, "personId");
   const displayName = readText(formData, "displayName");
-  const phone = readText(formData, "phone");
   const lineId = readText(formData, "lineId");
   const intro = readText(formData, "intro");
 
@@ -997,7 +996,6 @@ export async function updateGroupMemberDirectoryProfileAction(formData: FormData
     groupId,
     personId,
     displayName,
-    phone,
     lineId,
     intro,
   });

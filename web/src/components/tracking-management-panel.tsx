@@ -611,7 +611,18 @@ export function TrackingManagementPanel({
                                 </div>
                               </td>
                               <td className="px-3 py-2">
-                                <p className="font-medium text-slate-900">{item.title}</p>
+                                {item.external_url ? (
+                                  <a
+                                    href={item.external_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 transition hover:text-blue-800"
+                                  >
+                                    {item.title}
+                                  </a>
+                                ) : (
+                                  <p className="font-medium text-slate-900">{item.title}</p>
+                                )}
                                 <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{item.content || "-"}</p>
                               </td>
                               <td className="px-3 py-2 text-xs text-slate-700">{formatDate(item.due_date)}</td>
@@ -772,8 +783,11 @@ export function TrackingManagementPanel({
               <span className="text-sm font-medium text-slate-700">預定完成日</span>
               <input name="dueDate" type="date" />
             </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">網路連結</span>
+              <input name="externalUrl" type="url" placeholder="https://example.com" />
+            </label>
             <input type="hidden" name="extraData" value="" />
-            <input type="hidden" name="externalUrl" value="" />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -797,7 +811,6 @@ export function TrackingManagementPanel({
             <input type="hidden" name="itemId" value={editingItem.id} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <input type="hidden" name="extraData" value={editingItem.extra_data ?? ""} />
-            <input type="hidden" name="externalUrl" value={editingItem.external_url ?? ""} />
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
               <select name="sectionId" defaultValue={editingItem.section_id} required>
@@ -829,6 +842,15 @@ export function TrackingManagementPanel({
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">預定完成日</span>
               <input name="dueDate" type="date" defaultValue={editingItem.due_date ?? ""} />
+            </label>
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700">網路連結</span>
+              <input
+                name="externalUrl"
+                type="url"
+                defaultValue={editingItem.external_url ?? ""}
+                placeholder="https://example.com"
+              />
             </label>
             <div className="flex justify-end gap-2">
               <button
