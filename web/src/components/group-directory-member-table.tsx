@@ -8,7 +8,6 @@ type GroupDirectoryMemberItem = {
   personNo: string;
   fullName: string;
   displayName: string;
-  rolesLabel: string;
   email: string;
   lineId: string;
   intro: string;
@@ -132,7 +131,6 @@ export function GroupDirectoryMemberTable({
           <tr>
             <th className="px-3 py-2">學員編號</th>
             <th className="px-3 py-2">姓名</th>
-            <th className="px-3 py-2">組內角色</th>
             <th className="px-3 py-2">希望別人怎麼稱呼</th>
             <th className="px-3 py-2">Email</th>
             <th className="px-3 py-2">LINE ID</th>
@@ -154,7 +152,6 @@ export function GroupDirectoryMemberTable({
               <tr key={item.personId} className="border-t border-slate-100">
                 <td className="px-3 py-2">{item.personNo || "-"}</td>
                 <td className="px-3 py-2 font-medium">{item.fullName || "-"}</td>
-                <td className="px-3 py-2">{item.rolesLabel || "-"}</td>
                 <td className="px-3 py-2">
                   {isEditing ? (
                     <input
@@ -249,7 +246,7 @@ export function GroupDirectoryMemberTable({
           })}
           {!members.length && (
             <tr>
-              <td className="px-3 py-4 text-slate-500" colSpan={8}>
+              <td className="px-3 py-4 text-slate-500" colSpan={7}>
                 目前沒有小組學員資料。
               </td>
             </tr>

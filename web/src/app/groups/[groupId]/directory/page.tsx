@@ -12,7 +12,6 @@ import {
   listMemberships,
   listMembershipsByEmail,
   listPeople,
-  listRoleAssignments,
 } from "@/lib/repository";
 import { pickSearchParam } from "@/lib/search";
 
@@ -37,12 +36,11 @@ export default async function GroupDirectoryPage({
   const status = pickSearchParam(paramValues.status);
   const message = pickSearchParam(paramValues.message);
 
-  const [groups, memberships, people, assignments, myMemberships, coachOwners] =
+  const [groups, memberships, people, myMemberships, coachOwners] =
     await Promise.all([
       listGroups(),
       listMemberships(),
       listPeople(),
-      listRoleAssignments(),
       session.role === "member"
         ? listMembershipsByEmail(session.email)
         : Promise.resolve([]),
@@ -80,14 +78,6 @@ export default async function GroupDirectoryPage({
     return aName.localeCompare(bName, "zh-Hant");
   });
 
-  const rolesByPerson = new Map<string, string[]>();
-  for (const assignment of assignments) {
-    if (assignment.group_id !== groupId || !assignment.role?.name) continue;
-    const roleNames = rolesByPerson.get(assignment.person_id) ?? [];
-    roleNames.push(assignment.role.name);
-    rolesByPerson.set(assignment.person_id, roleNames);
-  }
-
   const memberItems = sortedMembers
     .map((membership) => {
       const person = personById.get(membership.person_id);
@@ -98,7 +88,6 @@ export default async function GroupDirectoryPage({
         personNo: person.person_no || "",
         fullName: person.full_name || "",
         displayName: person.display_name || "",
-        rolesLabel: (rolesByPerson.get(person.id) ?? []).join("、"),
         email: person.email || "",
         lineId: person.line_id || "",
         intro: person.intro || "",
@@ -140,7 +129,6 @@ export default async function GroupDirectoryPage({
                 <th className="px-3 py-2">姓名</th>
                 <th className="px-3 py-2">希望別人怎麼稱呼</th>
                 <th className="px-3 py-2">身份</th>
-                <th className="px-3 py-2">角色</th>
                 <th className="px-3 py-2">電話</th>
                 <th className="px-3 py-2">Email</th>
                 <th className="px-3 py-2">LINE ID</th>
@@ -157,7 +145,6 @@ export default async function GroupDirectoryPage({
                     {coachPerson?.display_name || coachOwner.coach.display_name || "-"}
                   </td>
                   <td className="px-3 py-2">教練</td>
-                  <td className="px-3 py-2">小組教練</td>
                   <td className="px-3 py-2">{coachPerson?.phone || "-"}</td>
                   <td className="px-3 py-2">{coachOwner.coach.email || "-"}</td>
                   <td className="px-3 py-2">{coachPerson?.line_id || "-"}</td>
@@ -172,7 +159,7 @@ export default async function GroupDirectoryPage({
               )}
               {!coachOwner?.coach && (
                 <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={8}>
+                  <td className="px-3 py-4 text-slate-500" colSpan={7}>
                     目前尚未指派小組教練。
                   </td>
                 </tr>

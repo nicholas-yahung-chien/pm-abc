@@ -263,13 +263,13 @@ export default async function GroupTrackingPage({
             </colgroup>
             <thead>
               <tr className="bg-emerald-100 text-slate-800">
-                <th className="sticky left-0 z-40 w-24 min-w-24 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                <th className="xl:sticky xl:left-0 z-40 w-24 min-w-24 border-b border-slate-300 bg-emerald-100 px-3 py-3">
                   編號
                 </th>
-                <th className="sticky left-24 z-40 w-56 min-w-56 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                <th className="xl:sticky xl:left-24 z-40 w-56 min-w-56 border-b border-slate-300 bg-emerald-100 px-3 py-3">
                   里程碑
                 </th>
-                <th className="sticky left-80 z-40 w-80 min-w-80 border-b border-slate-300 bg-emerald-100 px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                <th className="xl:sticky xl:left-80 z-40 w-80 min-w-80 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                   待辦事項
                 </th>
                 {groupMembers.map((member) => (
@@ -286,13 +286,13 @@ export default async function GroupTrackingPage({
               </tr>
               {!!groupMembers.length && (
                 <tr className="bg-emerald-50 text-xs text-slate-600">
-                  <th className="sticky left-0 z-30 w-24 min-w-24 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                  <th className="xl:sticky xl:left-0 z-30 w-24 min-w-24 border-b border-slate-200 bg-emerald-50 px-3 py-2">
                     -
                   </th>
-                  <th className="sticky left-24 z-30 w-56 min-w-56 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                  <th className="xl:sticky xl:left-24 z-30 w-56 min-w-56 border-b border-slate-200 bg-emerald-50 px-3 py-2">
                     -
                   </th>
-                  <th className="sticky left-80 z-30 w-80 min-w-80 border-b border-slate-200 bg-emerald-50 px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                  <th className="xl:sticky xl:left-80 z-30 w-80 min-w-80 border-b border-slate-200 bg-emerald-50 px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                     -
                   </th>
                   {groupMembers.map((member, index) => (
@@ -323,11 +323,11 @@ export default async function GroupTrackingPage({
                 return (
                   <Fragment key={section.id}>
                     <tr key={`${section.id}-summary`} className="bg-blue-700 text-white">
-                      <td className="sticky left-0 z-20 w-24 min-w-24 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">{sectionCode}</td>
-                      <td className="sticky left-24 z-20 w-56 min-w-56 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">
+                      <td className="xl:sticky xl:left-0 z-20 w-24 min-w-24 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">{sectionCode}</td>
+                      <td className="xl:sticky xl:left-24 z-20 w-56 min-w-56 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">
                         {section.title}（{sectionPercent.toFixed(2)}%）
                       </td>
-                      <td className="sticky left-80 z-20 w-80 min-w-80 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                      <td className="xl:sticky xl:left-80 z-20 w-80 min-w-80 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                         {section.description || "-"}
                       </td>
                       {groupMembers.map((member) => {
@@ -354,13 +354,13 @@ export default async function GroupTrackingPage({
                       return (
                         <Fragment key={subsection.id}>
                           <tr key={`${subsection.id}-summary`} className="bg-violet-100 text-slate-800">
-                            <td className="sticky left-0 z-20 w-24 min-w-24 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
+                            <td className="xl:sticky xl:left-0 z-20 w-24 min-w-24 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
                               {subsectionCode}
                             </td>
-                            <td className="sticky left-24 z-20 w-56 min-w-56 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
+                            <td className="xl:sticky xl:left-24 z-20 w-56 min-w-56 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
                               {subsection.title}
                             </td>
-                            <td className="sticky left-80 z-20 w-80 min-w-80 border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                            <td className="xl:sticky xl:left-80 z-20 w-80 min-w-80 border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                               {subsection.description || "-"}
                             </td>
                             {groupMembers.map((member) => {
@@ -384,9 +384,9 @@ export default async function GroupTrackingPage({
                             const itemCode = `${subsectionCode}.${itemIndex + 1}`;
                             return (
                               <tr key={item.id} className="border-b border-slate-200 align-top">
-                                <td className="sticky left-0 z-10 w-24 min-w-24 bg-white px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
-                                <td className="sticky left-24 z-10 w-56 min-w-56 bg-white px-3 py-2 text-slate-500">-</td>
-                                <td className="sticky left-80 z-10 w-80 min-w-80 bg-white px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                                <td className="xl:sticky xl:left-0 z-10 w-24 min-w-24 bg-white px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
+                                <td className="xl:sticky xl:left-24 z-10 w-56 min-w-56 bg-white px-3 py-2 text-slate-500">-</td>
+                                <td className="xl:sticky xl:left-80 z-10 w-80 min-w-80 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                                   {item.external_url ? (
                                     <a
                                       href={item.external_url}
