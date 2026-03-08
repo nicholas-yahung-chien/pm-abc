@@ -18,6 +18,7 @@ import {
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
 import { TrackingManagementPanel } from "@/components/tracking-management-panel";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
@@ -251,14 +252,23 @@ export default async function GroupTrackingPage({
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="min-w-full border-collapse text-left text-sm">
+          <table className="min-w-max border-collapse text-left text-sm">
             <thead>
               <tr className="bg-emerald-100 text-slate-800">
-                <th className="border-b border-slate-300 px-3 py-3">編號</th>
-                <th className="border-b border-slate-300 px-3 py-3">里程碑</th>
-                <th className="border-b border-slate-300 px-3 py-3">待辦事項</th>
+                <th className="sticky left-0 z-40 w-24 min-w-24 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                  編號
+                </th>
+                <th className="sticky left-24 z-40 w-80 min-w-80 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                  里程碑
+                </th>
+                <th className="sticky left-[26rem] z-40 w-[30rem] min-w-[30rem] border-b border-slate-300 bg-emerald-100 px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                  待辦事項
+                </th>
                 {groupMembers.map((member) => (
-                  <th key={member.id} className="border-b border-slate-300 px-3 py-3 text-center">
+                  <th
+                    key={member.id}
+                    className="min-w-[8rem] border-b border-slate-300 px-3 py-3 text-center"
+                  >
                     <p className="font-semibold text-slate-900">
                       {member.display_name || member.full_name}
                     </p>
@@ -268,9 +278,15 @@ export default async function GroupTrackingPage({
               </tr>
               {!!groupMembers.length && (
                 <tr className="bg-emerald-50 text-xs text-slate-600">
-                  <th className="border-b border-slate-200 px-3 py-2">-</th>
-                  <th className="border-b border-slate-200 px-3 py-2">-</th>
-                  <th className="border-b border-slate-200 px-3 py-2">-</th>
+                  <th className="sticky left-0 z-30 w-24 min-w-24 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                    -
+                  </th>
+                  <th className="sticky left-24 z-30 w-80 min-w-80 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                    -
+                  </th>
+                  <th className="sticky left-[26rem] z-30 w-[30rem] min-w-[30rem] border-b border-slate-200 bg-emerald-50 px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                    -
+                  </th>
                   {groupMembers.map((member, index) => (
                     <th key={member.id} className="border-b border-slate-200 px-3 py-2 text-center">
                       {index + 1}
@@ -299,11 +315,11 @@ export default async function GroupTrackingPage({
                 return (
                   <Fragment key={section.id}>
                     <tr key={`${section.id}-summary`} className="bg-blue-700 text-white">
-                      <td className="border-b border-blue-900 px-3 py-2 font-semibold">{sectionCode}</td>
-                      <td className="border-b border-blue-900 px-3 py-2 font-semibold">
+                      <td className="sticky left-0 z-20 w-24 min-w-24 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">{sectionCode}</td>
+                      <td className="sticky left-24 z-20 w-80 min-w-80 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">
                         {section.title}（{sectionPercent.toFixed(2)}%）
                       </td>
-                      <td className="border-b border-blue-900 px-3 py-2 text-xs">
+                      <td className="sticky left-[26rem] z-20 w-[30rem] min-w-[30rem] border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                         {section.description || "-"}
                       </td>
                       {groupMembers.map((member) => {
@@ -330,13 +346,13 @@ export default async function GroupTrackingPage({
                       return (
                         <Fragment key={subsection.id}>
                           <tr key={`${subsection.id}-summary`} className="bg-violet-100 text-slate-800">
-                            <td className="border-b border-violet-200 px-3 py-2 font-semibold">
+                            <td className="sticky left-0 z-20 w-24 min-w-24 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
                               {subsectionCode}
                             </td>
-                            <td className="border-b border-violet-200 px-3 py-2 font-semibold">
+                            <td className="sticky left-24 z-20 w-80 min-w-80 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
                               {subsection.title}
                             </td>
-                            <td className="border-b border-violet-200 px-3 py-2 text-xs">
+                            <td className="sticky left-[26rem] z-20 w-[30rem] min-w-[30rem] border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                               {subsection.description || "-"}
                             </td>
                             {groupMembers.map((member) => {
@@ -360,13 +376,17 @@ export default async function GroupTrackingPage({
                             const itemCode = `${subsectionCode}.${itemIndex + 1}`;
                             return (
                               <tr key={item.id} className="border-b border-slate-200 align-top">
-                                <td className="px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
-                                <td className="px-3 py-2 text-slate-500">-</td>
-                                <td className="px-3 py-2">
+                                <td className="sticky left-0 z-10 w-24 min-w-24 bg-white px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
+                                <td className="sticky left-24 z-10 w-80 min-w-80 bg-white px-3 py-2 text-slate-500">-</td>
+                                <td className="sticky left-[26rem] z-10 w-[30rem] min-w-[30rem] bg-white px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                                   <p className="font-medium text-slate-900">{item.title}</p>
-                                  <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">
-                                    {item.content || "-"}
-                                  </p>
+                                  <div className="mt-1">
+                                    <TextPreviewDialogButton
+                                      title={item.title}
+                                      text={item.content || ""}
+                                      maxLen={18}
+                                    />
+                                  </div>
                                   <p className="mt-1 text-xs text-slate-500">
                                     到期日：{formatDate(item.due_date)}
                                   </p>
