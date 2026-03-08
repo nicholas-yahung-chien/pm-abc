@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import {
   createTrackingItemAction,
   createTrackingSectionAction,
@@ -196,6 +196,53 @@ export default async function GroupTrackingPage({
     itemsBySubsectionId.set(item.subsection_id, list);
   }
 
+  const codeLabels: string[] = ["編號", "-"];
+  const milestoneLabels: string[] = ["里程碑", "-"];
+  for (const [sectionIndex, section] of groupSections.entries()) {
+    const sectionCode = String(sectionIndex);
+    codeLabels.push(sectionCode);
+    milestoneLabels.push(section.title || "-");
+
+    const subsectionRows = groupSubsections.filter((item) => item.section_id === section.id);
+    for (const [subsectionIndex, subsection] of subsectionRows.entries()) {
+      const subsectionCode = `${sectionCode}.${subsectionIndex + 1}`;
+      codeLabels.push(subsectionCode);
+      milestoneLabels.push(subsection.title || "-");
+
+      const itemRows = itemsBySubsectionId.get(subsection.id) ?? [];
+      for (const [itemIndex] of itemRows.entries()) {
+        codeLabels.push(`${subsectionCode}.${itemIndex + 1}`);
+        milestoneLabels.push("-");
+      }
+    }
+  }
+
+  const codeMaxChars = Math.max(...codeLabels.map((label) => label.trim().length || 1), 2);
+  const milestoneMaxChars = Math.max(
+    ...milestoneLabels.map((label) => label.trim().length || 1),
+    3,
+  );
+
+  const codeColRem = Math.min(Math.max(codeMaxChars * 0.7 + 1.8, 4.5), 8);
+  const milestoneColRem = Math.min(Math.max(milestoneMaxChars * 0.9 + 1.8, 8), 16);
+  const todoColRem = 20;
+
+  const codeCol = `${codeColRem}rem`;
+  const milestoneCol = `${milestoneColRem}rem`;
+  const todoCol = `${todoColRem}rem`;
+  const milestoneLeft = codeCol;
+  const todoLeft = `${codeColRem + milestoneColRem}rem`;
+
+  const codeCellStyle: CSSProperties = { width: codeCol, minWidth: codeCol };
+  const milestoneCellStyle: CSSProperties = { width: milestoneCol, minWidth: milestoneCol };
+  const todoCellStyle: CSSProperties = { width: todoCol, minWidth: todoCol };
+  const stickyCodeCellStyle: CSSProperties = { ...codeCellStyle, left: "0px" };
+  const stickyMilestoneCellStyle: CSSProperties = {
+    ...milestoneCellStyle,
+    left: milestoneLeft,
+  };
+  const stickyTodoCellStyle: CSSProperties = { ...todoCellStyle, left: todoLeft };
+
   return (
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -254,22 +301,31 @@ export default async function GroupTrackingPage({
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
           <table className="table-fixed min-w-max border-collapse text-left text-sm">
             <colgroup>
-              <col className="w-24 min-w-24" />
-              <col className="w-56 min-w-56" />
-              <col className="w-80 min-w-80" />
+              <col style={codeCellStyle} />
+              <col style={milestoneCellStyle} />
+              <col style={todoCellStyle} />
               {groupMembers.map((member) => (
                 <col key={`member-col-${member.id}`} className="w-32 min-w-32" />
               ))}
             </colgroup>
             <thead>
               <tr className="bg-emerald-100 text-slate-800">
-                <th className="xl:sticky xl:left-0 z-40 w-24 min-w-24 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                <th
+                  className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
+                  style={stickyCodeCellStyle}
+                >
                   編號
                 </th>
-                <th className="xl:sticky xl:left-24 z-40 w-56 min-w-56 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                <th
+                  className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
+                  style={stickyMilestoneCellStyle}
+                >
                   里程碑
                 </th>
-                <th className="xl:sticky xl:left-80 z-40 w-80 min-w-80 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                <th
+                  className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
+                  style={stickyTodoCellStyle}
+                >
                   待辦事項
                 </th>
                 {groupMembers.map((member) => (
@@ -286,13 +342,22 @@ export default async function GroupTrackingPage({
               </tr>
               {!!groupMembers.length && (
                 <tr className="bg-emerald-50 text-xs text-slate-600">
-                  <th className="xl:sticky xl:left-0 z-30 w-24 min-w-24 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                  <th
+                    className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2"
+                    style={stickyCodeCellStyle}
+                  >
                     -
                   </th>
-                  <th className="xl:sticky xl:left-24 z-30 w-56 min-w-56 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                  <th
+                    className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2"
+                    style={stickyMilestoneCellStyle}
+                  >
                     -
                   </th>
-                  <th className="xl:sticky xl:left-80 z-30 w-80 min-w-80 border-b border-slate-200 bg-emerald-50 px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                  <th
+                    className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
+                    style={stickyTodoCellStyle}
+                  >
                     -
                   </th>
                   {groupMembers.map((member, index) => (
@@ -323,11 +388,22 @@ export default async function GroupTrackingPage({
                 return (
                   <Fragment key={section.id}>
                     <tr key={`${section.id}-summary`} className="bg-blue-700 text-white">
-                      <td className="xl:sticky xl:left-0 z-20 w-24 min-w-24 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">{sectionCode}</td>
-                      <td className="xl:sticky xl:left-24 z-20 w-56 min-w-56 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">
+                      <td
+                        className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold"
+                        style={stickyCodeCellStyle}
+                      >
+                        {sectionCode}
+                      </td>
+                      <td
+                        className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold"
+                        style={stickyMilestoneCellStyle}
+                      >
                         {section.title}（{sectionPercent.toFixed(2)}%）
                       </td>
-                      <td className="xl:sticky xl:left-80 z-20 w-80 min-w-80 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                      <td
+                        className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
+                        style={stickyTodoCellStyle}
+                      >
                         {section.description || "-"}
                       </td>
                       {groupMembers.map((member) => {
@@ -354,13 +430,22 @@ export default async function GroupTrackingPage({
                       return (
                         <Fragment key={subsection.id}>
                           <tr key={`${subsection.id}-summary`} className="bg-violet-100 text-slate-800">
-                            <td className="xl:sticky xl:left-0 z-20 w-24 min-w-24 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
+                            <td
+                              className="xl:sticky z-20 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold"
+                              style={stickyCodeCellStyle}
+                            >
                               {subsectionCode}
                             </td>
-                            <td className="xl:sticky xl:left-24 z-20 w-56 min-w-56 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
+                            <td
+                              className="xl:sticky z-20 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold"
+                              style={stickyMilestoneCellStyle}
+                            >
                               {subsection.title}
                             </td>
-                            <td className="xl:sticky xl:left-80 z-20 w-80 min-w-80 border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                            <td
+                              className="xl:sticky z-20 border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
+                              style={stickyTodoCellStyle}
+                            >
                               {subsection.description || "-"}
                             </td>
                             {groupMembers.map((member) => {
@@ -384,9 +469,22 @@ export default async function GroupTrackingPage({
                             const itemCode = `${subsectionCode}.${itemIndex + 1}`;
                             return (
                               <tr key={item.id} className="border-b border-slate-200 align-top">
-                                <td className="xl:sticky xl:left-0 z-10 w-24 min-w-24 bg-white px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
-                                <td className="xl:sticky xl:left-24 z-10 w-56 min-w-56 bg-white px-3 py-2 text-slate-500">-</td>
-                                <td className="xl:sticky xl:left-80 z-10 w-80 min-w-80 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                                <td
+                                  className="xl:sticky z-10 bg-white px-3 py-2 font-semibold text-slate-700"
+                                  style={stickyCodeCellStyle}
+                                >
+                                  {itemCode}
+                                </td>
+                                <td
+                                  className="xl:sticky z-10 bg-white px-3 py-2 text-slate-500"
+                                  style={stickyMilestoneCellStyle}
+                                >
+                                  -
+                                </td>
+                                <td
+                                  className="xl:sticky z-10 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
+                                  style={stickyTodoCellStyle}
+                                >
                                   {item.external_url ? (
                                     <a
                                       href={item.external_url}
