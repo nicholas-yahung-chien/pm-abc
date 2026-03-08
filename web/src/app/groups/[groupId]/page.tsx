@@ -252,16 +252,24 @@ export default async function GroupTrackingPage({
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="min-w-max border-collapse text-left text-sm">
+          <table className="table-fixed min-w-max border-collapse text-left text-sm">
+            <colgroup>
+              <col className="w-24 min-w-24" />
+              <col className="w-56 min-w-56" />
+              <col className="w-80 min-w-80" />
+              {groupMembers.map((member) => (
+                <col key={`member-col-${member.id}`} className="w-32 min-w-32" />
+              ))}
+            </colgroup>
             <thead>
               <tr className="bg-emerald-100 text-slate-800">
                 <th className="sticky left-0 z-40 w-24 min-w-24 border-b border-slate-300 bg-emerald-100 px-3 py-3">
                   編號
                 </th>
-                <th className="sticky left-24 z-40 w-80 min-w-80 border-b border-slate-300 bg-emerald-100 px-3 py-3">
+                <th className="sticky left-24 z-40 w-56 min-w-56 border-b border-slate-300 bg-emerald-100 px-3 py-3">
                   里程碑
                 </th>
-                <th className="sticky left-[26rem] z-40 w-[30rem] min-w-[30rem] border-b border-slate-300 bg-emerald-100 px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                <th className="sticky left-80 z-40 w-80 min-w-80 border-b border-slate-300 bg-emerald-100 px-3 py-3 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                   待辦事項
                 </th>
                 {groupMembers.map((member) => (
@@ -281,10 +289,10 @@ export default async function GroupTrackingPage({
                   <th className="sticky left-0 z-30 w-24 min-w-24 border-b border-slate-200 bg-emerald-50 px-3 py-2">
                     -
                   </th>
-                  <th className="sticky left-24 z-30 w-80 min-w-80 border-b border-slate-200 bg-emerald-50 px-3 py-2">
+                  <th className="sticky left-24 z-30 w-56 min-w-56 border-b border-slate-200 bg-emerald-50 px-3 py-2">
                     -
                   </th>
-                  <th className="sticky left-[26rem] z-30 w-[30rem] min-w-[30rem] border-b border-slate-200 bg-emerald-50 px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                  <th className="sticky left-80 z-30 w-80 min-w-80 border-b border-slate-200 bg-emerald-50 px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                     -
                   </th>
                   {groupMembers.map((member, index) => (
@@ -316,10 +324,10 @@ export default async function GroupTrackingPage({
                   <Fragment key={section.id}>
                     <tr key={`${section.id}-summary`} className="bg-blue-700 text-white">
                       <td className="sticky left-0 z-20 w-24 min-w-24 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">{sectionCode}</td>
-                      <td className="sticky left-24 z-20 w-80 min-w-80 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">
+                      <td className="sticky left-24 z-20 w-56 min-w-56 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold">
                         {section.title}（{sectionPercent.toFixed(2)}%）
                       </td>
-                      <td className="sticky left-[26rem] z-20 w-[30rem] min-w-[30rem] border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                      <td className="sticky left-80 z-20 w-80 min-w-80 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                         {section.description || "-"}
                       </td>
                       {groupMembers.map((member) => {
@@ -349,10 +357,10 @@ export default async function GroupTrackingPage({
                             <td className="sticky left-0 z-20 w-24 min-w-24 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
                               {subsectionCode}
                             </td>
-                            <td className="sticky left-24 z-20 w-80 min-w-80 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
+                            <td className="sticky left-24 z-20 w-56 min-w-56 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold">
                               {subsection.title}
                             </td>
-                            <td className="sticky left-[26rem] z-20 w-[30rem] min-w-[30rem] border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                            <td className="sticky left-80 z-20 w-80 min-w-80 border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                               {subsection.description || "-"}
                             </td>
                             {groupMembers.map((member) => {
@@ -377,8 +385,8 @@ export default async function GroupTrackingPage({
                             return (
                               <tr key={item.id} className="border-b border-slate-200 align-top">
                                 <td className="sticky left-0 z-10 w-24 min-w-24 bg-white px-3 py-2 font-semibold text-slate-700">{itemCode}</td>
-                                <td className="sticky left-24 z-10 w-80 min-w-80 bg-white px-3 py-2 text-slate-500">-</td>
-                                <td className="sticky left-[26rem] z-10 w-[30rem] min-w-[30rem] bg-white px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                                <td className="sticky left-24 z-10 w-56 min-w-56 bg-white px-3 py-2 text-slate-500">-</td>
+                                <td className="sticky left-80 z-10 w-80 min-w-80 bg-white px-3 py-2 shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]">
                                   <p className="font-medium text-slate-900">{item.title}</p>
                                   <div className="mt-1">
                                     <TextPreviewDialogButton
