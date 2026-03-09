@@ -36,7 +36,7 @@ type Params = Promise<{ groupId: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function formatDate(dateInput: string | null): string {
-  if (!dateInput) return "-";
+  if (!dateInput) return "";
   const date = new Date(dateInput);
   if (Number.isNaN(date.getTime())) return dateInput;
   return date.toLocaleDateString("zh-TW");
@@ -205,23 +205,23 @@ export default async function GroupTrackingPage({
     cumulativeItemsBeforeSection += sectionItemCountById.get(section.id) ?? 0;
   }
 
-  const codeLabels: string[] = ["編號", "-"];
-  const milestoneLabels: string[] = ["里程碑", "-"];
+  const codeLabels: string[] = ["編號", ""];
+  const milestoneLabels: string[] = ["里程碑", ""];
   for (const [sectionIndex, section] of groupSections.entries()) {
     const sectionCode = String(sectionIndex);
     codeLabels.push(sectionCode);
-    milestoneLabels.push(section.title || "-");
+    milestoneLabels.push(section.title || "");
 
     const subsectionRows = visibleSubsectionsBySectionId.get(section.id) ?? [];
     for (const [subsectionIndex, subsection] of subsectionRows.entries()) {
       const subsectionCode = `${sectionCode}.${subsectionIndex + 1}`;
       codeLabels.push(subsectionCode);
-      milestoneLabels.push(subsection.title || "-");
+      milestoneLabels.push(subsection.title || "");
 
       const itemRows = itemsBySubsectionId.get(subsection.id) ?? [];
       for (const [itemIndex] of itemRows.entries()) {
         codeLabels.push(`${subsectionCode}.${itemIndex + 1}`);
-        milestoneLabels.push("-");
+        milestoneLabels.push("");
       }
     }
 
@@ -229,7 +229,7 @@ export default async function GroupTrackingPage({
     for (const [directItemIndex] of directItems.entries()) {
       const directCode = `${sectionCode}.${subsectionRows.length + directItemIndex + 1}`;
       codeLabels.push(directCode);
-      milestoneLabels.push("-");
+      milestoneLabels.push("");
     }
   }
 
@@ -260,6 +260,11 @@ export default async function GroupTrackingPage({
     left: milestoneLeft,
   };
   const stickyTodoCellStyle: CSSProperties = { ...todoCellStyle, left: todoLeft };
+  const stickyMergedMilestoneTodoCellStyle: CSSProperties = {
+    width: `${milestoneColRem + todoColRem}rem`,
+    minWidth: `${milestoneColRem + todoColRem}rem`,
+    left: milestoneLeft,
+  };
   const getMemberColStyle = (index: number): CSSProperties => {
     const isLast = index === visibleMembers.length - 1;
     if (memberColsShouldStretch && isLast) {
@@ -373,19 +378,19 @@ export default async function GroupTrackingPage({
                     className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2"
                     style={stickyCodeCellStyle}
                   >
-                    -
+                    
                   </th>
                   <th
                     className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2"
                     style={stickyMilestoneCellStyle}
                   >
-                    -
+                    
                   </th>
                   <th
                     className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
                     style={stickyTodoCellStyle}
                   >
-                    -
+                    
                   </th>
                   {visibleMembers.map((member) => (
                     <th key={member.id} className="border-b border-slate-200 px-3 py-2 text-center">
@@ -423,23 +428,23 @@ export default async function GroupTrackingPage({
                         {sectionCode}
                       </td>
                       <td
-                        className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold"
-                        style={stickyMilestoneCellStyle}
-                      >
-                        {section.title}（{sectionMilestonePercent.toFixed(2)}%）
-                      </td>
-                      <td
+                        colSpan={2}
                         className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
-                        style={stickyTodoCellStyle}
+                        style={stickyMergedMilestoneTodoCellStyle}
                       >
-                        {section.description || "-"}
+                        <p className="font-semibold text-white">
+                          {section.title} ({sectionMilestonePercent.toFixed(2)}%)
+                        </p>
+                        {section.description ? (
+                          <p className="mt-1 text-xs text-blue-100">{section.description}</p>
+                        ) : null}
                       </td>
                       {visibleMembers.map((member) => (
                         <td
                           key={`${section.id}:${member.id}:summary`}
                           className="border-b border-blue-900 px-2 py-2 text-center text-xs font-semibold"
                         >
-                          -
+                          
                         </td>
                       ))}
                     </tr>
@@ -457,23 +462,21 @@ export default async function GroupTrackingPage({
                               {subsectionCode}
                             </td>
                             <td
-                              className="xl:sticky z-20 border-b border-violet-200 bg-violet-100 px-3 py-2 font-semibold"
-                              style={stickyMilestoneCellStyle}
-                            >
-                              {subsection.title}
-                            </td>
-                            <td
+                              colSpan={2}
                               className="xl:sticky z-20 border-b border-violet-200 bg-violet-100 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
-                              style={stickyTodoCellStyle}
+                              style={stickyMergedMilestoneTodoCellStyle}
                             >
-                              {subsection.description || "-"}
+                              <p className="font-semibold text-slate-800">{subsection.title}</p>
+                              {subsection.description ? (
+                                <p className="mt-1 text-xs text-slate-600">{subsection.description}</p>
+                              ) : null}
                             </td>
                             {visibleMembers.map((member) => (
                               <td
                                 key={`${subsection.id}:${member.id}:summary`}
                                 className="border-b border-violet-200 px-2 py-2 text-center text-xs font-semibold"
                               >
-                                -
+                                
                               </td>
                             ))}
                           </tr>
@@ -492,7 +495,7 @@ export default async function GroupTrackingPage({
                                   className="xl:sticky z-10 bg-white px-3 py-2 text-slate-500"
                                   style={stickyMilestoneCellStyle}
                                 >
-                                  -
+                                  
                                 </td>
                                 <td
                                   className="xl:sticky z-10 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
@@ -605,7 +608,7 @@ export default async function GroupTrackingPage({
                             className="xl:sticky z-10 bg-white px-3 py-2 text-slate-500"
                             style={stickyMilestoneCellStyle}
                           >
-                            -
+                            
                           </td>
                           <td
                             className="xl:sticky z-10 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
