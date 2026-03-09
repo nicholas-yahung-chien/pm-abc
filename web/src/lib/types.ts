@@ -1,5 +1,6 @@
 export type PersonType = "coach" | "member";
 export type MembershipType = "coach" | "member";
+export type TrackingItemResponseType = "checkbox" | "number" | "date" | "select";
 
 export type ClassRow = {
   id: string;
@@ -162,6 +163,8 @@ export type TrackingItemRow = {
   content: string;
   extra_data: string;
   external_url: string;
+  response_type: TrackingItemResponseType;
+  response_options: string[];
   due_date: string | null;
   owner_person_id: string | null;
   progress_percent: number;
@@ -214,6 +217,9 @@ export type TrackingItemMemberCompletionRow = {
   item_id: string;
   person_id: string;
   is_completed: boolean;
+  number_value: number | null;
+  date_value: string | null;
+  select_value: string | null;
   completed_at: string | null;
   completed_by_account_id: string | null;
   created_at: string;

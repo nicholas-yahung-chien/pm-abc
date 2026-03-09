@@ -1,4 +1,4 @@
-﻿import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import type {
   ClassRow,
   GroupRow,
@@ -8,6 +8,7 @@ import type {
   PersonRow,
   RoleAssignmentRow,
   RoleDefinitionRow,
+  TrackingItemResponseType,
   TrackingItemRow,
   TrackingItemMemberCompletionRow,
   TrackingSectionProgressRow,
@@ -35,6 +36,39 @@ function getClientOrError():
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+const TRACKING_ITEM_RESPONSE_TYPES: TrackingItemResponseType[] = [
+  "checkbox",
+  "number",
+  "date",
+  "select",
+];
+
+function normalizeTrackingItemResponseType(
+  value: unknown,
+): TrackingItemResponseType {
+  if (typeof value !== "string") return "checkbox";
+  return TRACKING_ITEM_RESPONSE_TYPES.includes(value as TrackingItemResponseType)
+    ? (value as TrackingItemResponseType)
+    : "checkbox";
+}
+
+function normalizeTrackingItemResponseOptions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(
+    new Set(
+      value
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter((item) => item.length > 0),
+    ),
+  );
+}
+
+function normalizeTrackingItemMemberNumberValue(value: unknown): number | null {
+  if (typeof value !== "number") return null;
+  if (!Number.isFinite(value)) return null;
+  return Number(value);
 }
 
 type AdminClient = NonNullable<ReturnType<typeof getSupabaseAdminClient>>;
@@ -348,7 +382,14 @@ export async function listTrackingItems(): Promise<TrackingItemRow[]> {
     return [];
   }
 
-  return ((data ?? []) as unknown) as TrackingItemRow[];
+  return (((data ?? []) as unknown[]) ?? []).map((rawRow) => {
+    const row = rawRow as Record<string, unknown>;
+    return {
+      ...(row as unknown as TrackingItemRow),
+      response_type: normalizeTrackingItemResponseType(row.response_type),
+      response_options: normalizeTrackingItemResponseOptions(row.response_options),
+    };
+  });
 }
 
 export async function listTrackingItemMemberCompletions(): Promise<
@@ -362,7 +403,15 @@ export async function listTrackingItemMemberCompletions(): Promise<
     .select("*")
     .order("updated_at", { ascending: false });
 
-  return ((data ?? []) as unknown) as TrackingItemMemberCompletionRow[];
+  return (((data ?? []) as unknown[]) ?? []).map((rawRow) => {
+    const row = rawRow as Record<string, unknown>;
+    return {
+      ...(row as unknown as TrackingItemMemberCompletionRow),
+      number_value: normalizeTrackingItemMemberNumberValue(row.number_value),
+      date_value: typeof row.date_value === "string" ? row.date_value : null,
+      select_value: typeof row.select_value === "string" ? row.select_value : null,
+    };
+  });
 }
 
 export async function listGroupTrackingProgress(): Promise<GroupTrackingProgressRow[]> {
@@ -1374,11 +1423,23 @@ export async function createTrackingItem(input: {
   extraData: string;
   externalUrl: string;
   dueDate: string;
+  responseType: TrackingItemResponseType;
+  responseOptions: string[];
   sortOrder?: number | null;
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
+
+  const responseType = normalizeTrackingItemResponseType(input.responseType);
+  const responseOptions =
+    responseType === "select"
+      ? normalizeTrackingItemResponseOptions(input.responseOptions)
+      : [];
+
+  if (responseType === "select" && !responseOptions.length) {
+    return { ok: false, message: "下拉式選單回報至少需要一個選項。" };
+  }
 
   const resolvedSubsection = await resolveTrackingItemSubsectionId({
     client: db.client,
@@ -1415,6 +1476,8 @@ export async function createTrackingItem(input: {
     content: input.content,
     extra_data: input.extraData,
     external_url: input.externalUrl,
+    response_type: responseType,
+    response_options: responseOptions,
     due_date: input.dueDate || null,
     owner_person_id: null,
     progress_percent: 0,
@@ -1438,10 +1501,32 @@ export async function updateTrackingItem(input: {
   extraData: string;
   externalUrl: string;
   dueDate: string;
+  responseType: TrackingItemResponseType;
+  responseOptions: string[];
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
+
+  const responseType = normalizeTrackingItemResponseType(input.responseType);
+  const responseOptions =
+    responseType === "select"
+      ? normalizeTrackingItemResponseOptions(input.responseOptions)
+      : [];
+
+  if (responseType === "select" && !responseOptions.length) {
+    return { ok: false, message: "下拉式選單回報至少需要一個選項。" };
+  }
+
+  const { data: existingItem, error: existingItemError } = await db.client
+    .from("tracking_items")
+    .select("response_type, response_options")
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId)
+    .maybeSingle();
+
+  if (existingItemError) return { ok: false, message: existingItemError.message };
+  if (!existingItem) return { ok: false, message: "找不到追蹤項目。" };
 
   const resolvedSubsection = await resolveTrackingItemSubsectionId({
     client: db.client,
@@ -1461,6 +1546,8 @@ export async function updateTrackingItem(input: {
       content: input.content,
       extra_data: input.extraData,
       external_url: input.externalUrl,
+      response_type: responseType,
+      response_options: responseOptions,
       due_date: input.dueDate || null,
       updated_by_account_id: input.accountId ?? null,
     })
@@ -1468,6 +1555,26 @@ export async function updateTrackingItem(input: {
     .eq("group_id", input.groupId);
 
   if (error) return { ok: false, message: error.message };
+
+  const previousResponseType = normalizeTrackingItemResponseType(existingItem.response_type);
+  const previousResponseOptions = normalizeTrackingItemResponseOptions(
+    existingItem.response_options,
+  );
+  const shouldResetCompletions =
+    previousResponseType !== responseType ||
+    (responseType === "select" &&
+      JSON.stringify(previousResponseOptions) !== JSON.stringify(responseOptions));
+
+  if (shouldResetCompletions) {
+    const { error: resetError } = await db.client
+      .from("tracking_item_member_completions")
+      .delete()
+      .eq("group_id", input.groupId)
+      .eq("item_id", input.itemId);
+
+    if (resetError) return { ok: false, message: resetError.message };
+  }
+
   return { ok: true };
 }
 
@@ -1592,6 +1699,8 @@ export async function copyTrackingItem(input: {
     content: string;
     extra_data: string;
     external_url: string;
+    response_type: TrackingItemResponseType;
+    response_options: unknown;
     due_date: string | null;
   };
 
@@ -1604,6 +1713,8 @@ export async function copyTrackingItem(input: {
         "content",
         "extra_data",
         "external_url",
+        "response_type",
+        "response_options",
         "due_date",
       ].join(", "),
     )
@@ -1638,6 +1749,8 @@ export async function copyTrackingItem(input: {
     content: source.content,
     extra_data: source.extra_data,
     external_url: source.external_url,
+    response_type: normalizeTrackingItemResponseType(source.response_type),
+    response_options: normalizeTrackingItemResponseOptions(source.response_options),
     due_date: source.due_date,
     owner_person_id: null,
     progress_percent: 0,
@@ -1654,28 +1767,92 @@ export async function copyTrackingItem(input: {
   return { ok: true };
 }
 
-export async function setTrackingItemMemberCompletion(input: {
+export async function setTrackingItemMemberResponse(input: {
   groupId: string;
   itemId: string;
   personId: string;
   isCompleted: boolean;
+  numberValue: string;
+  dateValue: string;
+  selectValue: string;
   accountId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
 
-  if (input.isCompleted) {
-    const { error } = await db.client.from("tracking_item_member_completions").upsert(
-      {
-        group_id: input.groupId,
-        item_id: input.itemId,
-        person_id: input.personId,
-        is_completed: true,
-        completed_at: new Date().toISOString(),
-        completed_by_account_id: input.accountId ?? null,
-      },
-      { onConflict: "item_id,person_id" },
-    );
+  const { data: itemRow, error: itemError } = await db.client
+    .from("tracking_items")
+    .select("response_type")
+    .eq("id", input.itemId)
+    .eq("group_id", input.groupId)
+    .maybeSingle();
+
+  if (itemError) return { ok: false, message: itemError.message };
+  if (!itemRow) return { ok: false, message: "找不到追蹤項目。" };
+
+  const responseType = normalizeTrackingItemResponseType(
+    (itemRow as { response_type?: unknown }).response_type,
+  );
+  const numberText = input.numberValue.trim();
+  const dateText = input.dateValue.trim();
+  const selectText = input.selectValue.trim();
+
+  let shouldDelete = false;
+  const payload = {
+    group_id: input.groupId,
+    item_id: input.itemId,
+    person_id: input.personId,
+    is_completed: false,
+    number_value: null as number | null,
+    date_value: null as string | null,
+    select_value: null as string | null,
+    completed_at: null as string | null,
+    completed_by_account_id: input.accountId ?? null,
+  };
+
+  if (responseType === "checkbox") {
+    shouldDelete = !input.isCompleted;
+    if (!shouldDelete) {
+      payload.is_completed = true;
+      payload.completed_at = new Date().toISOString();
+    }
+  } else if (responseType === "number") {
+    if (!numberText) {
+      shouldDelete = true;
+    } else {
+      if (!/^\d+(\.\d{1,2})?$/.test(numberText)) {
+        return { ok: false, message: "請輸入有效數字（最多 2 位小數）。" };
+      }
+      const numberValue = Number(numberText);
+      if (!Number.isFinite(numberValue)) {
+        return { ok: false, message: "請輸入有效數字（最多 2 位小數）。" };
+      }
+      payload.number_value = numberValue;
+    }
+  } else if (responseType === "date") {
+    if (!dateText) {
+      shouldDelete = true;
+    } else {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+        return { ok: false, message: "請輸入有效日期。" };
+      }
+      payload.date_value = dateText;
+    }
+  } else {
+    if (!selectText) {
+      shouldDelete = true;
+    } else {
+      payload.select_value = selectText;
+    }
+  }
+
+  if (shouldDelete) {
+    const { error } = await db.client
+      .from("tracking_item_member_completions")
+      .delete()
+      .eq("group_id", input.groupId)
+      .eq("item_id", input.itemId)
+      .eq("person_id", input.personId);
 
     if (error) return { ok: false, message: error.message };
     return { ok: true };
@@ -1683,10 +1860,7 @@ export async function setTrackingItemMemberCompletion(input: {
 
   const { error } = await db.client
     .from("tracking_item_member_completions")
-    .delete()
-    .eq("group_id", input.groupId)
-    .eq("item_id", input.itemId)
-    .eq("person_id", input.personId);
+    .upsert(payload, { onConflict: "item_id,person_id" });
 
   if (error) return { ok: false, message: error.message };
   return { ok: true };

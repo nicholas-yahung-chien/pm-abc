@@ -11,7 +11,7 @@ import {
   moveTrackingItemOrderAction,
   moveTrackingSectionAction,
   moveTrackingSubsectionAction,
-  setTrackingItemMemberCompletionAction,
+  setTrackingItemMemberResponseAction,
   updateTrackingItemAction,
   updateTrackingSectionAction,
   updateTrackingSubsectionAction,
@@ -31,6 +31,7 @@ import {
   listTrackingSubsections,
 } from "@/lib/repository";
 import { pickSearchParam } from "@/lib/search";
+import type { TrackingItemMemberCompletionRow, TrackingItemResponseType, TrackingItemRow } from "@/lib/types";
 
 type Params = Promise<{ groupId: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -49,6 +50,15 @@ function buildCompletionKey(left: string, right: string): string {
 function toPercent(completed: number, total: number): number {
   if (total <= 0) return 0;
   return (completed / total) * 100;
+}
+
+function normalizeResponseType(value: unknown): TrackingItemResponseType {
+  if (value === "number" || value === "date" || value === "select") return value;
+  return "checkbox";
+}
+
+function formatNumberValue(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
 export default async function GroupTrackingPage({
@@ -91,7 +101,7 @@ export default async function GroupTrackingPage({
     session.role === "member" &&
     !myMemberships.some((membership) => membership.group_id === groupId)
   ) {
-    const encoded = encodeURIComponent("學員僅可進入已被指派的小組。");
+    const encoded = encodeURIComponent("學員僅可管理已被指派的小組。");
     redirect(`/groups?status=error&message=${encoded}`);
   }
 
@@ -153,17 +163,17 @@ export default async function GroupTrackingPage({
 
   const itemById = new Map(groupItems.map((item) => [item.id, item]));
 
-  const completionRows = trackingItemCompletions.filter(
+  const responseRows = trackingItemCompletions.filter(
     (item) =>
       item.group_id === groupId &&
-      item.is_completed &&
       visibleMemberIdSet.has(item.person_id) &&
       itemById.has(item.item_id),
   );
-
-  const completionKeySet = new Set(
-    completionRows.map((item) => buildCompletionKey(item.item_id, item.person_id)),
-  );
+  const completionRows = responseRows.filter((item) => item.is_completed);
+  const responseByKey = new Map<string, TrackingItemMemberCompletionRow>();
+  for (const responseRow of responseRows) {
+    responseByKey.set(buildCompletionKey(responseRow.item_id, responseRow.person_id), responseRow);
+  }
 
   const sectionItemCountById = new Map<string, number>();
   for (const item of groupItems) {
@@ -205,7 +215,7 @@ export default async function GroupTrackingPage({
     cumulativeItemsBeforeSection += sectionItemCountById.get(section.id) ?? 0;
   }
 
-  const codeLabels: string[] = ["編號", ""];
+  const codeLabels: string[] = ["蝺刻?", ""];
   const milestoneLabels: string[] = ["里程碑", ""];
   for (const [sectionIndex, section] of groupSections.entries()) {
     const sectionCode = String(sectionIndex);
@@ -273,12 +283,182 @@ export default async function GroupTrackingPage({
     return { width: memberCol, minWidth: memberCol };
   };
 
+  const renderReadonlyMemberResponse = (
+    item: TrackingItemRow,
+    responseRow: TrackingItemMemberCompletionRow | null,
+  ) => {
+    const responseType = normalizeResponseType(item.response_type);
+    if (responseType === "checkbox") {
+      const completed = Boolean(responseRow?.is_completed);
+      return (
+        <div
+          className={`mx-auto inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] leading-none ${
+            completed
+              ? "border-emerald-700 bg-emerald-700 text-white"
+              : "border-slate-300 bg-slate-100 text-slate-400"
+          }`}
+        >
+          {completed ? "✓" : ""}
+        </div>
+      );
+    }
+
+    if (responseType === "number") {
+      return (
+        <p className="text-xs font-medium text-slate-700">
+          {typeof responseRow?.number_value === "number"
+            ? formatNumberValue(responseRow.number_value)
+            : ""}
+        </p>
+      );
+    }
+
+    if (responseType === "date") {
+      return <p className="text-xs font-medium text-slate-700">{formatDate(responseRow?.date_value ?? null)}</p>;
+    }
+
+    return <p className="text-xs font-medium text-slate-700">{responseRow?.select_value ?? ""}</p>;
+  };
+
+  const renderEditableMemberResponse = (
+    item: TrackingItemRow,
+    memberId: string,
+    responseRow: TrackingItemMemberCompletionRow | null,
+  ) => {
+    const responseType = normalizeResponseType(item.response_type);
+
+    if (responseType === "checkbox") {
+      const completed = Boolean(responseRow?.is_completed);
+      return (
+        <form action={setTrackingItemMemberResponseAction} className="flex items-center justify-center">
+          <input type="hidden" name="groupId" value={groupId} />
+          <input type="hidden" name="itemId" value={item.id} />
+          <input type="hidden" name="personId" value={memberId} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <input type="hidden" name="isCompleted" value={completed ? "false" : "true"} />
+          <input type="hidden" name="numberValue" value="" />
+          <input type="hidden" name="dateValue" value="" />
+          <input type="hidden" name="selectValue" value="" />
+          <button
+            title={completed ? "??摰?" : "?摰?"}
+            className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-semibold leading-none transition ${
+              completed
+                ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
+                : "border-slate-300 bg-white text-slate-500 hover:border-emerald-400 hover:text-emerald-600"
+            }`}
+          >
+            {completed ? "✓" : ""}
+          </button>
+        </form>
+      );
+    }
+
+    if (responseType === "number") {
+      return (
+        <form action={setTrackingItemMemberResponseAction} className="mx-auto flex items-center justify-center gap-1">
+          <input type="hidden" name="groupId" value={groupId} />
+          <input type="hidden" name="itemId" value={item.id} />
+          <input type="hidden" name="personId" value={memberId} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <input type="hidden" name="isCompleted" value="false" />
+          <input type="hidden" name="dateValue" value="" />
+          <input type="hidden" name="selectValue" value="" />
+          <input
+            name="numberValue"
+            type="number"
+            step="0.01"
+            defaultValue={
+              typeof responseRow?.number_value === "number"
+                ? responseRow.number_value.toString()
+                : ""
+            }
+            className="w-20 rounded-md border border-slate-300 px-2 py-1 text-center text-xs"
+          />
+          <button
+            className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
+            title="?脣??"
+          >
+            ??          </button>
+        </form>
+      );
+    }
+
+    if (responseType === "date") {
+      return (
+        <form action={setTrackingItemMemberResponseAction} className="mx-auto flex items-center justify-center gap-1">
+          <input type="hidden" name="groupId" value={groupId} />
+          <input type="hidden" name="itemId" value={item.id} />
+          <input type="hidden" name="personId" value={memberId} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <input type="hidden" name="isCompleted" value="false" />
+          <input type="hidden" name="numberValue" value="" />
+          <input type="hidden" name="selectValue" value="" />
+          <input
+            name="dateValue"
+            type="date"
+            defaultValue={responseRow?.date_value ?? ""}
+            className="w-32 rounded-md border border-slate-300 px-2 py-1 text-xs"
+          />
+          <button
+            className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
+            title="?脣??"
+          >
+            ??          </button>
+        </form>
+      );
+    }
+
+    const options = Array.isArray(item.response_options) ? item.response_options : [];
+    const currentValue = responseRow?.select_value ?? "";
+    const hasCurrentOption = currentValue ? options.includes(currentValue) : true;
+
+    return (
+      <form action={setTrackingItemMemberResponseAction} className="mx-auto flex items-center justify-center gap-1">
+        <input type="hidden" name="groupId" value={groupId} />
+        <input type="hidden" name="itemId" value={item.id} />
+        <input type="hidden" name="personId" value={memberId} />
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <input type="hidden" name="isCompleted" value="false" />
+        <input type="hidden" name="numberValue" value="" />
+        <input type="hidden" name="dateValue" value="" />
+        <select
+          name="selectValue"
+          defaultValue={currentValue}
+          className="w-28 rounded-md border border-slate-300 px-2 py-1 text-xs"
+        >
+          <option value="">未選擇</option>
+          {!hasCurrentOption && currentValue ? (
+            <option value={currentValue}>{currentValue}（舊值）</option>
+          ) : null}
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <button
+          className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
+          title="?脣??"
+        >
+          ??        </button>
+      </form>
+    );
+  };
+
+  const renderMemberResponseCell = (item: TrackingItemRow, memberId: string) => {
+    const responseRow = responseByKey.get(buildCompletionKey(item.id, memberId)) ?? null;
+    const canToggle = session.role === "coach" || currentMemberPersonId === memberId;
+    if (!canToggle) {
+      return renderReadonlyMemberResponse(item, responseRow);
+    }
+    return renderEditableMemberResponse(item, memberId, responseRow);
+  };
+
   return (
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          小組管理 / 追蹤表
-        </p>
+          撠?蝞∠? / 餈質馱銵?        </p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-900">
           {group.class?.code} / {group.code} {group.name}
         </h1>
@@ -290,17 +470,17 @@ export default async function GroupTrackingPage({
 
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">追蹤大項</p>
+            <p className="text-xs text-slate-500">餈質馱憭折?</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{groupSections.length}</p>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">追蹤小項</p>
+            <p className="text-xs text-slate-500">餈質馱撠?</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">
               {visibleGroupSubsections.length}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">追蹤項目</p>
+            <p className="text-xs text-slate-500">餈質馱?</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{groupItems.length}</p>
           </div>
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
@@ -313,22 +493,20 @@ export default async function GroupTrackingPage({
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
           <Link href={`/groups/${groupId}/directory`} className="text-amber-700 underline">
-            前往通訊錄
-          </Link>
+            ??????          </Link>
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            前往 R&R
+            ?? R&R
           </Link>
           <Link href="/groups" className="text-amber-700 underline">
-            回到小組列表
+            ?撠??”
           </Link>
         </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣</h2>
+        <h2 className="text-lg font-semibold text-slate-900">餈質馱?拚</h2>
         <p className="mt-1 text-sm text-slate-600">
-          以里程碑與待辦事項為列、學員為欄，直接查看並回報每位學員完成狀態。
-        </p>
+          隞仿?蝔???颲虫???飛?∠甈??湔?亦?銝血??望?雿飛?∪?????        </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
           <table className="table-fixed w-full min-w-max border-collapse text-left text-sm">
@@ -346,19 +524,18 @@ export default async function GroupTrackingPage({
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyCodeCellStyle}
                 >
-                  編號
+                  蝺刻?
                 </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyMilestoneCellStyle}
                 >
-                  里程碑
-                </th>
+                  ??蝣?                </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
                   style={stickyTodoCellStyle}
                 >
-                  待辦事項
+                  敺齒鈭?
                 </th>
                 {visibleMembers.map((member) => (
                   <th
@@ -407,8 +584,7 @@ export default async function GroupTrackingPage({
               {!groupSections.length && (
                 <tr>
                   <td className="px-3 py-5 text-slate-500" colSpan={3 + visibleMembers.length}>
-                    目前尚無追蹤大項。請先建立追蹤大項後，再新增追蹤項目。
-                  </td>
+                    ?桀?撠餈質馱憭折????遣蝡蕭頩文之??嚗??啣?餈質馱???                  </td>
                 </tr>
               )}
 
@@ -521,61 +697,18 @@ export default async function GroupTrackingPage({
                                     />
                                   </div>
                                   <p className="mt-1 text-xs text-slate-500">
-                                    到期日：{formatDate(item.due_date)}
+                                    ?唳??伐?{formatDate(item.due_date)}
                                   </p>
                                 </td>
 
-                                {visibleMembers.map((member) => {
-                                  const completed = completionKeySet.has(
-                                    buildCompletionKey(item.id, member.id),
-                                  );
-                                  const canToggle =
-                                    session.role === "coach" || currentMemberPersonId === member.id;
-
-                                  return (
-                                    <td
-                                      key={`${item.id}:${member.id}`}
-                                      className="px-2 py-2 align-middle text-center"
-                                    >
-                                      {canToggle ? (
-                                        <form
-                                          action={setTrackingItemMemberCompletionAction}
-                                          className="flex items-center justify-center"
-                                        >
-                                          <input type="hidden" name="groupId" value={groupId} />
-                                          <input type="hidden" name="itemId" value={item.id} />
-                                          <input type="hidden" name="personId" value={member.id} />
-                                          <input type="hidden" name="returnTo" value={returnTo} />
-                                          <input
-                                            type="hidden"
-                                            name="isCompleted"
-                                            value={completed ? "false" : "true"}
-                                          />
-                                          <button
-                                            title={completed ? "取消完成" : "標記完成"}
-                                            className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-semibold leading-none transition ${
-                                              completed
-                                                ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
-                                                : "border-slate-300 bg-white text-slate-500 hover:border-emerald-400 hover:text-emerald-600"
-                                            }`}
-                                          >
-                                            {completed ? "✓" : ""}
-                                          </button>
-                                        </form>
-                                      ) : (
-                                        <div
-                                          className={`mx-auto inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] leading-none ${
-                                            completed
-                                              ? "border-emerald-700 bg-emerald-700 text-white"
-                                              : "border-slate-300 bg-slate-100 text-slate-400"
-                                          }`}
-                                        >
-                                          {completed ? "✓" : ""}
-                                        </div>
-                                      )}
-                                    </td>
-                                  );
-                                })}
+                                {visibleMembers.map((member) => (
+                                  <td
+                                    key={`${item.id}:${member.id}`}
+                                    className="px-2 py-2 align-middle text-center"
+                                  >
+                                    {renderMemberResponseCell(item, member.id)}
+                                  </td>
+                                ))}
                               </tr>
                             );
                           })}
@@ -586,8 +719,7 @@ export default async function GroupTrackingPage({
                                 className="px-3 py-3 text-xs text-slate-500"
                                 colSpan={3 + visibleMembers.length}
                               >
-                                此小項尚無追蹤項目。
-                              </td>
+                                甇文????∟蕭頩日??柴?                              </td>
                             </tr>
                           )}
                         </Fragment>
@@ -633,57 +765,17 @@ export default async function GroupTrackingPage({
                                 maxLen={18}
                               />
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">到期日：{formatDate(item.due_date)}</p>
+                            <p className="mt-1 text-xs text-slate-500">?唳??伐?{formatDate(item.due_date)}</p>
                           </td>
 
-                          {visibleMembers.map((member) => {
-                            const completed = completionKeySet.has(buildCompletionKey(item.id, member.id));
-                            const canToggle = session.role === "coach" || currentMemberPersonId === member.id;
-
-                            return (
-                              <td
-                                key={`${item.id}:${member.id}`}
-                                className="px-2 py-2 align-middle text-center"
-                              >
-                                {canToggle ? (
-                                  <form
-                                    action={setTrackingItemMemberCompletionAction}
-                                    className="flex items-center justify-center"
-                                  >
-                                    <input type="hidden" name="groupId" value={groupId} />
-                                    <input type="hidden" name="itemId" value={item.id} />
-                                    <input type="hidden" name="personId" value={member.id} />
-                                    <input type="hidden" name="returnTo" value={returnTo} />
-                                    <input
-                                      type="hidden"
-                                      name="isCompleted"
-                                      value={completed ? "false" : "true"}
-                                    />
-                                    <button
-                                      title={completed ? "取消完成" : "標記完成"}
-                                      className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-semibold leading-none transition ${
-                                        completed
-                                          ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
-                                          : "border-slate-300 bg-white text-slate-500 hover:border-emerald-400 hover:text-emerald-600"
-                                      }`}
-                                    >
-                                      {completed ? "✓" : ""}
-                                    </button>
-                                  </form>
-                                ) : (
-                                  <div
-                                    className={`mx-auto inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] leading-none ${
-                                      completed
-                                        ? "border-emerald-700 bg-emerald-700 text-white"
-                                        : "border-slate-300 bg-slate-100 text-slate-400"
-                                    }`}
-                                  >
-                                    {completed ? "✓" : ""}
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
+                          {visibleMembers.map((member) => (
+                            <td
+                              key={`${item.id}:${member.id}`}
+                              className="px-2 py-2 align-middle text-center"
+                            >
+                              {renderMemberResponseCell(item, member.id)}
+                            </td>
+                          ))}
                         </tr>
                       );
                     })}
@@ -694,8 +786,7 @@ export default async function GroupTrackingPage({
                           className="px-3 py-3 text-xs text-slate-500"
                           colSpan={3 + visibleMembers.length}
                         >
-                          此大項尚無追蹤小項或直屬追蹤項目。
-                        </td>
+                          甇文之???∟蕭頩文????游惇餈質馱???                        </td>
                       </tr>
                     )}
                   </Fragment>
@@ -729,3 +820,5 @@ export default async function GroupTrackingPage({
     </AppShell>
   );
 }
+
+

@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -27,7 +27,7 @@ import {
   moveTrackingSubsection,
   moveTrackingItem,
   moveTrackingItemOrder,
-  setTrackingItemMemberCompletion,
+  setTrackingItemMemberResponse,
   updateRoleDefinition,
   updateRoleAssignment,
   updateTrackingItem,
@@ -44,6 +44,7 @@ import {
 } from "@/lib/repository";
 import { getCurrentSession } from "@/lib/auth/session";
 import type { AppSession } from "@/lib/auth/types";
+import type { TrackingItemResponseType } from "@/lib/types";
 import { TRACKING_DIRECT_SUBSECTION_SENTINEL } from "@/lib/tracking";
 
 function redirectWithMessage(path: string, ok: boolean, message: string): never {
@@ -54,6 +55,26 @@ function redirectWithMessage(path: string, ok: boolean, message: string): never 
 
 function readText(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
+}
+
+function readTrackingItemResponseType(
+  formData: FormData,
+  key = "responseType",
+): TrackingItemResponseType {
+  const value = readText(formData, key);
+  if (value === "number" || value === "date" || value === "select") return value;
+  return "checkbox";
+}
+
+function parseTrackingItemResponseOptions(optionsText: string): string[] {
+  const chunks = optionsText.split(/\r?\n|,/g);
+  return Array.from(
+    new Set(
+      chunks
+        .map((chunk) => chunk.trim())
+        .filter((chunk) => chunk.length > 0 && chunk !== "未選擇"),
+    ),
+  );
 }
 
 function readReturnTo(formData: FormData): string | null {
@@ -777,9 +798,17 @@ export async function createTrackingItemAction(formData: FormData) {
   const extraData = readText(formData, "extraData");
   const externalUrl = readText(formData, "externalUrl");
   const dueDate = readText(formData, "dueDate");
+  const responseType = readTrackingItemResponseType(formData);
+  const responseOptionsText = readText(formData, "responseOptionsText");
+  const responseOptions =
+    responseType === "select" ? parseTrackingItemResponseOptions(responseOptionsText) : [];
 
   if (!groupId || !sectionId || !title) {
     redirectWithMessage(returnTo, false, "請填寫追蹤項目資料。");
+  }
+
+  if (responseType === "select" && !responseOptions.length) {
+    redirectWithMessage(returnTo, false, "下拉式選單回報至少需要一個選項。");
   }
 
   const session = await requireGroupStructureAccess(groupId, returnTo);
@@ -794,6 +823,8 @@ export async function createTrackingItemAction(formData: FormData) {
     extraData,
     externalUrl,
     dueDate,
+    responseType,
+    responseOptions,
     accountId: session.accountId,
   });
 
@@ -814,9 +845,17 @@ export async function updateTrackingItemAction(formData: FormData) {
   const extraData = readText(formData, "extraData");
   const externalUrl = readText(formData, "externalUrl");
   const dueDate = readText(formData, "dueDate");
+  const responseType = readTrackingItemResponseType(formData);
+  const responseOptionsText = readText(formData, "responseOptionsText");
+  const responseOptions =
+    responseType === "select" ? parseTrackingItemResponseOptions(responseOptionsText) : [];
 
   if (!groupId || !itemId || !sectionId || !title) {
     redirectWithMessage(returnTo, false, "請填寫追蹤項目資料。");
+  }
+
+  if (responseType === "select" && !responseOptions.length) {
+    redirectWithMessage(returnTo, false, "下拉式選單回報至少需要一個選項。");
   }
 
   const session = await requireGroupStructureAccess(groupId, returnTo);
@@ -832,6 +871,8 @@ export async function updateTrackingItemAction(formData: FormData) {
     extraData,
     externalUrl,
     dueDate,
+    responseType,
+    responseOptions,
     accountId: session.accountId,
   });
 
@@ -943,12 +984,15 @@ export async function copyTrackingItemAction(formData: FormData) {
   redirectWithMessage(returnTo, true, "追蹤項目已複製。");
 }
 
-export async function setTrackingItemMemberCompletionAction(formData: FormData) {
+export async function setTrackingItemMemberResponseAction(formData: FormData) {
   const returnTo = readReturnTo(formData) ?? "/groups";
   const groupId = readText(formData, "groupId");
   const itemId = readText(formData, "itemId");
   const personId = readText(formData, "personId");
   const isCompleted = readText(formData, "isCompleted") === "true";
+  const numberValue = readText(formData, "numberValue");
+  const dateValue = readText(formData, "dateValue");
+  const selectValue = readText(formData, "selectValue");
 
   if (!groupId || !itemId || !personId) {
     redirectWithMessage(returnTo, false, "缺少追蹤項目識別資料。");
@@ -963,22 +1007,25 @@ export async function setTrackingItemMemberCompletionAction(formData: FormData) 
     );
 
     if (!currentMembership || currentMembership.person_id !== personId) {
-      redirectWithMessage(returnTo, false, "學員僅可勾選自己的追蹤項目。");
+      redirectWithMessage(returnTo, false, "學員僅可回報自己的追蹤項目。");
     }
   }
 
-  const result = await setTrackingItemMemberCompletion({
+  const result = await setTrackingItemMemberResponse({
     groupId,
     itemId,
     personId,
     isCompleted,
+    numberValue,
+    dateValue,
+    selectValue,
     accountId: session.accountId,
   });
 
   revalidatePath("/groups");
   revalidatePath(`/groups/${groupId}`);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);
-  redirectWithMessage(returnTo, true, isCompleted ? "已回報完成。" : "已取消完成。");
+  redirectWithMessage(returnTo, true, "追蹤回報已更新。");
 }
 
 export async function updateGroupMemberDirectoryProfileAction(formData: FormData) {
