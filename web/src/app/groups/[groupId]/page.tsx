@@ -117,7 +117,11 @@ export default async function GroupTrackingPage({
     .map((item) => item.person)
     .filter((person): person is NonNullable<typeof person> => Boolean(person));
 
-  const groupMemberIdSet = new Set(groupMembers.map((item) => item.id));
+  const visibleMembers =
+    session.role === "member" && currentMemberPersonId
+      ? groupMembers.filter((member) => member.id === currentMemberPersonId)
+      : groupMembers;
+  const visibleMemberIdSet = new Set(visibleMembers.map((item) => item.id));
 
   const groupSections = trackingSections
     .filter((item) => item.group_id === groupId)
@@ -137,7 +141,7 @@ export default async function GroupTrackingPage({
     (item) =>
       item.group_id === groupId &&
       item.is_completed &&
-      groupMemberIdSet.has(item.person_id) &&
+      visibleMemberIdSet.has(item.person_id) &&
       itemById.has(item.item_id),
   );
 
@@ -186,7 +190,7 @@ export default async function GroupTrackingPage({
     );
   }
 
-  const totalCells = groupItems.length * groupMembers.length;
+  const totalCells = groupItems.length * visibleMembers.length;
   const overallCompletionPercent = toPercent(completionRows.length, totalCells);
 
   const itemsBySubsectionId = new Map<string, typeof groupItems>();
@@ -304,7 +308,7 @@ export default async function GroupTrackingPage({
               <col style={codeCellStyle} />
               <col style={milestoneCellStyle} />
               <col style={todoCellStyle} />
-              {groupMembers.map((member) => (
+              {visibleMembers.map((member) => (
                 <col key={`member-col-${member.id}`} className="w-32 min-w-32" />
               ))}
             </colgroup>
@@ -328,7 +332,7 @@ export default async function GroupTrackingPage({
                 >
                   待辦事項
                 </th>
-                {groupMembers.map((member) => (
+                {visibleMembers.map((member) => (
                   <th
                     key={member.id}
                     className="min-w-[8rem] border-b border-slate-300 px-3 py-3 text-center"
@@ -340,7 +344,7 @@ export default async function GroupTrackingPage({
                   </th>
                 ))}
               </tr>
-              {!!groupMembers.length && (
+              {!!visibleMembers.length && (
                 <tr className="bg-emerald-50 text-xs text-slate-600">
                   <th
                     className="xl:sticky z-30 border-b border-slate-200 bg-emerald-50 px-3 py-2"
@@ -360,7 +364,7 @@ export default async function GroupTrackingPage({
                   >
                     -
                   </th>
-                  {groupMembers.map((member, index) => (
+                  {visibleMembers.map((member, index) => (
                     <th key={member.id} className="border-b border-slate-200 px-3 py-2 text-center">
                       {index + 1}
                     </th>
@@ -371,7 +375,7 @@ export default async function GroupTrackingPage({
             <tbody>
               {!groupSections.length && (
                 <tr>
-                  <td className="px-3 py-5 text-slate-500" colSpan={3 + groupMembers.length}>
+                  <td className="px-3 py-5 text-slate-500" colSpan={3 + visibleMembers.length}>
                     目前尚無追蹤大項。請先建立追蹤大項與小項後，再新增追蹤項目。
                   </td>
                 </tr>
@@ -381,7 +385,7 @@ export default async function GroupTrackingPage({
                 const sectionCode = String(sectionIndex);
                 const subsectionRows = groupSubsections.filter((item) => item.section_id === section.id);
                 const sectionItemCount = sectionItemCountById.get(section.id) ?? 0;
-                const sectionTotalCells = sectionItemCount * groupMembers.length;
+                const sectionTotalCells = sectionItemCount * visibleMembers.length;
                 const sectionCompletedCells = completedCellCountBySectionId.get(section.id) ?? 0;
                 const sectionPercent = toPercent(sectionCompletedCells, sectionTotalCells);
 
@@ -406,7 +410,7 @@ export default async function GroupTrackingPage({
                       >
                         {section.description || "-"}
                       </td>
-                      {groupMembers.map((member) => {
+                      {visibleMembers.map((member) => {
                         const completedByMember =
                           completedCellCountBySectionAndMember.get(
                             buildCompletionKey(section.id, member.id),
@@ -448,7 +452,7 @@ export default async function GroupTrackingPage({
                             >
                               {subsection.description || "-"}
                             </td>
-                            {groupMembers.map((member) => {
+                            {visibleMembers.map((member) => {
                               const completedByMember =
                                 completedCellCountBySubsectionAndMember.get(
                                   buildCompletionKey(subsection.id, member.id),
@@ -509,7 +513,7 @@ export default async function GroupTrackingPage({
                                   </p>
                                 </td>
 
-                                {groupMembers.map((member) => {
+                                {visibleMembers.map((member) => {
                                   const completed = completionKeySet.has(
                                     buildCompletionKey(item.id, member.id),
                                   );
@@ -568,7 +572,7 @@ export default async function GroupTrackingPage({
                             <tr key={`${subsection.id}-empty`}>
                               <td
                                 className="px-3 py-3 text-xs text-slate-500"
-                                colSpan={3 + groupMembers.length}
+                                colSpan={3 + visibleMembers.length}
                               >
                                 此小項尚無追蹤項目。
                               </td>
@@ -582,7 +586,7 @@ export default async function GroupTrackingPage({
                       <tr key={`${section.id}-empty`}>
                         <td
                           className="px-3 py-3 text-xs text-slate-500"
-                          colSpan={3 + groupMembers.length}
+                          colSpan={3 + visibleMembers.length}
                         >
                           此大項尚無追蹤小項。
                         </td>
