@@ -251,7 +251,7 @@ export default async function GroupTrackingPage({
   const getMemberColStyle = (index: number): CSSProperties => {
     const isLast = index === visibleMembers.length - 1;
     if (memberColsShouldStretch && isLast) {
-      return { minWidth: memberCol, width: "auto" };
+      return { minWidth: memberCol };
     }
     return { width: memberCol, minWidth: memberCol };
   };
@@ -312,7 +312,7 @@ export default async function GroupTrackingPage({
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="table-fixed w-[max(100%,max-content)] border-collapse text-left text-sm">
+          <table className="table-fixed w-full min-w-max border-collapse text-left text-sm">
             <colgroup>
               <col style={codeCellStyle} />
               <col style={milestoneCellStyle} />
