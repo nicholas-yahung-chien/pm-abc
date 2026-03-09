@@ -927,7 +927,12 @@ export function TrackingManagementPanel({
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-              <select name="sectionId" defaultValue={orderedSections[0]?.id ?? ""} required>
+              <select
+                name="sectionId"
+                value={createItemSectionId || orderedSections[0]?.id || ""}
+                onChange={(event) => handleCreateItemSectionChange(event.currentTarget.value)}
+                required
+              >
                 {orderedSections.map((section) => (
                   <option key={section.id} value={section.id}>
                     {section.title}
