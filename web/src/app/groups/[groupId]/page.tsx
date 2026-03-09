@@ -234,8 +234,10 @@ export default async function GroupTrackingPage({
   const codeCol = `${codeColRem}rem`;
   const milestoneCol = `${milestoneColRem}rem`;
   const todoCol = `${todoColRem}rem`;
+  const memberCol = "8rem";
   const milestoneLeft = codeCol;
   const todoLeft = `${codeColRem + milestoneColRem}rem`;
+  const memberColsShouldStretch = visibleMembers.length <= 2;
 
   const codeCellStyle: CSSProperties = { width: codeCol, minWidth: codeCol };
   const milestoneCellStyle: CSSProperties = { width: milestoneCol, minWidth: milestoneCol };
@@ -246,6 +248,13 @@ export default async function GroupTrackingPage({
     left: milestoneLeft,
   };
   const stickyTodoCellStyle: CSSProperties = { ...todoCellStyle, left: todoLeft };
+  const getMemberColStyle = (index: number): CSSProperties => {
+    const isLast = index === visibleMembers.length - 1;
+    if (memberColsShouldStretch && isLast) {
+      return { minWidth: memberCol, width: "auto" };
+    }
+    return { width: memberCol, minWidth: memberCol };
+  };
 
   return (
     <AppShell>
@@ -303,13 +312,13 @@ export default async function GroupTrackingPage({
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="table-fixed min-w-max border-collapse text-left text-sm">
+          <table className="table-fixed w-[max(100%,max-content)] border-collapse text-left text-sm">
             <colgroup>
               <col style={codeCellStyle} />
               <col style={milestoneCellStyle} />
               <col style={todoCellStyle} />
-              {visibleMembers.map((member) => (
-                <col key={`member-col-${member.id}`} className="w-32 min-w-32" />
+              {visibleMembers.map((member, index) => (
+                <col key={`member-col-${member.id}`} style={getMemberColStyle(index)} />
               ))}
             </colgroup>
             <thead>
