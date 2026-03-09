@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 const FAILSAFE_MS = 15000;
+const MIN_VISIBLE_MS = 1000;
 
 type FormLockSnapshot = {
   pointerEvents: string;
@@ -48,7 +49,9 @@ function unlockForm(form: HTMLFormElement, snapshot: FormLockSnapshot) {
 export function FormSubmitProgressIndicator() {
   const [isPending, setIsPending] = useState(false);
   const lockRef = useRef<{ form: HTMLFormElement; snapshot: FormLockSnapshot } | null>(null);
+  const shownAtRef = useRef<number | null>(null);
   const failsafeTimerRef = useRef<number | null>(null);
+  const clearTimerRef = useRef<number | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchKey = useMemo(() => searchParams.toString(), [searchParams]);
@@ -60,32 +63,63 @@ export function FormSubmitProgressIndicator() {
     }
   }, []);
 
+  const clearScheduledClear = useCallback(() => {
+    if (clearTimerRef.current !== null) {
+      window.clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = null;
+    }
+  }, []);
+
+  const unlockCurrentForm = useCallback(() => {
+    if (!lockRef.current) return;
+    unlockForm(lockRef.current.form, lockRef.current.snapshot);
+    lockRef.current = null;
+  }, []);
+
   const clearPendingState = useCallback(() => {
     clearFailsafe();
-
-    if (lockRef.current) {
-      unlockForm(lockRef.current.form, lockRef.current.snapshot);
-      lockRef.current = null;
-    }
-
+    clearScheduledClear();
+    unlockCurrentForm();
+    shownAtRef.current = null;
     setIsPending(false);
-  }, [clearFailsafe]);
+  }, [clearFailsafe, clearScheduledClear, unlockCurrentForm]);
+
+  const scheduleClearPendingState = useCallback(
+    (forceImmediate = false) => {
+      if (!lockRef.current && !isPending) return;
+
+      clearScheduledClear();
+
+      const shownAt = shownAtRef.current ?? Date.now();
+      const elapsed = Date.now() - shownAt;
+      const delay = forceImmediate ? 0 : Math.max(0, MIN_VISIBLE_MS - elapsed);
+
+      clearTimerRef.current = window.setTimeout(() => {
+        clearTimerRef.current = null;
+        clearPendingState();
+      }, delay);
+    },
+    [clearPendingState, clearScheduledClear, isPending],
+  );
 
   const beginPendingState = useCallback(
     (form: HTMLFormElement) => {
-      clearPendingState();
+      clearFailsafe();
+      clearScheduledClear();
+      unlockCurrentForm();
 
       lockRef.current = {
         form,
         snapshot: lockForm(form),
       };
+      shownAtRef.current = Date.now();
       setIsPending(true);
 
       failsafeTimerRef.current = window.setTimeout(() => {
-        clearPendingState();
+        scheduleClearPendingState(true);
       }, FAILSAFE_MS);
     },
-    [clearPendingState],
+    [clearFailsafe, clearScheduledClear, unlockCurrentForm, scheduleClearPendingState],
   );
 
   useEffect(() => {
@@ -108,19 +142,17 @@ export function FormSubmitProgressIndicator() {
 
   useEffect(() => {
     if (!isPending) return;
-    const timer = window.setTimeout(() => {
-      clearPendingState();
-    }, 0);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [pathname, searchKey, isPending, clearPendingState]);
+    scheduleClearPendingState(false);
+  }, [pathname, searchKey, isPending, scheduleClearPendingState]);
 
   useEffect(
     () => () => {
-      clearPendingState();
+      clearFailsafe();
+      clearScheduledClear();
+      unlockCurrentForm();
+      shownAtRef.current = null;
     },
-    [clearPendingState],
+    [clearFailsafe, clearScheduledClear, unlockCurrentForm],
   );
 
   if (!isPending) return null;
