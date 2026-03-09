@@ -38,3 +38,7 @@ textarea:focus {
 button {
   @apply cursor-pointer;
 }
+
+form[data-submit-pending="true"] {
+  transition: opacity 0.15s ease;
+}

@@ -1,5 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Noto_Sans_TC, Roboto_Mono } from "next/font/google";
+import { Suspense } from "react";
+import { FormSubmitProgressIndicator } from "@/components/form-submit-progress-indicator";
 import "./globals.css";
 
 const notoSansTc = Noto_Sans_TC({
@@ -24,9 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
-      <body
-        className={`${notoSansTc.variable} ${robotoMono.variable} antialiased`}
-      >
+      <body className={`${notoSansTc.variable} ${robotoMono.variable} antialiased`}>
+        <Suspense fallback={null}>
+          <FormSubmitProgressIndicator />
+        </Suspense>
         {children}
       </body>
     </html>
