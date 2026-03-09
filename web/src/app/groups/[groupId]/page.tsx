@@ -215,7 +215,7 @@ export default async function GroupTrackingPage({
     cumulativeItemsBeforeSection += sectionItemCountById.get(section.id) ?? 0;
   }
 
-  const codeLabels: string[] = ["蝺刻?", ""];
+  const codeLabels: string[] = ["編號", ""];
   const milestoneLabels: string[] = ["里程碑", ""];
   for (const [sectionIndex, section] of groupSections.entries()) {
     const sectionCode = String(sectionIndex);
@@ -340,7 +340,7 @@ export default async function GroupTrackingPage({
           <input type="hidden" name="dateValue" value="" />
           <input type="hidden" name="selectValue" value="" />
           <button
-            title={completed ? "??摰?" : "?摰?"}
+            title={completed ? "取消完成" : "標記完成"}
             className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-semibold leading-none transition ${
               completed
                 ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
@@ -376,9 +376,10 @@ export default async function GroupTrackingPage({
           />
           <button
             className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
-            title="?脣??"
+            title="儲存回報"
           >
-            ??          </button>
+            ✓
+          </button>
         </form>
       );
     }
@@ -401,9 +402,10 @@ export default async function GroupTrackingPage({
           />
           <button
             className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
-            title="?脣??"
+            title="儲存回報"
           >
-            ??          </button>
+            ✓
+          </button>
         </form>
       );
     }
@@ -438,9 +440,10 @@ export default async function GroupTrackingPage({
         </select>
         <button
           className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
-          title="?脣??"
+          title="儲存回報"
         >
-          ??        </button>
+          ✓
+        </button>
       </form>
     );
   };
@@ -458,7 +461,8 @@ export default async function GroupTrackingPage({
     <AppShell>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          撠?蝞∠? / 餈質馱銵?        </p>
+          小組管理 / 追蹤表
+        </p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-900">
           {group.class?.code} / {group.code} {group.name}
         </h1>
@@ -470,17 +474,17 @@ export default async function GroupTrackingPage({
 
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">餈質馱憭折?</p>
+            <p className="text-xs text-slate-500">追蹤大項</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{groupSections.length}</p>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">餈質馱撠?</p>
+            <p className="text-xs text-slate-500">追蹤小項</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">
               {visibleGroupSubsections.length}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">餈質馱?</p>
+            <p className="text-xs text-slate-500">追蹤項目</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">{groupItems.length}</p>
           </div>
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
@@ -493,20 +497,22 @@ export default async function GroupTrackingPage({
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
           <Link href={`/groups/${groupId}/directory`} className="text-amber-700 underline">
-            ??????          </Link>
+            前往通訊錄
+          </Link>
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            ?? R&R
+            前往 R&R
           </Link>
           <Link href="/groups" className="text-amber-700 underline">
-            ?撠??”
+            回到小組列表
           </Link>
         </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">餈質馱?拚</h2>
+        <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣</h2>
         <p className="mt-1 text-sm text-slate-600">
-          隞仿?蝔???颲虫???飛?∠甈??湔?亦?銝血??望?雿飛?∪?????        </p>
+          以里程碑與待辦事項為列、學員為欄，直接查看並回報每位學員完成狀態。
+        </p>
 
         <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
           <table className="table-fixed w-full min-w-max border-collapse text-left text-sm">
@@ -524,18 +530,19 @@ export default async function GroupTrackingPage({
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyCodeCellStyle}
                 >
-                  蝺刻?
+                  編號
                 </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyMilestoneCellStyle}
                 >
-                  ??蝣?                </th>
+                  里程碑
+                </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
                   style={stickyTodoCellStyle}
                 >
-                  敺齒鈭?
+                  待辦事項
                 </th>
                 {visibleMembers.map((member) => (
                   <th
@@ -584,7 +591,8 @@ export default async function GroupTrackingPage({
               {!groupSections.length && (
                 <tr>
                   <td className="px-3 py-5 text-slate-500" colSpan={3 + visibleMembers.length}>
-                    ?桀?撠餈質馱憭折????遣蝡蕭頩文之??嚗??啣?餈質馱???                  </td>
+                    目前尚無追蹤大項。請先建立追蹤大項後，再新增追蹤項目。
+                  </td>
                 </tr>
               )}
 
@@ -697,7 +705,7 @@ export default async function GroupTrackingPage({
                                     />
                                   </div>
                                   <p className="mt-1 text-xs text-slate-500">
-                                    ?唳??伐?{formatDate(item.due_date)}
+                                    到期日：{formatDate(item.due_date)}
                                   </p>
                                 </td>
 
@@ -719,7 +727,8 @@ export default async function GroupTrackingPage({
                                 className="px-3 py-3 text-xs text-slate-500"
                                 colSpan={3 + visibleMembers.length}
                               >
-                                甇文????∟蕭頩日??柴?                              </td>
+                                此小項尚無追蹤項目。
+                              </td>
                             </tr>
                           )}
                         </Fragment>
@@ -765,7 +774,7 @@ export default async function GroupTrackingPage({
                                 maxLen={18}
                               />
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">?唳??伐?{formatDate(item.due_date)}</p>
+                            <p className="mt-1 text-xs text-slate-500">到期日：{formatDate(item.due_date)}</p>
                           </td>
 
                           {visibleMembers.map((member) => (
@@ -786,7 +795,8 @@ export default async function GroupTrackingPage({
                           className="px-3 py-3 text-xs text-slate-500"
                           colSpan={3 + visibleMembers.length}
                         >
-                          甇文之???∟蕭頩文????游惇餈質馱???                        </td>
+                          此大項尚無追蹤小項或直屬追蹤項目。
+                        </td>
                       </tr>
                     )}
                   </Fragment>

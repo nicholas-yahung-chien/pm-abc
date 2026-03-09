@@ -129,7 +129,7 @@ function Modal({
             type="button"
             onClick={onClose}
             className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
-            title="??"
+            title="關閉"
           >
             <X className="h-4 w-4" />
           </button>
@@ -245,7 +245,7 @@ export function TrackingManagementPanel({
       const options: SubsectionOption[] = [
         {
           value: TRACKING_DIRECT_SUBSECTION_SENTINEL,
-          label: "銝?摰????湔?啣??典之??",
+          label: "不指定小項（直接新增在大項）",
           sectionId: section.id,
           subsectionId: null,
           isDirect: true,
@@ -254,7 +254,7 @@ export function TrackingManagementPanel({
       for (const subsection of visibleSubsectionsBySectionId.get(section.id) ?? []) {
         options.push({
           value: subsection.id,
-          label: subsection.title || "(?芸????",
+          label: subsection.title || "(未命名小項)",
           sectionId: section.id,
           subsectionId: subsection.id,
           isDirect: false,
@@ -501,10 +501,10 @@ export function TrackingManagementPanel({
       <table className="min-w-full text-left text-sm">
         <thead className="bg-slate-50 text-slate-600">
           <tr>
-            <th className="w-20 px-3 py-2">??</th>
-            <th className="px-3 py-2">餈質馱?</th>
+            <th className="w-20 px-3 py-2">順序</th>
+            <th className="px-3 py-2">追蹤項目</th>
             <th className="w-28 px-3 py-2">到期日</th>
-            <th className="w-24 px-3 py-2">??</th>
+            <th className="w-24 px-3 py-2">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -519,7 +519,7 @@ export function TrackingManagementPanel({
                     <input type="hidden" name="itemId" value={item.id} />
                     <input type="hidden" name="direction" value="up" />
                     <input type="hidden" name="returnTo" value={returnTo} />
-                    <button className={moveButton()} title="銝宏?">
+                    <button className={moveButton()} title="上移項目">
                       <ArrowUp className="h-3 w-3" />
                     </button>
                   </form>
@@ -530,7 +530,7 @@ export function TrackingManagementPanel({
                     <input type="hidden" name="itemId" value={item.id} />
                     <input type="hidden" name="direction" value="down" />
                     <input type="hidden" name="returnTo" value={returnTo} />
-                    <button className={moveButton()} title="銝宏?">
+                    <button className={moveButton()} title="下移項目">
                       <ArrowDown className="h-3 w-3" />
                     </button>
                   </form>
@@ -558,7 +558,7 @@ export function TrackingManagementPanel({
                     type="button"
                     onClick={() => openEditItemModal(item)}
                     className={iconButton("edit")}
-                    title="蝺刻摩餈質馱?"
+                    title="編輯追蹤項目"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -566,7 +566,7 @@ export function TrackingManagementPanel({
                     <input type="hidden" name="groupId" value={groupId} />
                     <input type="hidden" name="itemId" value={item.id} />
                     <input type="hidden" name="returnTo" value={returnTo} />
-                    <button className={iconButton("delete")} title="?芷餈質馱?">
+                    <button className={iconButton("delete")} title="刪除追蹤項目">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </form>
@@ -589,7 +589,7 @@ export function TrackingManagementPanel({
   return (
     <section className="space-y-4">
       <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">餈質馱?拚蝞∠?嚗?蝺湛?</h2>
+        <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣管理（教練）</h2>
         <p className="mt-1 text-sm text-slate-600">
           新增、編輯、排序與刪除追蹤大項、小項、追蹤項目。
         </p>
@@ -601,7 +601,7 @@ export function TrackingManagementPanel({
             className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
           >
             <Plus className="h-4 w-4" />
-            ?啣?餈質馱憭折?
+            新增追蹤大項
           </button>
           <button
             type="button"
@@ -610,7 +610,7 @@ export function TrackingManagementPanel({
             className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             <Plus className="h-4 w-4" />
-            ?啣?餈質馱撠?
+            新增追蹤小項
           </button>
           <button
             type="button"
@@ -619,7 +619,7 @@ export function TrackingManagementPanel({
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
           >
             <Plus className="h-4 w-4" />
-            ?啣?餈質馱?
+            新增追蹤項目
           </button>
         </div>
       </article>
@@ -644,7 +644,7 @@ export function TrackingManagementPanel({
                   <input type="hidden" name="sectionId" value={section.id} />
                   <input type="hidden" name="direction" value="up" />
                   <input type="hidden" name="returnTo" value={returnTo} />
-                  <button className={moveButton()} title="銝宏憭折?">
+                  <button className={moveButton()} title="上移大項">
                     <ArrowUp className="h-3 w-3" />
                   </button>
                 </form>
@@ -653,7 +653,7 @@ export function TrackingManagementPanel({
                   <input type="hidden" name="sectionId" value={section.id} />
                   <input type="hidden" name="direction" value="down" />
                   <input type="hidden" name="returnTo" value={returnTo} />
-                  <button className={moveButton()} title="銝宏憭折?">
+                  <button className={moveButton()} title="下移大項">
                     <ArrowDown className="h-3 w-3" />
                   </button>
                 </form>
@@ -680,7 +680,7 @@ export function TrackingManagementPanel({
                       onChange={(event) =>
                         setSectionDraftValue(section.id, "description", event.currentTarget.value)
                       }
-                      placeholder="憭折?隤芣?"
+                      placeholder="大項說明"
                     />
                   </form>
                 ) : (
@@ -696,14 +696,14 @@ export function TrackingManagementPanel({
               <div className="flex flex-wrap items-center gap-2">
                 {isEditingSection ? (
                   <>
-                    <button form={sectionFormId} type="submit" className={iconButton("save")} title="?脣?">
+                    <button form={sectionFormId} type="submit" className={iconButton("save")} title="儲存">
                       <Check className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => cancelSectionEdit(section.id)}
                       className={iconButton("cancel")}
-                      title="??"
+                      title="取消"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -714,7 +714,7 @@ export function TrackingManagementPanel({
                       type="button"
                       onClick={() => beginSectionEdit(section.id)}
                       className={iconButton("edit")}
-                      title="蝺刻摩憭折?"
+                      title="編輯大項"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -722,7 +722,7 @@ export function TrackingManagementPanel({
                       <input type="hidden" name="groupId" value={groupId} />
                       <input type="hidden" name="sectionId" value={section.id} />
                       <input type="hidden" name="returnTo" value={returnTo} />
-                      <button className={iconButton("delete")} title="?芷憭折?">
+                      <button className={iconButton("delete")} title="刪除大項">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </form>
@@ -752,7 +752,7 @@ export function TrackingManagementPanel({
                           <input type="hidden" name="subsectionId" value={subsection.id} />
                           <input type="hidden" name="direction" value="up" />
                           <input type="hidden" name="returnTo" value={returnTo} />
-                          <button className={moveButton()} title="銝宏撠?">
+                          <button className={moveButton()} title="上移小項">
                             <ArrowUp className="h-3 w-3" />
                           </button>
                         </form>
@@ -762,7 +762,7 @@ export function TrackingManagementPanel({
                           <input type="hidden" name="subsectionId" value={subsection.id} />
                           <input type="hidden" name="direction" value="down" />
                           <input type="hidden" name="returnTo" value={returnTo} />
-                          <button className={moveButton()} title="銝宏撠?">
+                          <button className={moveButton()} title="下移小項">
                             <ArrowDown className="h-3 w-3" />
                           </button>
                         </form>
@@ -815,7 +815,7 @@ export function TrackingManagementPanel({
                                   event.currentTarget.value,
                                 )
                               }
-                              placeholder="撠?隤芣?"
+                              placeholder="小項說明"
                             />
                           </form>
                         ) : (
@@ -831,14 +831,14 @@ export function TrackingManagementPanel({
                       <div className="flex flex-wrap items-center gap-2">
                         {isEditingSubsection ? (
                           <>
-                            <button form={subsectionFormId} type="submit" className={iconButton("save")} title="?脣?">
+                            <button form={subsectionFormId} type="submit" className={iconButton("save")} title="儲存">
                               <Check className="h-4 w-4" />
                             </button>
                             <button
                               type="button"
                               onClick={() => cancelSubsectionEdit(subsection.id)}
                               className={iconButton("cancel")}
-                              title="??"
+                              title="取消"
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -849,7 +849,7 @@ export function TrackingManagementPanel({
                               type="button"
                               onClick={() => beginSubsectionEdit(subsection.id)}
                               className={iconButton("edit")}
-                              title="蝺刻摩撠?"
+                              title="編輯小項"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
@@ -857,7 +857,7 @@ export function TrackingManagementPanel({
                               <input type="hidden" name="groupId" value={groupId} />
                               <input type="hidden" name="subsectionId" value={subsection.id} />
                               <input type="hidden" name="returnTo" value={returnTo} />
-                              <button className={iconButton("delete")} title="?芷撠?">
+                              <button className={iconButton("delete")} title="刪除小項">
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </form>
@@ -878,7 +878,7 @@ export function TrackingManagementPanel({
 
               {!!directItems.length && directSubsection && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
-                  <h4 className="text-base font-semibold text-slate-900">?游惇餈質馱?</h4>
+                  <h4 className="text-base font-semibold text-slate-900">直屬追蹤項目</h4>
                   <p className="mt-1 text-sm text-slate-600">
                     這些項目直接新增於大項下，不歸屬特定追蹤小項。
                   </p>
@@ -893,7 +893,8 @@ export function TrackingManagementPanel({
 
               {!subsectionRows.length && !directItems.length && (
                 <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">
-                  ?桀?撠餈質馱撠??撅祈蕭頩日??柴?                </p>
+                  目前尚無追蹤小項或直屬追蹤項目。
+                </p>
               )}
             </div>
           </article>
@@ -907,16 +908,16 @@ export function TrackingManagementPanel({
       )}
 
       {createModal === "section" && (
-        <Modal title="?啣?餈質馱憭折?" onClose={() => setCreateModal(null)}>
+        <Modal title="新增追蹤大項" onClose={() => setCreateModal(null)}>
           <form action={submitCreateSection} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">憭折??迂 *</span>
+              <span className="text-sm font-medium text-slate-700">大項名稱 *</span>
               <input name="title" required />
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">隤芣?</span>
+              <span className="text-sm font-medium text-slate-700">說明</span>
               <textarea name="description" rows={4} />
             </label>
             <div className="flex justify-end gap-2">
@@ -925,10 +926,10 @@ export function TrackingManagementPanel({
                 onClick={() => setCreateModal(null)}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
               >
-                ??
+                取消
               </button>
               <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-                ?啣?憭折?
+                新增大項
               </button>
             </div>
           </form>
@@ -936,12 +937,12 @@ export function TrackingManagementPanel({
       )}
 
       {createModal === "subsection" && (
-        <Modal title="?啣?餈質馱撠?" onClose={() => setCreateModal(null)}>
+        <Modal title="新增追蹤小項" onClose={() => setCreateModal(null)}>
           <form action={submitCreateSubsection} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">?撅砍之??*</span>
+              <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
               <select
                 name="sectionId"
                 value={createItemSectionId || orderedSections[0]?.id || ""}
@@ -956,11 +957,11 @@ export function TrackingManagementPanel({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">撠??迂 *</span>
+              <span className="text-sm font-medium text-slate-700">小項名稱 *</span>
               <input name="title" required />
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">隤芣?</span>
+              <span className="text-sm font-medium text-slate-700">說明</span>
               <textarea name="description" rows={4} />
             </label>
             <div className="flex justify-end gap-2">
@@ -969,10 +970,10 @@ export function TrackingManagementPanel({
                 onClick={() => setCreateModal(null)}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
               >
-                ??
+                取消
               </button>
               <button className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900">
-                ?啣?撠?
+                新增小項
               </button>
             </div>
           </form>
@@ -980,12 +981,12 @@ export function TrackingManagementPanel({
       )}
 
       {createModal === "item" && (
-        <Modal title="?啣?餈質馱?" onClose={() => setCreateModal(null)}>
+        <Modal title="新增追蹤項目" onClose={() => setCreateModal(null)}>
           <form action={submitCreateItem} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">?撅砍之??*</span>
+              <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
               <select
                 name="sectionId"
                 value={createItemSectionId || orderedSections[0]?.id || ""}
@@ -1017,11 +1018,11 @@ export function TrackingManagementPanel({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">??迂 *</span>
+              <span className="text-sm font-medium text-slate-700">項目名稱 *</span>
               <input name="title" required />
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">??批捆</span>
+              <span className="text-sm font-medium text-slate-700">項目內容</span>
               <textarea name="content" rows={4} />
             </label>
             <label className="space-y-1">
@@ -1061,7 +1062,7 @@ export function TrackingManagementPanel({
               <input name="dueDate" type="date" />
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">蝬脰楝???</span>
+              <span className="text-sm font-medium text-slate-700">網路連結</span>
               <input name="externalUrl" type="url" placeholder="https://example.com" />
             </label>
             <input type="hidden" name="extraData" value="" />
@@ -1071,10 +1072,10 @@ export function TrackingManagementPanel({
                 onClick={() => setCreateModal(null)}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
               >
-                ??
+                取消
               </button>
               <button className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">
-                ?啣?餈質馱?
+                新增追蹤項目
               </button>
             </div>
           </form>
@@ -1082,14 +1083,14 @@ export function TrackingManagementPanel({
       )}
 
       {editingItem && (
-        <Modal title="蝺刻摩餈質馱?" onClose={closeEditItemModal}>
+        <Modal title="編輯追蹤項目" onClose={closeEditItemModal}>
           <form action={submitItemUpdate} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="itemId" value={editingItem.id} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <input type="hidden" name="extraData" value={editingItem.extra_data ?? ""} />
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">?撅砍之??*</span>
+              <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
               <select
                 name="sectionId"
                 value={editItemSectionId || editingItem.section_id}
@@ -1119,11 +1120,11 @@ export function TrackingManagementPanel({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">??迂 *</span>
+              <span className="text-sm font-medium text-slate-700">項目名稱 *</span>
               <input name="title" defaultValue={editingItem.title} required />
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">??批捆</span>
+              <span className="text-sm font-medium text-slate-700">項目內容</span>
               <textarea name="content" rows={4} defaultValue={editingItem.content ?? ""} />
             </label>
             <label className="space-y-1">
@@ -1163,7 +1164,7 @@ export function TrackingManagementPanel({
               <input name="dueDate" type="date" defaultValue={editingItem.due_date ?? ""} />
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">蝬脰楝???</span>
+              <span className="text-sm font-medium text-slate-700">網路連結</span>
               <input
                 name="externalUrl"
                 type="url"
@@ -1177,10 +1178,10 @@ export function TrackingManagementPanel({
                 onClick={closeEditItemModal}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
               >
-                ??
+                取消
               </button>
               <button className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900">
-                ?脣?霈
+                儲存變更
               </button>
             </div>
           </form>
