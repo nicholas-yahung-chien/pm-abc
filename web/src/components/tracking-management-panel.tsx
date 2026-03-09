@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TRACKING_DIRECT_SUBSECTION_SENTINEL } from "@/lib/tracking";
 import type { TrackingItemRow, TrackingSectionRow, TrackingSubsectionRow } from "@/lib/types";
 
 type ActionHandler = (formData: FormData) => void | Promise<void>;
@@ -35,6 +36,14 @@ type SubsectionDraft = {
   sectionId: string;
   title: string;
   description: string;
+};
+
+type SubsectionOption = {
+  value: string;
+  label: string;
+  sectionId: string;
+  subsectionId: string | null;
+  isDirect: boolean;
 };
 
 function formatDate(dateInput: string | null): string {
@@ -145,15 +154,40 @@ export function TrackingManagementPanel({
     () => new Map(orderedSections.map((item) => [item.id, item])),
     [orderedSections],
   );
-  const subsectionsBySectionId = useMemo(() => {
+  const visibleSubsections = useMemo(
+    () => orderedSubsections.filter((item) => !item.is_system_default),
+    [orderedSubsections],
+  );
+  const hiddenSubsections = useMemo(
+    () => orderedSubsections.filter((item) => item.is_system_default),
+    [orderedSubsections],
+  );
+  const visibleSubsectionsBySectionId = useMemo(() => {
     const map = new Map<string, TrackingSubsectionRow[]>();
-    for (const subsection of orderedSubsections) {
+    for (const subsection of visibleSubsections) {
       const list = map.get(subsection.section_id) ?? [];
       list.push(subsection);
       map.set(subsection.section_id, list);
     }
     return map;
-  }, [orderedSubsections]);
+  }, [visibleSubsections]);
+  const hiddenSubsectionsBySectionId = useMemo(() => {
+    const map = new Map<string, TrackingSubsectionRow[]>();
+    for (const subsection of hiddenSubsections) {
+      const list = map.get(subsection.section_id) ?? [];
+      list.push(subsection);
+      map.set(subsection.section_id, list);
+    }
+    return map;
+  }, [hiddenSubsections]);
+  const directSubsectionBySectionId = useMemo(() => {
+    const map = new Map<string, TrackingSubsectionRow>();
+    for (const [sectionId, subsectionRows] of hiddenSubsectionsBySectionId.entries()) {
+      if (!subsectionRows.length) continue;
+      map.set(sectionId, subsectionRows[0]);
+    }
+    return map;
+  }, [hiddenSubsectionsBySectionId]);
   const itemsBySubsectionId = useMemo(() => {
     const map = new Map<string, TrackingItemRow[]>();
     for (const item of orderedItems) {
@@ -163,24 +197,130 @@ export function TrackingManagementPanel({
     }
     return map;
   }, [orderedItems]);
-  const subsectionOptions = useMemo(
-    () =>
-      orderedSubsections.map((subsection) => ({
-        id: subsection.id,
-        label: `${sectionById.get(subsection.section_id)?.title ?? "-"} / ${subsection.title}`,
-      })),
-    [orderedSubsections, sectionById],
-  );
+  const subsectionToSectionId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const subsection of orderedSubsections) {
+      map.set(subsection.id, subsection.section_id);
+    }
+    return map;
+  }, [orderedSubsections]);
+  const subsectionOptionsBySectionId = useMemo(() => {
+    const map = new Map<string, SubsectionOption[]>();
+    for (const section of orderedSections) {
+      const options: SubsectionOption[] = [
+        {
+          value: TRACKING_DIRECT_SUBSECTION_SENTINEL,
+          label: "不指定小項（直接新增在大項）",
+          sectionId: section.id,
+          subsectionId: null,
+          isDirect: true,
+        },
+      ];
+      for (const subsection of visibleSubsectionsBySectionId.get(section.id) ?? []) {
+        options.push({
+          value: subsection.id,
+          label: subsection.title || "(未命名小項)",
+          sectionId: section.id,
+          subsectionId: subsection.id,
+          isDirect: false,
+        });
+      }
+      map.set(section.id, options);
+    }
+    return map;
+  }, [orderedSections, visibleSubsectionsBySectionId]);
   const itemById = useMemo(() => new Map(orderedItems.map((item) => [item.id, item])), [orderedItems]);
 
   const [createModal, setCreateModal] = useState<"section" | "subsection" | "item" | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingSubsectionId, setEditingSubsectionId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [createItemSectionId, setCreateItemSectionId] = useState<string>(
+    orderedSections[0]?.id ?? "",
+  );
+  const [createItemSubsectionId, setCreateItemSubsectionId] = useState<string>(() => {
+    const firstSectionId = orderedSections[0]?.id ?? "";
+    const firstVisibleSubsection = (visibleSubsectionsBySectionId.get(firstSectionId) ?? [])[0];
+    return firstVisibleSubsection?.id ?? TRACKING_DIRECT_SUBSECTION_SENTINEL;
+  });
+  const [editItemSectionId, setEditItemSectionId] = useState<string>("");
+  const [editItemSubsectionId, setEditItemSubsectionId] = useState<string>(
+    TRACKING_DIRECT_SUBSECTION_SENTINEL,
+  );
   const [sectionDrafts, setSectionDrafts] = useState<Record<string, SectionDraft>>({});
   const [subsectionDrafts, setSubsectionDrafts] = useState<Record<string, SubsectionDraft>>({});
 
   const editingItem = editingItemId ? itemById.get(editingItemId) ?? null : null;
+  const getSubsectionOptions = (sectionId: string): SubsectionOption[] =>
+    subsectionOptionsBySectionId.get(sectionId) ?? [];
+  const getFirstSubsectionValue = (sectionId: string): string => {
+    const options = getSubsectionOptions(sectionId);
+    return (
+      options.find((option) => !option.isDirect)?.value ??
+      options[0]?.value ??
+      TRACKING_DIRECT_SUBSECTION_SENTINEL
+    );
+  };
+  const resolveEditSubsectionValue = (item: TrackingItemRow): string => {
+    const subsection = subsectionById.get(item.subsection_id);
+    if (subsection?.is_system_default) return TRACKING_DIRECT_SUBSECTION_SENTINEL;
+    return item.subsection_id;
+  };
+
+  const openCreateItemModal = () => {
+    const defaultSectionId = orderedSections[0]?.id ?? "";
+    setCreateItemSectionId(defaultSectionId);
+    setCreateItemSubsectionId(
+      defaultSectionId ? getFirstSubsectionValue(defaultSectionId) : TRACKING_DIRECT_SUBSECTION_SENTINEL,
+    );
+    setCreateModal("item");
+  };
+
+  const handleCreateItemSectionChange = (nextSectionId: string) => {
+    setCreateItemSectionId(nextSectionId);
+    const options = getSubsectionOptions(nextSectionId);
+    if (!options.some((option) => option.value === createItemSubsectionId)) {
+      setCreateItemSubsectionId(getFirstSubsectionValue(nextSectionId));
+    }
+  };
+
+  const handleCreateItemSubsectionChange = (nextSubsectionValue: string) => {
+    setCreateItemSubsectionId(nextSubsectionValue);
+    if (nextSubsectionValue === TRACKING_DIRECT_SUBSECTION_SENTINEL) return;
+    const linkedSectionId = subsectionToSectionId.get(nextSubsectionValue);
+    if (linkedSectionId && linkedSectionId !== createItemSectionId) {
+      setCreateItemSectionId(linkedSectionId);
+    }
+  };
+
+  const closeEditItemModal = () => {
+    setEditingItemId(null);
+    setEditItemSectionId("");
+    setEditItemSubsectionId(TRACKING_DIRECT_SUBSECTION_SENTINEL);
+  };
+
+  const openEditItemModal = (item: TrackingItemRow) => {
+    setEditItemSectionId(item.section_id);
+    setEditItemSubsectionId(resolveEditSubsectionValue(item));
+    setEditingItemId(item.id);
+  };
+
+  const handleEditItemSectionChange = (nextSectionId: string) => {
+    setEditItemSectionId(nextSectionId);
+    const options = getSubsectionOptions(nextSectionId);
+    if (!options.some((option) => option.value === editItemSubsectionId)) {
+      setEditItemSubsectionId(getFirstSubsectionValue(nextSectionId));
+    }
+  };
+
+  const handleEditItemSubsectionChange = (nextSubsectionValue: string) => {
+    setEditItemSubsectionId(nextSubsectionValue);
+    if (nextSubsectionValue === TRACKING_DIRECT_SUBSECTION_SENTINEL) return;
+    const linkedSectionId = subsectionToSectionId.get(nextSubsectionValue);
+    if (linkedSectionId && linkedSectionId !== editItemSectionId) {
+      setEditItemSectionId(linkedSectionId);
+    }
+  };
 
   const beginSectionEdit = (sectionId: string) => {
     const source = sectionById.get(sectionId);
@@ -291,9 +431,104 @@ export function TrackingManagementPanel({
   };
 
   const submitItemUpdate = async (formData: FormData) => {
-    setEditingItemId(null);
+    closeEditItemModal();
     await onUpdateItemAction(formData);
   };
+
+  const renderItemTable = (input: {
+    sectionId: string;
+    subsectionId: string;
+    rows: TrackingItemRow[];
+    emptyText: string;
+  }) => (
+    <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <table className="min-w-full text-left text-sm">
+        <thead className="bg-slate-50 text-slate-600">
+          <tr>
+            <th className="w-20 px-3 py-2">順序</th>
+            <th className="px-3 py-2">追蹤項目</th>
+            <th className="w-28 px-3 py-2">到期日</th>
+            <th className="w-24 px-3 py-2">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {input.rows.map((item) => (
+            <tr key={item.id} className="border-t border-slate-100 align-top">
+              <td className="px-3 py-2">
+                <div className="flex flex-col gap-1">
+                  <form action={onMoveItemOrderAction}>
+                    <input type="hidden" name="groupId" value={groupId} />
+                    <input type="hidden" name="sectionId" value={input.sectionId} />
+                    <input type="hidden" name="subsectionId" value={input.subsectionId} />
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <input type="hidden" name="direction" value="up" />
+                    <input type="hidden" name="returnTo" value={returnTo} />
+                    <button className={moveButton()} title="上移項目">
+                      <ArrowUp className="h-3 w-3" />
+                    </button>
+                  </form>
+                  <form action={onMoveItemOrderAction}>
+                    <input type="hidden" name="groupId" value={groupId} />
+                    <input type="hidden" name="sectionId" value={input.sectionId} />
+                    <input type="hidden" name="subsectionId" value={input.subsectionId} />
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <input type="hidden" name="direction" value="down" />
+                    <input type="hidden" name="returnTo" value={returnTo} />
+                    <button className={moveButton()} title="下移項目">
+                      <ArrowDown className="h-3 w-3" />
+                    </button>
+                  </form>
+                </div>
+              </td>
+              <td className="px-3 py-2">
+                {item.external_url ? (
+                  <a
+                    href={item.external_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 transition hover:text-blue-800"
+                  >
+                    {item.title}
+                  </a>
+                ) : (
+                  <p className="font-medium text-slate-900">{item.title}</p>
+                )}
+                <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{item.content || "-"}</p>
+              </td>
+              <td className="px-3 py-2 text-xs text-slate-700">{formatDate(item.due_date)}</td>
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openEditItemModal(item)}
+                    className={iconButton("edit")}
+                    title="編輯追蹤項目"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <form action={onDeleteItemAction}>
+                    <input type="hidden" name="groupId" value={groupId} />
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <input type="hidden" name="returnTo" value={returnTo} />
+                    <button className={iconButton("delete")} title="刪除追蹤項目">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          ))}
+          {!input.rows.length && (
+            <tr>
+              <td className="px-3 py-4 text-slate-500" colSpan={4}>
+                {input.emptyText}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <section className="space-y-4">
@@ -321,8 +556,8 @@ export function TrackingManagementPanel({
           </button>
           <button
             type="button"
-            onClick={() => setCreateModal("item")}
-            disabled={!orderedSubsections.length}
+            onClick={openCreateItemModal}
+            disabled={!orderedSections.length}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
           >
             <Plus className="h-4 w-4" />
@@ -338,7 +573,9 @@ export function TrackingManagementPanel({
           description: section.description ?? "",
         };
         const isEditingSection = editingSectionId === section.id;
-        const subsectionRows = subsectionsBySectionId.get(section.id) ?? [];
+        const subsectionRows = visibleSubsectionsBySectionId.get(section.id) ?? [];
+        const directSubsection = directSubsectionBySectionId.get(section.id) ?? null;
+        const directItems = directSubsection ? (itemsBySubsectionId.get(directSubsection.id) ?? []) : [];
 
         return (
           <article key={section.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -571,100 +808,32 @@ export function TrackingManagementPanel({
                       </div>
                     </div>
 
-                    <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-600">
-                          <tr>
-                            <th className="w-20 px-3 py-2">順序</th>
-                            <th className="px-3 py-2">追蹤項目</th>
-                            <th className="w-28 px-3 py-2">到期日</th>
-                            <th className="w-24 px-3 py-2">操作</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rows.map((item) => (
-                            <tr key={item.id} className="border-t border-slate-100 align-top">
-                              <td className="px-3 py-2">
-                                <div className="flex flex-col gap-1">
-                                  <form action={onMoveItemOrderAction}>
-                                    <input type="hidden" name="groupId" value={groupId} />
-                                    <input type="hidden" name="sectionId" value={section.id} />
-                                    <input type="hidden" name="subsectionId" value={subsection.id} />
-                                    <input type="hidden" name="itemId" value={item.id} />
-                                    <input type="hidden" name="direction" value="up" />
-                                    <input type="hidden" name="returnTo" value={returnTo} />
-                                    <button className={moveButton()} title="上移項目">
-                                      <ArrowUp className="h-3 w-3" />
-                                    </button>
-                                  </form>
-                                  <form action={onMoveItemOrderAction}>
-                                    <input type="hidden" name="groupId" value={groupId} />
-                                    <input type="hidden" name="sectionId" value={section.id} />
-                                    <input type="hidden" name="subsectionId" value={subsection.id} />
-                                    <input type="hidden" name="itemId" value={item.id} />
-                                    <input type="hidden" name="direction" value="down" />
-                                    <input type="hidden" name="returnTo" value={returnTo} />
-                                    <button className={moveButton()} title="下移項目">
-                                      <ArrowDown className="h-3 w-3" />
-                                    </button>
-                                  </form>
-                                </div>
-                              </td>
-                              <td className="px-3 py-2">
-                                {item.external_url ? (
-                                  <a
-                                    href={item.external_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 transition hover:text-blue-800"
-                                  >
-                                    {item.title}
-                                  </a>
-                                ) : (
-                                  <p className="font-medium text-slate-900">{item.title}</p>
-                                )}
-                                <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600">{item.content || "-"}</p>
-                              </td>
-                              <td className="px-3 py-2 text-xs text-slate-700">{formatDate(item.due_date)}</td>
-                              <td className="px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingItemId(item.id)}
-                                    className={iconButton("edit")}
-                                    title="編輯追蹤項目"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </button>
-                                  <form action={onDeleteItemAction}>
-                                    <input type="hidden" name="groupId" value={groupId} />
-                                    <input type="hidden" name="itemId" value={item.id} />
-                                    <input type="hidden" name="returnTo" value={returnTo} />
-                                    <button className={iconButton("delete")} title="刪除追蹤項目">
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </form>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {!rows.length && (
-                            <tr>
-                              <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                                目前尚無追蹤項目。
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                    {renderItemTable({
+                      sectionId: section.id,
+                      subsectionId: subsection.id,
+                      rows,
+                      emptyText: "目前尚無追蹤項目。",
+                    })}
                   </div>
                 );
               })}
 
-              {!subsectionRows.length && (
+              {!!directItems.length && directSubsection && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
+                  <h4 className="text-base font-semibold text-slate-900">直屬追蹤項目</h4>
+                  <p className="mt-1 text-sm text-slate-600">此區項目直接掛在大項底下，不屬於任何具名小項。</p>
+                  {renderItemTable({
+                    sectionId: section.id,
+                    subsectionId: directSubsection.id,
+                    rows: directItems,
+                    emptyText: "目前尚無直屬追蹤項目。",
+                  })}
+                </div>
+              )}
+
+              {!subsectionRows.length && !directItems.length && (
                 <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">
-                  目前尚無追蹤小項。
+                  目前尚無追蹤小項或直屬追蹤項目。
                 </p>
               )}
             </div>
@@ -714,7 +883,12 @@ export function TrackingManagementPanel({
             <input type="hidden" name="returnTo" value={returnTo} />
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-              <select name="sectionId" defaultValue={orderedSections[0]?.id ?? ""} required>
+              <select
+                name="sectionId"
+                value={createItemSectionId || orderedSections[0]?.id || ""}
+                onChange={(event) => handleCreateItemSectionChange(event.currentTarget.value)}
+                required
+              >
                 {orderedSections.map((section) => (
                   <option key={section.id} value={section.id}>
                     {section.title}
@@ -762,13 +936,20 @@ export function TrackingManagementPanel({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">所屬小項 *</span>
-              <select name="subsectionId" defaultValue={orderedSubsections[0]?.id ?? ""} required>
-                {subsectionOptions.map((subsection) => (
-                  <option key={subsection.id} value={subsection.id}>
-                    {subsection.label}
+              <span className="text-sm font-medium text-slate-700">所屬小項</span>
+              <select
+                name="subsectionId"
+                value={createItemSubsectionId}
+                onChange={(event) => handleCreateItemSubsectionChange(event.currentTarget.value)}
+                required
+              >
+                {getSubsectionOptions(createItemSectionId || orderedSections[0]?.id || "").map(
+                  (option) => (
+                  <option key={`${option.sectionId}-${option.value}`} value={option.value}>
+                    {option.label}
                   </option>
-                ))}
+                  ),
+                )}
               </select>
             </label>
             <label className="space-y-1">
@@ -805,7 +986,7 @@ export function TrackingManagementPanel({
       )}
 
       {editingItem && (
-        <Modal title="編輯追蹤項目" onClose={() => setEditingItemId(null)}>
+        <Modal title="編輯追蹤項目" onClose={closeEditItemModal}>
           <form action={submitItemUpdate} className="space-y-3">
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="itemId" value={editingItem.id} />
@@ -813,7 +994,12 @@ export function TrackingManagementPanel({
             <input type="hidden" name="extraData" value={editingItem.extra_data ?? ""} />
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">所屬大項 *</span>
-              <select name="sectionId" defaultValue={editingItem.section_id} required>
+              <select
+                name="sectionId"
+                value={editItemSectionId || editingItem.section_id}
+                onChange={(event) => handleEditItemSectionChange(event.currentTarget.value)}
+                required
+              >
                 {orderedSections.map((section) => (
                   <option key={section.id} value={section.id}>
                     {section.title}
@@ -822,11 +1008,16 @@ export function TrackingManagementPanel({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">所屬小項 *</span>
-              <select name="subsectionId" defaultValue={editingItem.subsection_id} required>
-                {subsectionOptions.map((subsection) => (
-                  <option key={subsection.id} value={subsection.id}>
-                    {subsection.label}
+              <span className="text-sm font-medium text-slate-700">所屬小項</span>
+              <select
+                name="subsectionId"
+                value={editItemSubsectionId}
+                onChange={(event) => handleEditItemSubsectionChange(event.currentTarget.value)}
+                required
+              >
+                {getSubsectionOptions(editItemSectionId || editingItem.section_id).map((option) => (
+                  <option key={`${option.sectionId}-${option.value}`} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -855,7 +1046,7 @@ export function TrackingManagementPanel({
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setEditingItemId(null)}
+                onClick={closeEditItemModal}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
               >
                 取消

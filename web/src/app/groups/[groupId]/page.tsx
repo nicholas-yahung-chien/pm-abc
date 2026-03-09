@@ -130,6 +130,22 @@ export default async function GroupTrackingPage({
   const groupSubsections = trackingSubsections
     .filter((item) => item.group_id === groupId)
     .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+  const visibleGroupSubsections = groupSubsections.filter((item) => !item.is_system_default);
+  const hiddenGroupSubsections = groupSubsections.filter((item) => item.is_system_default);
+
+  const visibleSubsectionsBySectionId = new Map<string, typeof visibleGroupSubsections>();
+  for (const subsection of visibleGroupSubsections) {
+    const list = visibleSubsectionsBySectionId.get(subsection.section_id) ?? [];
+    list.push(subsection);
+    visibleSubsectionsBySectionId.set(subsection.section_id, list);
+  }
+
+  const hiddenSubsectionsBySectionId = new Map<string, typeof hiddenGroupSubsections>();
+  for (const subsection of hiddenGroupSubsections) {
+    const list = hiddenSubsectionsBySectionId.get(subsection.section_id) ?? [];
+    list.push(subsection);
+    hiddenSubsectionsBySectionId.set(subsection.section_id, list);
+  }
 
   const groupItems = trackingItems
     .filter((item) => item.group_id === groupId)
@@ -150,43 +166,15 @@ export default async function GroupTrackingPage({
   );
 
   const sectionItemCountById = new Map<string, number>();
-  const subsectionItemCountById = new Map<string, number>();
   for (const item of groupItems) {
     sectionItemCountById.set(item.section_id, (sectionItemCountById.get(item.section_id) ?? 0) + 1);
-    subsectionItemCountById.set(
-      item.subsection_id,
-      (subsectionItemCountById.get(item.subsection_id) ?? 0) + 1,
-    );
   }
 
-  const completedCellCountBySectionId = new Map<string, number>();
-  const completedCellCountBySubsectionId = new Map<string, number>();
-  const completedCellCountBySectionAndMember = new Map<string, number>();
-  const completedCellCountBySubsectionAndMember = new Map<string, number>();
-
+  const completedItemCountByMember = new Map<string, number>();
   for (const completion of completionRows) {
-    const item = itemById.get(completion.item_id);
-    if (!item) continue;
-
-    completedCellCountBySectionId.set(
-      item.section_id,
-      (completedCellCountBySectionId.get(item.section_id) ?? 0) + 1,
-    );
-    completedCellCountBySubsectionId.set(
-      item.subsection_id,
-      (completedCellCountBySubsectionId.get(item.subsection_id) ?? 0) + 1,
-    );
-
-    const sectionMemberKey = buildCompletionKey(item.section_id, completion.person_id);
-    completedCellCountBySectionAndMember.set(
-      sectionMemberKey,
-      (completedCellCountBySectionAndMember.get(sectionMemberKey) ?? 0) + 1,
-    );
-
-    const subsectionMemberKey = buildCompletionKey(item.subsection_id, completion.person_id);
-    completedCellCountBySubsectionAndMember.set(
-      subsectionMemberKey,
-      (completedCellCountBySubsectionAndMember.get(subsectionMemberKey) ?? 0) + 1,
+    completedItemCountByMember.set(
+      completion.person_id,
+      (completedItemCountByMember.get(completion.person_id) ?? 0) + 1,
     );
   }
 
@@ -199,6 +187,23 @@ export default async function GroupTrackingPage({
     list.push(item);
     itemsBySubsectionId.set(item.subsection_id, list);
   }
+  const directItemsBySectionId = new Map<string, typeof groupItems>();
+  for (const section of groupSections) {
+    const directItems = (hiddenSubsectionsBySectionId.get(section.id) ?? []).flatMap(
+      (subsection) => itemsBySubsectionId.get(subsection.id) ?? [],
+    );
+    directItemsBySectionId.set(section.id, directItems);
+  }
+
+  const sectionMilestoneBasePercentById = new Map<string, number>();
+  let cumulativeItemsBeforeSection = 0;
+  for (const section of groupSections) {
+    sectionMilestoneBasePercentById.set(
+      section.id,
+      toPercent(cumulativeItemsBeforeSection, groupItems.length),
+    );
+    cumulativeItemsBeforeSection += sectionItemCountById.get(section.id) ?? 0;
+  }
 
   const codeLabels: string[] = ["編號", "-"];
   const milestoneLabels: string[] = ["里程碑", "-"];
@@ -207,7 +212,7 @@ export default async function GroupTrackingPage({
     codeLabels.push(sectionCode);
     milestoneLabels.push(section.title || "-");
 
-    const subsectionRows = groupSubsections.filter((item) => item.section_id === section.id);
+    const subsectionRows = visibleSubsectionsBySectionId.get(section.id) ?? [];
     for (const [subsectionIndex, subsection] of subsectionRows.entries()) {
       const subsectionCode = `${sectionCode}.${subsectionIndex + 1}`;
       codeLabels.push(subsectionCode);
@@ -218,6 +223,13 @@ export default async function GroupTrackingPage({
         codeLabels.push(`${subsectionCode}.${itemIndex + 1}`);
         milestoneLabels.push("-");
       }
+    }
+
+    const directItems = directItemsBySectionId.get(section.id) ?? [];
+    for (const [directItemIndex] of directItems.entries()) {
+      const directCode = `${sectionCode}.${subsectionRows.length + directItemIndex + 1}`;
+      codeLabels.push(directCode);
+      milestoneLabels.push("-");
     }
   }
 
@@ -278,7 +290,9 @@ export default async function GroupTrackingPage({
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-500">追蹤小項</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">{groupSubsections.length}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              {visibleGroupSubsections.length}
+            </p>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-500">追蹤項目</p>
@@ -373,9 +387,12 @@ export default async function GroupTrackingPage({
                   >
                     -
                   </th>
-                  {visibleMembers.map((member, index) => (
+                  {visibleMembers.map((member) => (
                     <th key={member.id} className="border-b border-slate-200 px-3 py-2 text-center">
-                      {index + 1}
+                      {toPercent(completedItemCountByMember.get(member.id) ?? 0, groupItems.length).toFixed(
+                        2,
+                      )}
+                      %
                     </th>
                   ))}
                 </tr>
@@ -385,18 +402,16 @@ export default async function GroupTrackingPage({
               {!groupSections.length && (
                 <tr>
                   <td className="px-3 py-5 text-slate-500" colSpan={3 + visibleMembers.length}>
-                    目前尚無追蹤大項。請先建立追蹤大項與小項後，再新增追蹤項目。
+                    目前尚無追蹤大項。請先建立追蹤大項後，再新增追蹤項目。
                   </td>
                 </tr>
               )}
 
               {groupSections.map((section, sectionIndex) => {
                 const sectionCode = String(sectionIndex);
-                const subsectionRows = groupSubsections.filter((item) => item.section_id === section.id);
-                const sectionItemCount = sectionItemCountById.get(section.id) ?? 0;
-                const sectionTotalCells = sectionItemCount * visibleMembers.length;
-                const sectionCompletedCells = completedCellCountBySectionId.get(section.id) ?? 0;
-                const sectionPercent = toPercent(sectionCompletedCells, sectionTotalCells);
+                const subsectionRows = visibleSubsectionsBySectionId.get(section.id) ?? [];
+                const directItems = directItemsBySectionId.get(section.id) ?? [];
+                const sectionMilestonePercent = sectionMilestoneBasePercentById.get(section.id) ?? 0;
 
                 return (
                   <Fragment key={section.id}>
@@ -411,7 +426,7 @@ export default async function GroupTrackingPage({
                         className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 font-semibold"
                         style={stickyMilestoneCellStyle}
                       >
-                        {section.title}（{sectionPercent.toFixed(2)}%）
+                        {section.title}（{sectionMilestonePercent.toFixed(2)}%）
                       </td>
                       <td
                         className="xl:sticky z-20 border-b border-blue-900 bg-blue-700 px-3 py-2 text-xs xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
@@ -419,26 +434,18 @@ export default async function GroupTrackingPage({
                       >
                         {section.description || "-"}
                       </td>
-                      {visibleMembers.map((member) => {
-                        const completedByMember =
-                          completedCellCountBySectionAndMember.get(
-                            buildCompletionKey(section.id, member.id),
-                          ) ?? 0;
-                        const memberPercent = toPercent(completedByMember, sectionItemCount);
-                        return (
-                          <td
-                            key={`${section.id}:${member.id}:summary`}
-                            className="border-b border-blue-900 px-2 py-2 text-center text-xs font-semibold"
-                          >
-                            {memberPercent.toFixed(2)}%
-                          </td>
-                        );
-                      })}
+                      {visibleMembers.map((member) => (
+                        <td
+                          key={`${section.id}:${member.id}:summary`}
+                          className="border-b border-blue-900 px-2 py-2 text-center text-xs font-semibold"
+                        >
+                          -
+                        </td>
+                      ))}
                     </tr>
 
                     {subsectionRows.map((subsection, subsectionIndex) => {
                       const subsectionCode = `${sectionCode}.${subsectionIndex + 1}`;
-                      const subsectionItemCount = subsectionItemCountById.get(subsection.id) ?? 0;
 
                       return (
                         <Fragment key={subsection.id}>
@@ -461,21 +468,14 @@ export default async function GroupTrackingPage({
                             >
                               {subsection.description || "-"}
                             </td>
-                            {visibleMembers.map((member) => {
-                              const completedByMember =
-                                completedCellCountBySubsectionAndMember.get(
-                                  buildCompletionKey(subsection.id, member.id),
-                                ) ?? 0;
-                              const memberPercent = toPercent(completedByMember, subsectionItemCount);
-                              return (
-                                <td
-                                  key={`${subsection.id}:${member.id}:summary`}
-                                  className="border-b border-violet-200 px-2 py-2 text-center text-xs font-semibold"
-                                >
-                                  {memberPercent.toFixed(2)}%
-                                </td>
-                              );
-                            })}
+                            {visibleMembers.map((member) => (
+                              <td
+                                key={`${subsection.id}:${member.id}:summary`}
+                                className="border-b border-violet-200 px-2 py-2 text-center text-xs font-semibold"
+                              >
+                                -
+                              </td>
+                            ))}
                           </tr>
 
                           {(itemsBySubsectionId.get(subsection.id) ?? []).map((item, itemIndex) => {
@@ -591,13 +591,107 @@ export default async function GroupTrackingPage({
                       );
                     })}
 
-                    {!subsectionRows.length && (
+                    {directItems.map((item, directItemIndex) => {
+                      const itemCode = `${sectionCode}.${subsectionRows.length + directItemIndex + 1}`;
+                      return (
+                        <tr key={item.id} className="border-b border-slate-200 align-top">
+                          <td
+                            className="xl:sticky z-10 bg-white px-3 py-2 font-semibold text-slate-700"
+                            style={stickyCodeCellStyle}
+                          >
+                            {itemCode}
+                          </td>
+                          <td
+                            className="xl:sticky z-10 bg-white px-3 py-2 text-slate-500"
+                            style={stickyMilestoneCellStyle}
+                          >
+                            -
+                          </td>
+                          <td
+                            className="xl:sticky z-10 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
+                            style={stickyTodoCellStyle}
+                          >
+                            {item.external_url ? (
+                              <a
+                                href={item.external_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 transition hover:text-blue-800"
+                              >
+                                {item.title}
+                              </a>
+                            ) : (
+                              <p className="font-medium text-slate-900">{item.title}</p>
+                            )}
+                            <div className="mt-1">
+                              <TextPreviewDialogButton
+                                title={item.title}
+                                text={item.content || ""}
+                                maxLen={18}
+                              />
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">到期日：{formatDate(item.due_date)}</p>
+                          </td>
+
+                          {visibleMembers.map((member) => {
+                            const completed = completionKeySet.has(buildCompletionKey(item.id, member.id));
+                            const canToggle = session.role === "coach" || currentMemberPersonId === member.id;
+
+                            return (
+                              <td
+                                key={`${item.id}:${member.id}`}
+                                className="px-2 py-2 align-middle text-center"
+                              >
+                                {canToggle ? (
+                                  <form
+                                    action={setTrackingItemMemberCompletionAction}
+                                    className="flex items-center justify-center"
+                                  >
+                                    <input type="hidden" name="groupId" value={groupId} />
+                                    <input type="hidden" name="itemId" value={item.id} />
+                                    <input type="hidden" name="personId" value={member.id} />
+                                    <input type="hidden" name="returnTo" value={returnTo} />
+                                    <input
+                                      type="hidden"
+                                      name="isCompleted"
+                                      value={completed ? "false" : "true"}
+                                    />
+                                    <button
+                                      title={completed ? "取消完成" : "標記完成"}
+                                      className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-semibold leading-none transition ${
+                                        completed
+                                          ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
+                                          : "border-slate-300 bg-white text-slate-500 hover:border-emerald-400 hover:text-emerald-600"
+                                      }`}
+                                    >
+                                      {completed ? "✓" : ""}
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <div
+                                    className={`mx-auto inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] leading-none ${
+                                      completed
+                                        ? "border-emerald-700 bg-emerald-700 text-white"
+                                        : "border-slate-300 bg-slate-100 text-slate-400"
+                                    }`}
+                                  >
+                                    {completed ? "✓" : ""}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+
+                    {!subsectionRows.length && !directItems.length && (
                       <tr key={`${section.id}-empty`}>
                         <td
                           className="px-3 py-3 text-xs text-slate-500"
                           colSpan={3 + visibleMembers.length}
                         >
-                          此大項尚無追蹤小項。
+                          此大項尚無追蹤小項或直屬追蹤項目。
                         </td>
                       </tr>
                     )}

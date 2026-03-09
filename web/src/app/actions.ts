@@ -44,6 +44,7 @@ import {
 } from "@/lib/repository";
 import { getCurrentSession } from "@/lib/auth/session";
 import type { AppSession } from "@/lib/auth/types";
+import { TRACKING_DIRECT_SUBSECTION_SENTINEL } from "@/lib/tracking";
 
 function redirectWithMessage(path: string, ok: boolean, message: string): never {
   const status = ok ? "success" : "error";
@@ -777,7 +778,7 @@ export async function createTrackingItemAction(formData: FormData) {
   const externalUrl = readText(formData, "externalUrl");
   const dueDate = readText(formData, "dueDate");
 
-  if (!groupId || !sectionId || !subsectionId || !title) {
+  if (!groupId || !sectionId || !title) {
     redirectWithMessage(returnTo, false, "請填寫追蹤項目資料。");
   }
 
@@ -786,7 +787,8 @@ export async function createTrackingItemAction(formData: FormData) {
   const result = await createTrackingItem({
     groupId,
     sectionId,
-    subsectionId,
+    subsectionId:
+      subsectionId && subsectionId !== TRACKING_DIRECT_SUBSECTION_SENTINEL ? subsectionId : null,
     title,
     content,
     extraData,
@@ -813,7 +815,7 @@ export async function updateTrackingItemAction(formData: FormData) {
   const externalUrl = readText(formData, "externalUrl");
   const dueDate = readText(formData, "dueDate");
 
-  if (!groupId || !itemId || !sectionId || !subsectionId || !title) {
+  if (!groupId || !itemId || !sectionId || !title) {
     redirectWithMessage(returnTo, false, "請填寫追蹤項目資料。");
   }
 
@@ -823,7 +825,8 @@ export async function updateTrackingItemAction(formData: FormData) {
     groupId,
     itemId,
     sectionId,
-    subsectionId,
+    subsectionId:
+      subsectionId && subsectionId !== TRACKING_DIRECT_SUBSECTION_SENTINEL ? subsectionId : null,
     title,
     content,
     extraData,

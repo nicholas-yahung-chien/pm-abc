@@ -14,6 +14,7 @@ import type {
   TrackingSectionRow,
   TrackingSubsectionRow,
 } from "@/lib/types";
+import { TRACKING_DIRECT_SUBSECTION_SENTINEL } from "@/lib/tracking";
 
 type MutationResult = { ok: true } | { ok: false; message: string };
 
@@ -34,6 +35,116 @@ function getClientOrError():
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+type AdminClient = NonNullable<ReturnType<typeof getSupabaseAdminClient>>;
+
+async function ensureSystemDefaultSubsectionId(input: {
+  client: AdminClient;
+  groupId: string;
+  sectionId: string;
+  accountId?: string | null;
+}): Promise<{ ok: true; subsectionId: string } | { ok: false; message: string }> {
+  const { client, groupId, sectionId } = input;
+
+  const selectExisting = async () =>
+    client
+      .from("tracking_subsections")
+      .select("id")
+      .eq("group_id", groupId)
+      .eq("section_id", sectionId)
+      .eq("is_system_default", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+  const { data: existing, error: existingError } = await selectExisting();
+  if (existingError) return { ok: false, message: existingError.message };
+  if (existing?.id) return { ok: true, subsectionId: String(existing.id) };
+
+  const { data: maxSortRow, error: maxSortError } = await client
+    .from("tracking_subsections")
+    .select("sort_order")
+    .eq("group_id", groupId)
+    .eq("section_id", sectionId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (maxSortError) return { ok: false, message: maxSortError.message };
+
+  const nextSortOrder =
+    typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+
+  const { data: inserted, error: insertError } = await client
+    .from("tracking_subsections")
+    .insert({
+      group_id: groupId,
+      section_id: sectionId,
+      title: "",
+      description: "",
+      is_system_default: true,
+      sort_order: nextSortOrder,
+      created_by_account_id: input.accountId ?? null,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (!insertError && inserted?.id) {
+    return { ok: true, subsectionId: String(inserted.id) };
+  }
+
+  if (insertError && (insertError as { code?: string }).code !== "23505") {
+    return { ok: false, message: insertError.message };
+  }
+
+  const { data: racedExisting, error: racedError } = await selectExisting();
+  if (racedError) return { ok: false, message: racedError.message };
+  if (!racedExisting?.id) {
+    return {
+      ok: false,
+      message: insertError?.message || "系統預設追蹤小項建立失敗。",
+    };
+  }
+
+  return { ok: true, subsectionId: String(racedExisting.id) };
+}
+
+async function resolveTrackingItemSubsectionId(input: {
+  client: AdminClient;
+  groupId: string;
+  sectionId: string;
+  subsectionId?: string | null;
+  accountId?: string | null;
+}): Promise<{ ok: true; subsectionId: string } | { ok: false; message: string }> {
+  const rawSubsectionId = input.subsectionId?.trim() ?? "";
+  if (!rawSubsectionId || rawSubsectionId === TRACKING_DIRECT_SUBSECTION_SENTINEL) {
+    return ensureSystemDefaultSubsectionId({
+      client: input.client,
+      groupId: input.groupId,
+      sectionId: input.sectionId,
+      accountId: input.accountId ?? null,
+    });
+  }
+
+  const { data: subsection, error } = await input.client
+    .from("tracking_subsections")
+    .select("id, group_id, section_id")
+    .eq("id", rawSubsectionId)
+    .maybeSingle();
+
+  if (error) return { ok: false, message: error.message };
+  if (!subsection) return { ok: false, message: "找不到追蹤小項。" };
+
+  if (
+    String(subsection.group_id) !== input.groupId ||
+    String(subsection.section_id) !== input.sectionId
+  ) {
+    return { ok: false, message: "所選追蹤小項與追蹤大項不一致。" };
+  }
+
+  return { ok: true, subsectionId: rawSubsectionId };
 }
 
 export async function listClasses(): Promise<ClassRow[]> {
@@ -1152,6 +1263,7 @@ export async function createTrackingSubsection(input: {
       .select("sort_order")
       .eq("group_id", input.groupId)
       .eq("section_id", input.sectionId)
+      .eq("is_system_default", false)
       .order("sort_order", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -1166,6 +1278,7 @@ export async function createTrackingSubsection(input: {
     section_id: input.sectionId,
     title: input.title,
     description: input.description,
+    is_system_default: false,
     sort_order: sortOrder,
     created_by_account_id: input.accountId ?? null,
     updated_by_account_id: input.accountId ?? null,
@@ -1233,6 +1346,7 @@ export async function moveTrackingSubsection(input: {
     .select("id")
     .eq("group_id", input.groupId)
     .eq("section_id", input.sectionId)
+    .eq("is_system_default", false)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -1254,7 +1368,7 @@ export async function moveTrackingSubsection(input: {
 export async function createTrackingItem(input: {
   groupId: string;
   sectionId: string;
-  subsectionId: string;
+  subsectionId?: string | null;
   title: string;
   content: string;
   extraData: string;
@@ -1266,6 +1380,16 @@ export async function createTrackingItem(input: {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
 
+  const resolvedSubsection = await resolveTrackingItemSubsectionId({
+    client: db.client,
+    groupId: input.groupId,
+    sectionId: input.sectionId,
+    subsectionId: input.subsectionId ?? null,
+    accountId: input.accountId ?? null,
+  });
+  if (!resolvedSubsection.ok) return resolvedSubsection;
+  const subsectionId = resolvedSubsection.subsectionId;
+
   let sortOrder = input.sortOrder ?? null;
   if (sortOrder === null) {
     const { data: maxSortRow, error: maxSortError } = await db.client
@@ -1273,7 +1397,7 @@ export async function createTrackingItem(input: {
       .select("sort_order")
       .eq("group_id", input.groupId)
       .eq("section_id", input.sectionId)
-      .eq("subsection_id", input.subsectionId)
+      .eq("subsection_id", subsectionId)
       .order("sort_order", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -1286,7 +1410,7 @@ export async function createTrackingItem(input: {
   const { error } = await db.client.from("tracking_items").insert({
     group_id: input.groupId,
     section_id: input.sectionId,
-    subsection_id: input.subsectionId,
+    subsection_id: subsectionId,
     title: input.title,
     content: input.content,
     extra_data: input.extraData,
@@ -1308,7 +1432,7 @@ export async function updateTrackingItem(input: {
   groupId: string;
   itemId: string;
   sectionId: string;
-  subsectionId: string;
+  subsectionId?: string | null;
   title: string;
   content: string;
   extraData: string;
@@ -1319,11 +1443,20 @@ export async function updateTrackingItem(input: {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
 
+  const resolvedSubsection = await resolveTrackingItemSubsectionId({
+    client: db.client,
+    groupId: input.groupId,
+    sectionId: input.sectionId,
+    subsectionId: input.subsectionId ?? null,
+    accountId: input.accountId ?? null,
+  });
+  if (!resolvedSubsection.ok) return resolvedSubsection;
+
   const { error } = await db.client
     .from("tracking_items")
     .update({
       section_id: input.sectionId,
-      subsection_id: input.subsectionId,
+      subsection_id: resolvedSubsection.subsectionId,
       title: input.title,
       content: input.content,
       extra_data: input.extraData,

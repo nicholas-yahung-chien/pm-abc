@@ -135,6 +135,7 @@ export type TrackingSubsectionRow = {
   section_id: string;
   title: string;
   description: string;
+  is_system_default: boolean;
   sort_order: number;
   created_by_account_id: string | null;
   updated_by_account_id: string | null;
