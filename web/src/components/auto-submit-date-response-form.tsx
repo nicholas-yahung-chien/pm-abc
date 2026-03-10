@@ -41,10 +41,9 @@ export function AutoSubmitDateResponseForm({
         type="date"
         defaultValue={defaultValue}
         onChange={handleDateChange}
-        className="w-32 rounded-md border border-slate-300 px-2 py-1 text-xs"
+        className="w-36 min-w-[9rem] rounded-md border border-slate-300 px-2 py-1 pr-9 text-xs"
         title="選擇日期後自動儲存"
       />
     </form>
   );
 }
-
