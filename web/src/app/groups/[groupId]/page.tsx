@@ -17,6 +17,7 @@ import {
   updateTrackingSubsectionAction,
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { AutoSubmitDateResponseForm } from "@/components/auto-submit-date-response-form";
 import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
 import { TrackingManagementPanel } from "@/components/tracking-management-panel";
@@ -386,27 +387,14 @@ export default async function GroupTrackingPage({
 
     if (responseType === "date") {
       return (
-        <form action={setTrackingItemMemberResponseAction} className="mx-auto flex items-center justify-center gap-1">
-          <input type="hidden" name="groupId" value={groupId} />
-          <input type="hidden" name="itemId" value={item.id} />
-          <input type="hidden" name="personId" value={memberId} />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <input type="hidden" name="isCompleted" value="false" />
-          <input type="hidden" name="numberValue" value="" />
-          <input type="hidden" name="selectValue" value="" />
-          <input
-            name="dateValue"
-            type="date"
-            defaultValue={responseRow?.date_value ?? ""}
-            className="w-32 rounded-md border border-slate-300 px-2 py-1 text-xs"
-          />
-          <button
-            className="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white text-[11px] text-slate-700 transition hover:bg-slate-100"
-            title="儲存回報"
-          >
-            ✓
-          </button>
-        </form>
+        <AutoSubmitDateResponseForm
+          action={setTrackingItemMemberResponseAction}
+          groupId={groupId}
+          itemId={item.id}
+          personId={memberId}
+          returnTo={returnTo}
+          defaultValue={responseRow?.date_value ?? ""}
+        />
       );
     }
 
