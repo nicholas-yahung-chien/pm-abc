@@ -46,10 +46,9 @@ export function AutoSubmitNumberResponseForm({
         step="0.01"
         defaultValue={defaultValue}
         onBlur={(event) => handleBlur(event.currentTarget.value)}
-        className="w-20 rounded-md border border-slate-300 px-2 py-1 text-center text-xs"
+        className="w-full max-w-[9rem] min-w-0 rounded-md border border-slate-300 px-2 py-1 text-center text-xs"
         title="請輸入數值，離開欄位後會自動儲存"
       />
     </form>
   );
 }
-

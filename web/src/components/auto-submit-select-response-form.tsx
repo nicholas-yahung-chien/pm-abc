@@ -31,7 +31,7 @@ export function AutoSubmitSelectResponseForm({
   };
 
   return (
-    <form ref={formRef} action={action} className="mx-auto flex items-center justify-center">
+    <form ref={formRef} action={action} className="mx-auto flex w-full items-center justify-center">
       <input type="hidden" name="groupId" value={groupId} />
       <input type="hidden" name="itemId" value={itemId} />
       <input type="hidden" name="personId" value={personId} />
@@ -43,7 +43,7 @@ export function AutoSubmitSelectResponseForm({
         name="selectValue"
         defaultValue={defaultValue}
         onChange={handleChange}
-        className="w-28 rounded-md border border-slate-300 px-2 py-1 text-xs"
+        className="w-full max-w-[9rem] min-w-0 rounded-md border border-slate-300 px-2 py-1 text-xs"
         title="請選擇選項，變更後會自動儲存"
       >
         <option value="">未選擇</option>
@@ -59,4 +59,3 @@ export function AutoSubmitSelectResponseForm({
     </form>
   );
 }
-
