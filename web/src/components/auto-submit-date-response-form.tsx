@@ -28,7 +28,7 @@ export function AutoSubmitDateResponseForm({
   };
 
   return (
-    <form ref={formRef} action={action} className="mx-auto flex items-center justify-center">
+    <form ref={formRef} action={action} className="mx-auto flex w-full items-center justify-center">
       <input type="hidden" name="groupId" value={groupId} />
       <input type="hidden" name="itemId" value={itemId} />
       <input type="hidden" name="personId" value={personId} />
@@ -41,7 +41,7 @@ export function AutoSubmitDateResponseForm({
         type="date"
         defaultValue={defaultValue}
         onChange={handleDateChange}
-        className="w-36 min-w-[9rem] rounded-md border border-slate-300 px-2 py-1 pr-9 text-xs"
+        className="w-full max-w-[9rem] min-w-0 rounded-md border border-slate-300 px-2 py-1 pr-9 text-xs"
         title="選擇日期後自動儲存"
       />
     </form>

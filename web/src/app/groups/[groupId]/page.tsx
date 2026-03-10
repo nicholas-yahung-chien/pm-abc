@@ -257,7 +257,7 @@ export default async function GroupTrackingPage({
   const codeCol = `${codeColRem}rem`;
   const milestoneCol = `${milestoneColRem}rem`;
   const todoCol = `${todoColRem}rem`;
-  const memberCol = "8rem";
+  const memberCol = "9rem";
   const milestoneLeft = codeCol;
   const todoLeft = `${codeColRem + milestoneColRem}rem`;
   const memberColsShouldStretch = visibleMembers.length <= 2;
@@ -535,7 +535,7 @@ export default async function GroupTrackingPage({
                 {visibleMembers.map((member) => (
                   <th
                     key={member.id}
-                    className="min-w-[8rem] border-b border-slate-300 px-3 py-3 text-center"
+                    className="min-w-[9rem] border-b border-slate-300 px-3 py-3 text-center"
                   >
                     <p className="font-semibold text-slate-900">
                       {member.display_name || member.full_name}
