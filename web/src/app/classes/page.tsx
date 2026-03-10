@@ -4,6 +4,7 @@
   deleteClassAction,
   updateClassAction,
 } from "@/app/actions";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ClassManagementTable } from "@/components/class-management-table";
@@ -104,6 +105,26 @@ export default async function ClassesPage({
           onDeleteAction={deleteClassAction}
           onBatchDeleteAction={batchDeleteClassesAction}
         />
+      </section>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">課程表入口</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          點擊任一班別可進入課程表管理，設定課程項目、主題與章節。
+        </p>
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {classes.map((item) => (
+            <Link
+              key={item.id}
+              href={`/classes/${item.id}/courses`}
+              className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+            >
+              {item.code} / {item.name}
+            </Link>
+          ))}
+          {!classes.length && (
+            <p className="text-sm text-slate-500">尚未建立班別，請先新增班別。</p>
+          )}
+        </div>
       </section>
     </AppShell>
   );

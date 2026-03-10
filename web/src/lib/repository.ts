@@ -1,6 +1,9 @@
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import type {
   ClassRow,
+  ClassCourseChapterRow,
+  ClassCourseItemRow,
+  ClassCourseTopicRow,
   GroupRow,
   GroupCoachOwnerRow,
   GroupTrackingProgressRow,
@@ -36,6 +39,13 @@ function getClientOrError():
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
+
+function normalizeHexColor(value: string, fallback = "#ffffff"): string {
+  const normalized = value.trim().toLowerCase();
+  return HEX_COLOR_PATTERN.test(normalized) ? normalized : fallback;
 }
 
 const TRACKING_ITEM_RESPONSE_TYPES: TrackingItemResponseType[] = [
@@ -191,6 +201,90 @@ export async function listClasses(): Promise<ClassRow[]> {
     .order("created_at", { ascending: false });
 
   return (data ?? []) as ClassRow[];
+}
+
+export async function getClassById(classId: string): Promise<ClassRow | null> {
+  const db = getClientOrError();
+  if (!db.client) return null;
+
+  const { data } = await db.client.from("classes").select("*").eq("id", classId).maybeSingle();
+  return (data as ClassRow | null) ?? null;
+}
+
+export async function listClassCourseItemsByClassId(
+  classId: string,
+): Promise<ClassCourseItemRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("class_course_items")
+    .select("*, class:classes(id, code, name)")
+    .eq("class_id", classId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return (data ?? []) as ClassCourseItemRow[];
+}
+
+export async function listClassCourseTopicsByClassId(
+  classId: string,
+): Promise<ClassCourseTopicRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data: itemRows, error: itemError } = await db.client
+    .from("class_course_items")
+    .select("id")
+    .eq("class_id", classId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (itemError || !itemRows?.length) return [];
+
+  const itemIds = itemRows.map((row) => String((row as { id: unknown }).id));
+  const { data: topicRows, error: topicError } = await db.client
+    .from("class_course_topics")
+    .select("*")
+    .in("class_course_item_id", itemIds)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (topicError) return [];
+  return (topicRows ?? []) as ClassCourseTopicRow[];
+}
+
+export async function listClassCourseChaptersByClassId(
+  classId: string,
+): Promise<ClassCourseChapterRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data: itemRows, error: itemError } = await db.client
+    .from("class_course_items")
+    .select("id")
+    .eq("class_id", classId);
+
+  if (itemError || !itemRows?.length) return [];
+  const itemIds = itemRows.map((row) => String((row as { id: unknown }).id));
+
+  const { data: topicRows, error: topicError } = await db.client
+    .from("class_course_topics")
+    .select("id")
+    .in("class_course_item_id", itemIds);
+
+  if (topicError || !topicRows?.length) return [];
+  const topicIds = topicRows.map((row) => String((row as { id: unknown }).id));
+
+  const { data: chapterRows, error: chapterError } = await db.client
+    .from("class_course_chapters")
+    .select("*")
+    .in("class_course_topic_id", topicIds)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (chapterError) return [];
+  return (chapterRows ?? []) as ClassCourseChapterRow[];
 }
 
 export async function listGroups(): Promise<GroupRow[]> {
@@ -1102,6 +1196,573 @@ function reorderIds(ids: string[], currentId: string, direction: MoveDirection):
   const [current] = next.splice(currentIndex, 1);
   next.splice(targetIndex, 0, current);
   return next;
+}
+
+async function getClassCourseItemScope(input: {
+  client: AdminClient;
+  itemId: string;
+}): Promise<{ ok: true; classId: string } | { ok: false; message: string }> {
+  const { data, error } = await input.client
+    .from("class_course_items")
+    .select("id, class_id")
+    .eq("id", input.itemId)
+    .maybeSingle();
+
+  if (error) return { ok: false, message: error.message };
+  if (!data) return { ok: false, message: "找不到指定的課程項目。" };
+  return { ok: true, classId: String((data as { class_id: unknown }).class_id) };
+}
+
+async function getClassCourseTopicScope(input: {
+  client: AdminClient;
+  topicId: string;
+}): Promise<
+  | { ok: true; itemId: string; classId: string }
+  | { ok: false; message: string }
+> {
+  const { data: topicRow, error: topicError } = await input.client
+    .from("class_course_topics")
+    .select("id, class_course_item_id")
+    .eq("id", input.topicId)
+    .maybeSingle();
+
+  if (topicError) return { ok: false, message: topicError.message };
+  if (!topicRow) return { ok: false, message: "找不到指定的課程主題。" };
+
+  const itemId = String((topicRow as { class_course_item_id: unknown }).class_course_item_id);
+  const itemScope = await getClassCourseItemScope({
+    client: input.client,
+    itemId,
+  });
+  if (!itemScope.ok) return itemScope;
+  return { ok: true, itemId, classId: itemScope.classId };
+}
+
+async function getClassCourseChapterScope(input: {
+  client: AdminClient;
+  chapterId: string;
+}): Promise<
+  | { ok: true; topicId: string; itemId: string; classId: string }
+  | { ok: false; message: string }
+> {
+  const { data: chapterRow, error: chapterError } = await input.client
+    .from("class_course_chapters")
+    .select("id, class_course_topic_id")
+    .eq("id", input.chapterId)
+    .maybeSingle();
+
+  if (chapterError) return { ok: false, message: chapterError.message };
+  if (!chapterRow) return { ok: false, message: "找不到指定的章節。" };
+
+  const topicId = String((chapterRow as { class_course_topic_id: unknown }).class_course_topic_id);
+  const topicScope = await getClassCourseTopicScope({
+    client: input.client,
+    topicId,
+  });
+  if (!topicScope.ok) return topicScope;
+
+  return {
+    ok: true,
+    topicId,
+    itemId: topicScope.itemId,
+    classId: topicScope.classId,
+  };
+}
+
+async function resequenceClassCourseItems(input: {
+  classId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("class_course_items")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("class_id", input.classId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+async function resequenceClassCourseTopics(input: {
+  classCourseItemId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("class_course_topics")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("class_course_item_id", input.classCourseItemId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+async function resequenceClassCourseChapters(input: {
+  classCourseTopicId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("class_course_chapters")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("class_course_topic_id", input.classCourseTopicId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+export async function createClassCourseItem(input: {
+  classId: string;
+  courseDate: string;
+  instructorName: string;
+  bgColor: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("class_course_items")
+      .select("sort_order")
+      .eq("class_id", input.classId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("class_course_items").insert({
+    class_id: input.classId,
+    course_date: input.courseDate || null,
+    instructor_name: input.instructorName,
+    bg_color: normalizeHexColor(input.bgColor),
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateClassCourseItem(input: {
+  classId: string;
+  itemId: string;
+  courseDate: string;
+  instructorName: string;
+  bgColor: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("class_course_items")
+    .update({
+      course_date: input.courseDate || null,
+      instructor_name: input.instructorName,
+      bg_color: normalizeHexColor(input.bgColor),
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.itemId)
+    .eq("class_id", input.classId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteClassCourseItem(input: {
+  classId: string;
+  itemId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("class_course_items")
+    .delete()
+    .eq("id", input.itemId)
+    .eq("class_id", input.classId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveClassCourseItem(input: {
+  classId: string;
+  itemId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("class_course_items")
+    .select("id")
+    .eq("class_id", input.classId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.itemId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "找不到指定的課程項目。" };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceClassCourseItems({
+    classId: input.classId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
+}
+
+export async function createClassCourseTopic(input: {
+  classId: string;
+  classCourseItemId: string;
+  title: string;
+  bgColor: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const itemScope = await getClassCourseItemScope({
+    client: db.client,
+    itemId: input.classCourseItemId,
+  });
+  if (!itemScope.ok) return itemScope;
+  if (itemScope.classId !== input.classId) {
+    return { ok: false, message: "課程主題所屬課程項目與班別不一致。" };
+  }
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("class_course_topics")
+      .select("sort_order")
+      .eq("class_course_item_id", input.classCourseItemId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("class_course_topics").insert({
+    class_course_item_id: input.classCourseItemId,
+    title: input.title,
+    bg_color: normalizeHexColor(input.bgColor),
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateClassCourseTopic(input: {
+  classId: string;
+  topicId: string;
+  classCourseItemId: string;
+  title: string;
+  bgColor: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const itemScope = await getClassCourseItemScope({
+    client: db.client,
+    itemId: input.classCourseItemId,
+  });
+  if (!itemScope.ok) return itemScope;
+  if (itemScope.classId !== input.classId) {
+    return { ok: false, message: "課程主題所屬課程項目與班別不一致。" };
+  }
+
+  const topicScope = await getClassCourseTopicScope({
+    client: db.client,
+    topicId: input.topicId,
+  });
+  if (!topicScope.ok) return topicScope;
+  if (topicScope.classId !== input.classId) {
+    return { ok: false, message: "找不到指定的課程主題。" };
+  }
+
+  const { error } = await db.client
+    .from("class_course_topics")
+    .update({
+      class_course_item_id: input.classCourseItemId,
+      title: input.title,
+      bg_color: normalizeHexColor(input.bgColor),
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.topicId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteClassCourseTopic(input: {
+  classId: string;
+  topicId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const topicScope = await getClassCourseTopicScope({
+    client: db.client,
+    topicId: input.topicId,
+  });
+  if (!topicScope.ok) return topicScope;
+  if (topicScope.classId !== input.classId) {
+    return { ok: false, message: "找不到指定的課程主題。" };
+  }
+
+  const { error } = await db.client.from("class_course_topics").delete().eq("id", input.topicId);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveClassCourseTopic(input: {
+  classId: string;
+  classCourseItemId: string;
+  topicId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const itemScope = await getClassCourseItemScope({
+    client: db.client,
+    itemId: input.classCourseItemId,
+  });
+  if (!itemScope.ok) return itemScope;
+  if (itemScope.classId !== input.classId) {
+    return { ok: false, message: "課程主題所屬課程項目與班別不一致。" };
+  }
+
+  const { data: rows, error } = await db.client
+    .from("class_course_topics")
+    .select("id")
+    .eq("class_course_item_id", input.classCourseItemId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.topicId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "找不到指定的課程主題。" };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceClassCourseTopics({
+    classCourseItemId: input.classCourseItemId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
+}
+
+export async function createClassCourseChapter(input: {
+  classId: string;
+  classCourseTopicId: string;
+  title: string;
+  paperPage: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const topicScope = await getClassCourseTopicScope({
+    client: db.client,
+    topicId: input.classCourseTopicId,
+  });
+  if (!topicScope.ok) return topicScope;
+  if (topicScope.classId !== input.classId) {
+    return { ok: false, message: "章節所屬課程主題與班別不一致。" };
+  }
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("class_course_chapters")
+      .select("sort_order")
+      .eq("class_course_topic_id", input.classCourseTopicId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("class_course_chapters").insert({
+    class_course_topic_id: input.classCourseTopicId,
+    title: input.title,
+    paper_page: input.paperPage,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateClassCourseChapter(input: {
+  classId: string;
+  chapterId: string;
+  classCourseTopicId: string;
+  title: string;
+  paperPage: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const topicScope = await getClassCourseTopicScope({
+    client: db.client,
+    topicId: input.classCourseTopicId,
+  });
+  if (!topicScope.ok) return topicScope;
+  if (topicScope.classId !== input.classId) {
+    return { ok: false, message: "章節所屬課程主題與班別不一致。" };
+  }
+
+  const chapterScope = await getClassCourseChapterScope({
+    client: db.client,
+    chapterId: input.chapterId,
+  });
+  if (!chapterScope.ok) return chapterScope;
+  if (chapterScope.classId !== input.classId) {
+    return { ok: false, message: "找不到指定的章節。" };
+  }
+
+  const { error } = await db.client
+    .from("class_course_chapters")
+    .update({
+      class_course_topic_id: input.classCourseTopicId,
+      title: input.title,
+      paper_page: input.paperPage,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.chapterId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteClassCourseChapter(input: {
+  classId: string;
+  chapterId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const chapterScope = await getClassCourseChapterScope({
+    client: db.client,
+    chapterId: input.chapterId,
+  });
+  if (!chapterScope.ok) return chapterScope;
+  if (chapterScope.classId !== input.classId) {
+    return { ok: false, message: "找不到指定的章節。" };
+  }
+
+  const { error } = await db.client
+    .from("class_course_chapters")
+    .delete()
+    .eq("id", input.chapterId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveClassCourseChapter(input: {
+  classId: string;
+  classCourseTopicId: string;
+  chapterId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const topicScope = await getClassCourseTopicScope({
+    client: db.client,
+    topicId: input.classCourseTopicId,
+  });
+  if (!topicScope.ok) return topicScope;
+  if (topicScope.classId !== input.classId) {
+    return { ok: false, message: "章節所屬課程主題與班別不一致。" };
+  }
+
+  const { data: rows, error } = await db.client
+    .from("class_course_chapters")
+    .select("id")
+    .eq("class_course_topic_id", input.classCourseTopicId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.chapterId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "找不到指定的章節。" };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceClassCourseChapters({
+    classCourseTopicId: input.classCourseTopicId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
 }
 
 async function resequenceTrackingSections(input: {

@@ -4,11 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   createClass,
+  createClassCourseChapter,
+  createClassCourseItem,
+  createClassCourseTopic,
   createGroup,
   createMemberAccount,
   createMembership,
   createPerson,
   deleteClass,
+  deleteClassCourseChapter,
+  deleteClassCourseItem,
+  deleteClassCourseTopic,
   deleteClasses,
   deleteGroup,
   deleteMemberAccount,
@@ -23,6 +29,9 @@ import {
   deleteTrackingSection,
   deleteTrackingSubsection,
   deleteRoleAssignment,
+  moveClassCourseChapter,
+  moveClassCourseItem,
+  moveClassCourseTopic,
   moveTrackingSection,
   moveTrackingSubsection,
   moveTrackingItem,
@@ -40,6 +49,9 @@ import {
   listGroupIdsByEmail,
   listMembershipsByEmail,
   updateClass,
+  updateClassCourseChapter,
+  updateClassCourseItem,
+  updateClassCourseTopic,
   updateMemberAccount,
 } from "@/lib/repository";
 import { getCurrentSession } from "@/lib/auth/session";
@@ -207,6 +219,308 @@ export async function batchDeleteClassesAction(formData: FormData) {
   revalidatePath("/groups");
   if (!result.ok) redirectWithMessage("/classes", false, result.message);
   redirectWithMessage("/classes", true, `已批次刪除 ${classIds.length} 個班別。`);
+}
+
+function readClassCourseDirection(formData: FormData): "up" | "down" | null {
+  const raw = readText(formData, "direction");
+  if (raw === "up" || raw === "down") return raw;
+  return null;
+}
+
+function getClassCourseRedirectPath(classId: string): string {
+  return `/classes/${classId}/courses`;
+}
+
+export async function createClassCourseItemAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+  const courseDate = readText(formData, "courseDate");
+  const instructorName = readText(formData, "instructorName");
+  const bgColor = readText(formData, "bgColor");
+
+  if (!classId) {
+    redirectWithMessage("/classes", false, "缺少班別資訊，無法新增課程項目。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await createClassCourseItem({
+    classId,
+    courseDate,
+    instructorName,
+    bgColor,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程項目已新增。");
+}
+
+export async function updateClassCourseItemAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const itemId = readText(formData, "itemId");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+  const courseDate = readText(formData, "courseDate");
+  const instructorName = readText(formData, "instructorName");
+  const bgColor = readText(formData, "bgColor");
+
+  if (!classId || !itemId) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法更新課程項目。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await updateClassCourseItem({
+    classId,
+    itemId,
+    courseDate,
+    instructorName,
+    bgColor,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程項目已更新。");
+}
+
+export async function deleteClassCourseItemAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const itemId = readText(formData, "itemId");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !itemId) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法刪除課程項目。");
+  }
+
+  await requireCoachOrAdmin(redirectPath);
+  const result = await deleteClassCourseItem({ classId, itemId });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程項目已刪除。");
+}
+
+export async function moveClassCourseItemAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const itemId = readText(formData, "itemId");
+  const direction = readClassCourseDirection(formData);
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !itemId || !direction) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法調整課程項目順序。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await moveClassCourseItem({
+    classId,
+    itemId,
+    direction,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程項目順序已更新。");
+}
+
+export async function createClassCourseTopicAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const classCourseItemId = readText(formData, "classCourseItemId");
+  const title = readText(formData, "title");
+  const bgColor = readText(formData, "bgColor");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !classCourseItemId || !title) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法新增課程主題。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await createClassCourseTopic({
+    classId,
+    classCourseItemId,
+    title,
+    bgColor,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程主題已新增。");
+}
+
+export async function updateClassCourseTopicAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const topicId = readText(formData, "topicId");
+  const classCourseItemId = readText(formData, "classCourseItemId");
+  const title = readText(formData, "title");
+  const bgColor = readText(formData, "bgColor");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !topicId || !classCourseItemId || !title) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法更新課程主題。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await updateClassCourseTopic({
+    classId,
+    topicId,
+    classCourseItemId,
+    title,
+    bgColor,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程主題已更新。");
+}
+
+export async function deleteClassCourseTopicAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const topicId = readText(formData, "topicId");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !topicId) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法刪除課程主題。");
+  }
+
+  await requireCoachOrAdmin(redirectPath);
+  const result = await deleteClassCourseTopic({ classId, topicId });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程主題已刪除。");
+}
+
+export async function moveClassCourseTopicAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const classCourseItemId = readText(formData, "classCourseItemId");
+  const topicId = readText(formData, "topicId");
+  const direction = readClassCourseDirection(formData);
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !classCourseItemId || !topicId || !direction) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法調整課程主題順序。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await moveClassCourseTopic({
+    classId,
+    classCourseItemId,
+    topicId,
+    direction,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "課程主題順序已更新。");
+}
+
+export async function createClassCourseChapterAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const classCourseTopicId = readText(formData, "classCourseTopicId");
+  const title = readText(formData, "title");
+  const paperPage = readText(formData, "paperPage");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !classCourseTopicId || !title) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法新增章節。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await createClassCourseChapter({
+    classId,
+    classCourseTopicId,
+    title,
+    paperPage,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "章節已新增。");
+}
+
+export async function updateClassCourseChapterAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const chapterId = readText(formData, "chapterId");
+  const classCourseTopicId = readText(formData, "classCourseTopicId");
+  const title = readText(formData, "title");
+  const paperPage = readText(formData, "paperPage");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !chapterId || !classCourseTopicId || !title) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法更新章節。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await updateClassCourseChapter({
+    classId,
+    chapterId,
+    classCourseTopicId,
+    title,
+    paperPage,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "章節已更新。");
+}
+
+export async function deleteClassCourseChapterAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const chapterId = readText(formData, "chapterId");
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !chapterId) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法刪除章節。");
+  }
+
+  await requireCoachOrAdmin(redirectPath);
+  const result = await deleteClassCourseChapter({ classId, chapterId });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "章節已刪除。");
+}
+
+export async function moveClassCourseChapterAction(formData: FormData) {
+  const classId = readText(formData, "classId");
+  const classCourseTopicId = readText(formData, "classCourseTopicId");
+  const chapterId = readText(formData, "chapterId");
+  const direction = readClassCourseDirection(formData);
+  const redirectPath = classId ? getClassCourseRedirectPath(classId) : "/classes";
+
+  if (!classId || !classCourseTopicId || !chapterId || !direction) {
+    redirectWithMessage(redirectPath, false, "缺少必要欄位，無法調整章節順序。");
+  }
+
+  const session = await requireCoachOrAdmin(redirectPath);
+  const result = await moveClassCourseChapter({
+    classId,
+    classCourseTopicId,
+    chapterId,
+    direction,
+    accountId: session.accountId,
+  });
+
+  revalidatePath("/classes");
+  revalidatePath(redirectPath);
+  if (!result.ok) redirectWithMessage(redirectPath, false, result.message);
+  redirectWithMessage(redirectPath, true, "章節順序已更新。");
 }
 
 export async function createGroupAction(formData: FormData) {

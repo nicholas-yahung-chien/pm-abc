@@ -28,6 +28,62 @@ export type GroupRow = {
   } | null;
 };
 
+export type ClassCourseItemRow = {
+  id: string;
+  class_id: string;
+  course_date: string | null;
+  instructor_name: string;
+  bg_color: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  class?: {
+    id: string;
+    code: string;
+    name: string;
+  } | null;
+};
+
+export type ClassCourseTopicRow = {
+  id: string;
+  class_course_item_id: string;
+  title: string;
+  bg_color: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  item?: {
+    id: string;
+    class_id: string;
+    course_date: string | null;
+    instructor_name: string;
+    bg_color: string;
+    sort_order: number;
+  } | null;
+};
+
+export type ClassCourseChapterRow = {
+  id: string;
+  class_course_topic_id: string;
+  title: string;
+  paper_page: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  topic?: {
+    id: string;
+    class_course_item_id: string;
+    title: string;
+    sort_order: number;
+  } | null;
+};
+
 export type PersonRow = {
   id: string;
   person_no: string | null;
