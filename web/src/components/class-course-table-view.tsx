@@ -175,10 +175,10 @@ export function ClassCourseTableView({
                       </td>
                     )}
 
-                    <td className="border border-slate-700 px-2 py-2 align-middle text-base text-slate-900 break-words">
+                    <td className="border border-slate-700 px-2 py-2 align-middle text-sm text-slate-900 break-words">
                       {chapter?.title ?? ""}
                     </td>
-                    <td className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-base text-slate-900">
+                    <td className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-sm text-slate-900">
                       {chapter?.paper_page ?? ""}
                     </td>
                   </tr>,
