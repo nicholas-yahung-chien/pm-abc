@@ -68,16 +68,16 @@ export function ClassCourseTableView({
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200">
-      <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+      <table className="w-full table-auto border-collapse text-left text-sm">
         <thead>
           <tr className="bg-violet-50 text-slate-900">
-            <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
               {"\u9806\u5e8f"}
             </th>
-            <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
               {"\u4e0a\u8ab2\u65e5\u671f"}
             </th>
-            <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
               {"\u6388\u8ab2\u8b1b\u5e2b"}
             </th>
             <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
@@ -135,21 +135,21 @@ export function ClassCourseTableView({
                       <>
                         <td
                           rowSpan={itemRowCount}
-                          className="border border-slate-700 px-3 py-2 text-center align-middle text-base font-semibold text-slate-900"
+                          className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-base font-semibold text-slate-900"
                           style={{ backgroundColor: itemBg }}
                         >
                           {itemIndex + 1}
                         </td>
                         <td
                           rowSpan={itemRowCount}
-                          className="border border-slate-700 px-3 py-2 text-center align-middle text-base font-semibold text-slate-900"
+                          className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-sm font-semibold text-slate-900"
                           style={{ backgroundColor: itemBg }}
                         >
                           {formatDateWithWeekday(item.course_date)}
                         </td>
                         <td
                           rowSpan={itemRowCount}
-                          className="border border-slate-700 px-3 py-2 text-center align-middle text-base font-semibold text-slate-900"
+                          className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-base font-semibold text-slate-900"
                           style={{ backgroundColor: itemBg }}
                         >
                           {item.instructor_name || "\u672a\u5b9a"}
@@ -160,17 +160,17 @@ export function ClassCourseTableView({
                     {chapterIndex === 0 && (
                       <td
                         rowSpan={block.rowCount}
-                        className="border border-slate-700 px-3 py-2 align-middle text-center text-2xl font-semibold text-slate-900"
+                        className="border border-slate-700 px-3 py-2 align-middle text-center text-xl font-semibold text-slate-900"
                         style={{ backgroundColor: topicBg }}
                       >
                         {block.topic?.title ?? ""}
                       </td>
                     )}
 
-                    <td className="border border-slate-700 px-2 py-2 align-middle text-base text-slate-900">
+                    <td className="border border-slate-700 px-2 py-2 align-middle text-base text-slate-900 break-words">
                       {chapter?.title ?? ""}
                     </td>
-                    <td className="border border-slate-700 px-2 py-2 text-center align-middle text-base text-slate-900">
+                    <td className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-base text-slate-900">
                       {chapter?.paper_page ?? ""}
                     </td>
                   </tr>,
