@@ -81,11 +81,6 @@ export function ClassCourseManagementPanel({
   const orderedTopics = useMemo(() => sortByOrder(topics), [topics]);
   const orderedChapters = useMemo(() => sortByOrder(chapters), [chapters]);
 
-  const itemById = useMemo(
-    () => new Map(orderedItems.map((item) => [item.id, item])),
-    [orderedItems],
-  );
-
   const topicsByItemId = useMemo(() => {
     const map = new Map<string, ClassCourseTopicRow[]>();
     for (const topic of orderedTopics) {
@@ -123,19 +118,18 @@ export function ClassCourseManagementPanel({
 
   const chapterTopicOptions = useMemo(
     () =>
-      orderedTopics
-        .map((topic) => {
-          const item = itemById.get(topic.class_course_item_id);
-          if (!item) return null;
-          const itemOrder = itemOrderMap.get(item.id) ?? 0;
+      orderedItems.flatMap((item) => {
+        const itemOrder = itemOrderMap.get(item.id) ?? 0;
+        const itemTopics = topicsByItemId.get(item.id) ?? [];
+        return itemTopics.map((topic) => {
           const topicOrder = topicOrderMap.get(topic.id) ?? 0;
           return {
             id: topic.id,
             label: `課程 ${itemOrder} / 主題 ${itemOrder}.${topicOrder}：${topic.title}`,
           };
-        })
-        .filter((row): row is { id: string; label: string } => Boolean(row)),
-    [orderedTopics, itemById, itemOrderMap, topicOrderMap],
+        });
+      }),
+    [orderedItems, itemOrderMap, topicsByItemId, topicOrderMap],
   );
 
   return (
