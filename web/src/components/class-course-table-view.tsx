@@ -69,6 +69,14 @@ export function ClassCourseTableView({
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200">
       <table className="w-full table-auto border-collapse text-left text-sm">
+        <colgroup>
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+          <col />
+          <col className="w-[1%]" />
+        </colgroup>
         <thead>
           <tr className="bg-violet-50 text-slate-900">
             <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
@@ -80,13 +88,13 @@ export function ClassCourseTableView({
             <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
               {"\u6388\u8ab2\u8b1b\u5e2b"}
             </th>
-            <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-3 py-2 text-center font-semibold">
               {"\u4e3b\u984c"}
             </th>
             <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
               {"\u7ae0\u7bc0\u6a19\u984c"}
             </th>
-            <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-3 py-2 text-center font-semibold">
               {"\u7d19\u672c\u9801\u78bc"}
             </th>
           </tr>
@@ -160,7 +168,7 @@ export function ClassCourseTableView({
                     {chapterIndex === 0 && (
                       <td
                         rowSpan={block.rowCount}
-                        className="border border-slate-700 px-3 py-2 align-middle text-center text-xl font-semibold text-slate-900"
+                        className="w-[1%] whitespace-nowrap border border-slate-700 px-3 py-2 align-middle text-center text-xl font-semibold text-slate-900"
                         style={{ backgroundColor: topicBg }}
                       >
                         {block.topic?.title ?? ""}
