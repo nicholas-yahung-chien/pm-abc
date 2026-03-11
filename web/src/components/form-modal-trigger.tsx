@@ -10,6 +10,7 @@ type FormModalTriggerProps = {
   submitLabel: string;
   action: (formData: FormData) => void | Promise<void>;
   children: ReactNode;
+  triggerContent?: ReactNode;
   triggerClassName?: string;
   formClassName?: string;
   submitClassName?: string;
@@ -24,6 +25,7 @@ export function FormModalTrigger({
   submitLabel,
   action,
   children,
+  triggerContent,
   triggerClassName,
   formClassName = "space-y-3",
   submitClassName = "rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700",
@@ -43,14 +45,20 @@ export function FormModalTrigger({
         type="button"
         onClick={() => setOpen(true)}
         disabled={disabled}
+        aria-label={buttonLabel}
+        title={buttonLabel}
         className={[
           triggerClassName ??
             "inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700",
           "disabled:cursor-not-allowed disabled:bg-slate-400",
         ].join(" ")}
       >
-        <Plus className="h-4 w-4" />
-        {buttonLabel}
+        {triggerContent ?? (
+          <>
+            <Plus className="h-4 w-4" />
+            {buttonLabel}
+          </>
+        )}
       </button>
 
       {open && (

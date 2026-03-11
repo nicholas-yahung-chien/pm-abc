@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Fragment, type CSSProperties } from "react";
 import {
@@ -456,6 +456,9 @@ export default async function GroupTrackingPage({
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
             前往 R&R
           </Link>
+          <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
+            查看課程表
+          </Link>
           <Link href="/groups" className="text-amber-700 underline">
             回到小組列表
           </Link>
@@ -484,19 +487,19 @@ export default async function GroupTrackingPage({
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyCodeCellStyle}
                 >
-                  編號
+                  蝺刻?
                 </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyMilestoneCellStyle}
                 >
-                  里程碑
+                  ??蝣?
                 </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
                   style={stickyTodoCellStyle}
                 >
-                  待辦事項
+                  敺齒鈭?
                 </th>
                 {visibleMembers.map((member) => (
                   <th
@@ -545,7 +548,7 @@ export default async function GroupTrackingPage({
               {!groupSections.length && (
                 <tr>
                   <td className="px-3 py-5 text-slate-500" colSpan={3 + visibleMembers.length}>
-                    目前尚無追蹤大項。請先建立追蹤大項後，再新增追蹤項目。
+                    ?桀?撠餈質馱憭折????遣蝡蕭頩文之??嚗??啣?餈質馱???
                   </td>
                 </tr>
               )}
@@ -659,7 +662,7 @@ export default async function GroupTrackingPage({
                                     />
                                   </div>
                                   <p className="mt-1 text-xs text-slate-500">
-                                    到期日：{formatDate(item.due_date)}
+                                    ?唳??伐?{formatDate(item.due_date)}
                                   </p>
                                 </td>
 
@@ -681,7 +684,7 @@ export default async function GroupTrackingPage({
                                 className="px-3 py-3 text-xs text-slate-500"
                                 colSpan={3 + visibleMembers.length}
                               >
-                                此小項尚無追蹤項目。
+                                甇文????∟蕭頩日??柴?
                               </td>
                             </tr>
                           )}
@@ -728,7 +731,7 @@ export default async function GroupTrackingPage({
                                 maxLen={18}
                               />
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">到期日：{formatDate(item.due_date)}</p>
+                            <p className="mt-1 text-xs text-slate-500">?唳??伐?{formatDate(item.due_date)}</p>
                           </td>
 
                           {visibleMembers.map((member) => (
@@ -749,7 +752,7 @@ export default async function GroupTrackingPage({
                           className="px-3 py-3 text-xs text-slate-500"
                           colSpan={3 + visibleMembers.length}
                         >
-                          此大項尚無追蹤小項或直屬追蹤項目。
+                          甇文之???∟蕭頩文????游惇餈質馱???
                         </td>
                       </tr>
                     )}

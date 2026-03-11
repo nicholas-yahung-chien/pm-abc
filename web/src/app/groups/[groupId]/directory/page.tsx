@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updateGroupMemberDirectoryProfileAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
@@ -51,7 +51,7 @@ export default async function GroupDirectoryPage({
     session.role === "member" &&
     !myMemberships.some((membership) => membership.group_id === groupId)
   ) {
-    const encoded = encodeURIComponent("學員僅可進入已被指派的小組。");
+    const encoded = encodeURIComponent("學員僅可管理已被指派的小組。");
     redirect(`/groups?status=error&message=${encoded}`);
   }
 
@@ -105,7 +105,7 @@ export default async function GroupDirectoryPage({
           {group.class?.code} / {group.code} {group.name}
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          教練資訊顯示於頂端，學員資料可於下方列表直接編輯。
+          顯示教練與學員聯絡資訊，並可在下方更新學員通訊錄欄位。
         </p>
         <div className="mt-4">
           <StatusBanner status={status} message={message} />
@@ -115,7 +115,10 @@ export default async function GroupDirectoryPage({
             回到小組總覽
           </Link>
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            前往 R&amp;R 管理
+            前往 R&R
+          </Link>
+          <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
+            查看課程表
           </Link>
         </div>
       </section>
@@ -126,13 +129,13 @@ export default async function GroupDirectoryPage({
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <th className="px-3 py-2">姓名</th>
-                <th className="px-3 py-2">希望別人怎麼稱呼</th>
-                <th className="px-3 py-2">身份</th>
-                <th className="px-3 py-2">電話</th>
+                <th className="px-3 py-2">憪?</th>
+                <th className="px-3 py-2">撣??乩犖?獐蝔勗</th>
+                <th className="px-3 py-2">頨思遢</th>
+                <th className="px-3 py-2">?餉店</th>
                 <th className="px-3 py-2">Email</th>
                 <th className="px-3 py-2">LINE ID</th>
-                <th className="px-3 py-2">自我介紹</th>
+                <th className="px-3 py-2">?芣?隞晶</th>
               </tr>
             </thead>
             <tbody>
@@ -144,15 +147,15 @@ export default async function GroupDirectoryPage({
                   <td className="px-3 py-2">
                     {coachPerson?.display_name || coachOwner.coach.display_name || "-"}
                   </td>
-                  <td className="px-3 py-2">教練</td>
+                  <td className="px-3 py-2">?毀</td>
                   <td className="px-3 py-2">{coachPerson?.phone || "-"}</td>
                   <td className="px-3 py-2">{coachOwner.coach.email || "-"}</td>
                   <td className="px-3 py-2">{coachPerson?.line_id || "-"}</td>
                   <td className="px-3 py-2">
                     <TextPreviewDialogButton
-                      title="教練自我介紹"
+                      title="?毀?芣?隞晶"
                       text={coachPerson?.intro || ""}
-                      placeholder="查看教練自我介紹"
+                      placeholder="?亦??毀?芣?隞晶"
                     />
                   </td>
                 </tr>
@@ -160,8 +163,7 @@ export default async function GroupDirectoryPage({
               {!coachOwner?.coach && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={7}>
-                    目前尚未指派小組教練。
-                  </td>
+                    ?桀?撠?晷撠??毀??                  </td>
                 </tr>
               )}
             </tbody>
@@ -172,7 +174,7 @@ export default async function GroupDirectoryPage({
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">小組學員通訊錄</h2>
         <p className="mt-1 text-sm text-slate-600">
-          可直接編輯「希望別人怎麼稱呼」、「LINE ID」與「自我介紹」。
+          以通訊錄方式維護學員資料，包含姓名、顯示名稱、Email、LINE ID 與自我介紹。
         </p>
         <GroupDirectoryMemberTable
           groupId={groupId}

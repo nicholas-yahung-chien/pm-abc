@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { FormModalTrigger } from "@/components/form-modal-trigger";
 import type {
@@ -269,17 +269,8 @@ export function ClassCourseManagementPanel({
                 className="rounded-xl border border-slate-200 p-4"
                 style={{ backgroundColor: normalizeColor(item.bg_color) }}
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-700">
-                      課程 {itemIndex + 1}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-800">
-                      上課日期：{formatDate(item.course_date)} / 授課講師：{item.instructor_name || "未定"}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex shrink-0 flex-col gap-1">
                     <form action={onMoveItemAction}>
                       <input type="hidden" name="classId" value={classId} />
                       <input type="hidden" name="itemId" value={item.id} />
@@ -300,13 +291,25 @@ export function ClassCourseManagementPanel({
                         <ArrowDown className="h-3.5 w-3.5" />
                       </button>
                     </form>
+                  </div>
 
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-700">
+                      課程 {itemIndex + 1}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-800">
+                      上課日期：{formatDate(item.course_date)} / 授課講師：{item.instructor_name || "未定"}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-start gap-2">
                     <FormModalTrigger
-                      buttonLabel="編輯"
+                      buttonLabel="編輯課程項目"
                       modalTitle="編輯課程項目"
                       submitLabel="儲存變更"
                       action={onUpdateItemAction}
                       triggerClassName={iconButtonClassName("edit")}
+                      triggerContent={<Pencil className="h-4 w-4" />}
                     >
                       <input type="hidden" name="classId" value={classId} />
                       <input type="hidden" name="itemId" value={item.id} />
@@ -353,15 +356,8 @@ export function ClassCourseManagementPanel({
                           className="rounded-lg border border-slate-200 p-3"
                           style={{ backgroundColor: normalizeColor(topic.bg_color) }}
                         >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-700">
-                                主題 {itemIndex + 1}.{topicOrder}
-                              </p>
-                              <p className="mt-1 font-semibold text-slate-900">{topic.title}</p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 flex shrink-0 flex-col gap-1">
                               <form action={onMoveTopicAction}>
                                 <input type="hidden" name="classId" value={classId} />
                                 <input type="hidden" name="classCourseItemId" value={topic.class_course_item_id} />
@@ -384,13 +380,23 @@ export function ClassCourseManagementPanel({
                                   <ArrowDown className="h-3.5 w-3.5" />
                                 </button>
                               </form>
+                            </div>
 
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-700">
+                                主題 {itemIndex + 1}.{topicOrder}
+                              </p>
+                              <p className="mt-1 font-semibold text-slate-900">{topic.title}</p>
+                            </div>
+
+                            <div className="flex shrink-0 items-start gap-2">
                               <FormModalTrigger
-                                buttonLabel="編輯"
+                                buttonLabel="編輯課程主題"
                                 modalTitle="編輯課程主題"
                                 submitLabel="儲存變更"
                                 action={onUpdateTopicAction}
                                 triggerClassName={iconButtonClassName("edit")}
+                                triggerContent={<Pencil className="h-4 w-4" />}
                               >
                                 <input type="hidden" name="classId" value={classId} />
                                 <input type="hidden" name="topicId" value={topic.id} />
@@ -443,7 +449,6 @@ export function ClassCourseManagementPanel({
                                   <tr key={chapter.id} className="border-t border-slate-100">
                                     <td className="px-3 py-2 align-middle">
                                       <div className="flex items-center gap-2">
-                                        <span>{chapterIndex + 1}</span>
                                         <div className="flex flex-col gap-1">
                                           <form action={onMoveChapterAction}>
                                             <input type="hidden" name="classId" value={classId} />
@@ -468,6 +473,7 @@ export function ClassCourseManagementPanel({
                                             </button>
                                           </form>
                                         </div>
+                                        <span>{chapterIndex + 1}</span>
                                       </div>
                                     </td>
                                     <td className="px-3 py-2 align-middle font-medium text-slate-900">{chapter.title}</td>
@@ -475,11 +481,12 @@ export function ClassCourseManagementPanel({
                                     <td className="px-3 py-2 align-middle">
                                       <div className="flex items-center justify-center gap-2">
                                         <FormModalTrigger
-                                          buttonLabel="編輯"
+                                          buttonLabel="編輯章節"
                                           modalTitle="編輯章節"
                                           submitLabel="儲存變更"
                                           action={onUpdateChapterAction}
                                           triggerClassName={iconButtonClassName("edit")}
+                                          triggerContent={<Pencil className="h-4 w-4" />}
                                         >
                                           <input type="hidden" name="classId" value={classId} />
                                           <input type="hidden" name="chapterId" value={chapter.id} />

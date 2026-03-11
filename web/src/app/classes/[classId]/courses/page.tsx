@@ -16,6 +16,7 @@ import {
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { ClassCourseManagementPanel } from "@/components/class-course-management-panel";
+import { ClassCourseTableView } from "@/components/class-course-table-view";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
@@ -41,10 +42,6 @@ export default async function ClassCoursePage({
     const encoded = encodeURIComponent("請先登入後再繼續使用。");
     redirect(`/login?status=error&message=${encoded}`);
   }
-  if (session.role === "member") {
-    const encoded = encodeURIComponent("學員身份不可管理班別課程表。");
-    redirect(`/groups?status=error&message=${encoded}`);
-  }
 
   const { classId } = await params;
   const query = await searchParams;
@@ -62,6 +59,8 @@ export default async function ClassCoursePage({
     listClassCourseTopicsByClassId(classId),
     listClassCourseChaptersByClassId(classId),
   ]);
+
+  const canManage = session.role !== "member";
 
   return (
     <AppShell>
@@ -88,24 +87,42 @@ export default async function ClassCoursePage({
         </div>
       </section>
 
-      <ClassCourseManagementPanel
-        classId={classId}
-        items={items}
-        topics={topics}
-        chapters={chapters}
-        onCreateItemAction={createClassCourseItemAction}
-        onUpdateItemAction={updateClassCourseItemAction}
-        onDeleteItemAction={deleteClassCourseItemAction}
-        onMoveItemAction={moveClassCourseItemAction}
-        onCreateTopicAction={createClassCourseTopicAction}
-        onUpdateTopicAction={updateClassCourseTopicAction}
-        onDeleteTopicAction={deleteClassCourseTopicAction}
-        onMoveTopicAction={moveClassCourseTopicAction}
-        onCreateChapterAction={createClassCourseChapterAction}
-        onUpdateChapterAction={updateClassCourseChapterAction}
-        onDeleteChapterAction={deleteClassCourseChapterAction}
-        onMoveChapterAction={moveClassCourseChapterAction}
-      />
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">課程表內容</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          依課程、主題與章節顯示完整課程內容，章節後續可用於讀書會導讀分配。
+        </p>
+        <div className="mt-4">
+          <ClassCourseTableView items={items} topics={topics} chapters={chapters} />
+        </div>
+      </section>
+
+      {canManage ? (
+        <ClassCourseManagementPanel
+          classId={classId}
+          items={items}
+          topics={topics}
+          chapters={chapters}
+          onCreateItemAction={createClassCourseItemAction}
+          onUpdateItemAction={updateClassCourseItemAction}
+          onDeleteItemAction={deleteClassCourseItemAction}
+          onMoveItemAction={moveClassCourseItemAction}
+          onCreateTopicAction={createClassCourseTopicAction}
+          onUpdateTopicAction={updateClassCourseTopicAction}
+          onDeleteTopicAction={deleteClassCourseTopicAction}
+          onMoveTopicAction={moveClassCourseTopicAction}
+          onCreateChapterAction={createClassCourseChapterAction}
+          onUpdateChapterAction={updateClassCourseChapterAction}
+          onDeleteChapterAction={deleteClassCourseChapterAction}
+          onMoveChapterAction={moveClassCourseChapterAction}
+        />
+      ) : (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-600">
+            目前為檢視模式。若需編輯課程表，請改以教練或管理員身份登入。
+          </p>
+        </section>
+      )}
     </AppShell>
   );
 }
