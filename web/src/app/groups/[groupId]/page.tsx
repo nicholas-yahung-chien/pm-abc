@@ -487,19 +487,19 @@ export default async function GroupTrackingPage({
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyCodeCellStyle}
                 >
-                  蝺刻?
+                  編號
                 </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3"
                   style={stickyMilestoneCellStyle}
                 >
-                  ??蝣?
+                  里程碑
                 </th>
                 <th
                   className="xl:sticky z-40 border-b border-slate-300 bg-emerald-100 px-3 py-3 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
                   style={stickyTodoCellStyle}
                 >
-                  敺齒鈭?
+                  待辦事項
                 </th>
                 {visibleMembers.map((member) => (
                   <th
@@ -548,7 +548,7 @@ export default async function GroupTrackingPage({
               {!groupSections.length && (
                 <tr>
                   <td className="px-3 py-5 text-slate-500" colSpan={3 + visibleMembers.length}>
-                    ?桀?撠餈質馱憭折????遣蝡蕭頩文之??嚗??啣?餈質馱???
+                    尚未建立追蹤大項。請先新增追蹤大項、小項與追蹤項目。
                   </td>
                 </tr>
               )}
@@ -662,7 +662,7 @@ export default async function GroupTrackingPage({
                                     />
                                   </div>
                                   <p className="mt-1 text-xs text-slate-500">
-                                    ?唳??伐?{formatDate(item.due_date)}
+                                    到期日：{formatDate(item.due_date)}
                                   </p>
                                 </td>
 
@@ -684,7 +684,7 @@ export default async function GroupTrackingPage({
                                 className="px-3 py-3 text-xs text-slate-500"
                                 colSpan={3 + visibleMembers.length}
                               >
-                                甇文????∟蕭頩日??柴?
+                                此小項尚未建立追蹤項目。
                               </td>
                             </tr>
                           )}
@@ -731,7 +731,7 @@ export default async function GroupTrackingPage({
                                 maxLen={18}
                               />
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">?唳??伐?{formatDate(item.due_date)}</p>
+                            <p className="mt-1 text-xs text-slate-500">到期日：{formatDate(item.due_date)}</p>
                           </td>
 
                           {visibleMembers.map((member) => (
@@ -752,7 +752,7 @@ export default async function GroupTrackingPage({
                           className="px-3 py-3 text-xs text-slate-500"
                           colSpan={3 + visibleMembers.length}
                         >
-                          甇文之???∟蕭頩文????游惇餈質馱???
+                          此大項尚未建立追蹤小項或直接追蹤項目。
                         </td>
                       </tr>
                     )}

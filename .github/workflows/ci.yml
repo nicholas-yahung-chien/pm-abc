@@ -26,9 +26,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check text encoding safety
+        run: npm run check:encoding
+
       - name: Lint
         run: npm run lint
 
       - name: Build
         run: npm run build
-

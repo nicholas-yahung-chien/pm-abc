@@ -129,13 +129,13 @@ export default async function GroupDirectoryPage({
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <th className="px-3 py-2">憪?</th>
-                <th className="px-3 py-2">撣??乩犖?獐蝔勗</th>
-                <th className="px-3 py-2">頨思遢</th>
-                <th className="px-3 py-2">?餉店</th>
+                <th className="px-3 py-2">姓名</th>
+                <th className="px-3 py-2">希望別人怎麼稱呼</th>
+                <th className="px-3 py-2">身份</th>
+                <th className="px-3 py-2">電話</th>
                 <th className="px-3 py-2">Email</th>
                 <th className="px-3 py-2">LINE ID</th>
-                <th className="px-3 py-2">?芣?隞晶</th>
+                <th className="px-3 py-2">自我介紹</th>
               </tr>
             </thead>
             <tbody>
@@ -147,15 +147,15 @@ export default async function GroupDirectoryPage({
                   <td className="px-3 py-2">
                     {coachPerson?.display_name || coachOwner.coach.display_name || "-"}
                   </td>
-                  <td className="px-3 py-2">?毀</td>
+                  <td className="px-3 py-2">教練</td>
                   <td className="px-3 py-2">{coachPerson?.phone || "-"}</td>
                   <td className="px-3 py-2">{coachOwner.coach.email || "-"}</td>
                   <td className="px-3 py-2">{coachPerson?.line_id || "-"}</td>
                   <td className="px-3 py-2">
                     <TextPreviewDialogButton
-                      title="?毀?芣?隞晶"
+                      title="教練自我介紹"
                       text={coachPerson?.intro || ""}
-                      placeholder="?亦??毀?芣?隞晶"
+                      placeholder="尚未填寫教練自我介紹"
                     />
                   </td>
                 </tr>
@@ -163,7 +163,8 @@ export default async function GroupDirectoryPage({
               {!coachOwner?.coach && (
                 <tr>
                   <td className="px-3 py-4 text-slate-500" colSpan={7}>
-                    ?桀?撠?晷撠??毀??                  </td>
+                    尚未指派小組教練。
+                  </td>
                 </tr>
               )}
             </tbody>
