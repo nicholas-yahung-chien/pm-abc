@@ -81,7 +81,7 @@ export function FormModalTrigger({
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
-                title="關閉"
+                title="\u95dc\u9589"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -96,11 +96,14 @@ export function FormModalTrigger({
                   onClick={() => setOpen(false)}
                   className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
                 >
-                  取消
+                  {"\u53d6\u6d88"}
                 </button>
                 <button
                   disabled={disabled}
-                  className={[submitClassName, "disabled:cursor-not-allowed disabled:bg-slate-400"].join(" ")}
+                  className={[
+                    submitClassName,
+                    "disabled:cursor-not-allowed disabled:bg-slate-400",
+                  ].join(" ")}
                 >
                   {submitLabel}
                 </button>

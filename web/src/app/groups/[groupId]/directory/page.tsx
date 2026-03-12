@@ -117,6 +117,9 @@ export default async function GroupDirectoryPage({
           <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
             前往 R&R
           </Link>
+          <Link href={`/groups/${groupId}/study`} className="text-amber-700 underline">
+            前往讀書會
+          </Link>
           <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
             查看課程表
           </Link>

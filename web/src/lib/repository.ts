@@ -6,6 +6,11 @@ import type {
   ClassCourseTopicRow,
   GroupRow,
   GroupCoachOwnerRow,
+  GroupStudyReadingAssignmentRow,
+  GroupStudyReadingItemRow,
+  GroupStudySessionDutyMemberRow,
+  GroupStudySessionMode,
+  GroupStudySessionRow,
   GroupTrackingProgressRow,
   MembershipRow,
   PersonRow,
@@ -54,6 +59,15 @@ const TRACKING_ITEM_RESPONSE_TYPES: TrackingItemResponseType[] = [
   "date",
   "select",
 ];
+
+const GROUP_STUDY_SESSION_MODES: GroupStudySessionMode[] = ["offline", "online"];
+
+function normalizeGroupStudySessionMode(value: unknown): GroupStudySessionMode {
+  if (typeof value !== "string") return "offline";
+  return GROUP_STUDY_SESSION_MODES.includes(value as GroupStudySessionMode)
+    ? (value as GroupStudySessionMode)
+    : "offline";
+}
 
 function normalizeTrackingItemResponseType(
   value: unknown,
@@ -1763,6 +1777,814 @@ export async function moveClassCourseChapter(input: {
     orderedIds: nextOrder,
     accountId: input.accountId ?? null,
   });
+}
+
+async function getGroupStudySessionScope(input: {
+  client: AdminClient;
+  sessionId: string;
+}): Promise<{ ok: true; groupId: string } | { ok: false; message: string }> {
+  const { data, error } = await input.client
+    .from("group_study_sessions")
+    .select("id, group_id")
+    .eq("id", input.sessionId)
+    .maybeSingle();
+
+  if (error) return { ok: false, message: error.message };
+  if (!data) return { ok: false, message: "Group study session was not found." };
+  return { ok: true, groupId: String((data as { group_id: unknown }).group_id) };
+}
+
+async function getGroupStudyReadingItemScope(input: {
+  client: AdminClient;
+  readingItemId: string;
+}): Promise<
+  | { ok: true; groupId: string; sessionId: string }
+  | { ok: false; message: string }
+> {
+  const { data, error } = await input.client
+    .from("group_study_reading_items")
+    .select("id, group_id, session_id")
+    .eq("id", input.readingItemId)
+    .maybeSingle();
+
+  if (error) return { ok: false, message: error.message };
+  if (!data) return { ok: false, message: "Group study reading item was not found." };
+  return {
+    ok: true,
+    groupId: String((data as { group_id: unknown }).group_id),
+    sessionId: String((data as { session_id: unknown }).session_id),
+  };
+}
+
+async function resequenceGroupStudySessions(input: {
+  groupId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("group_study_sessions")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("group_id", input.groupId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+async function resequenceGroupStudySessionDutyMembers(input: {
+  groupId: string;
+  sessionId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("group_study_session_duty_members")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("group_id", input.groupId)
+      .eq("session_id", input.sessionId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+async function resequenceGroupStudyReadingItems(input: {
+  groupId: string;
+  sessionId: string;
+  orderedIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  for (let index = 0; index < input.orderedIds.length; index += 1) {
+    const id = input.orderedIds[index];
+    const { error } = await db.client
+      .from("group_study_reading_items")
+      .update({
+        sort_order: 100 + index * 10,
+        updated_by_account_id: input.accountId ?? null,
+      })
+      .eq("id", id)
+      .eq("group_id", input.groupId)
+      .eq("session_id", input.sessionId);
+
+    if (error) return { ok: false, message: error.message };
+  }
+
+  return { ok: true };
+}
+
+export async function listGroupStudySessionsByGroupId(
+  groupId: string,
+): Promise<GroupStudySessionRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data, error } = await db.client
+    .from("group_study_sessions")
+    .select("*, group:groups(id, code, name)")
+    .eq("group_id", groupId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return [];
+
+  return (((data ?? []) as unknown[]) ?? []).map((rawRow) => {
+    const row = rawRow as Record<string, unknown>;
+    return {
+      ...(row as unknown as GroupStudySessionRow),
+      mode: normalizeGroupStudySessionMode(row.mode),
+    };
+  });
+}
+
+export async function listGroupStudySessionDutyMembersByGroupId(
+  groupId: string,
+): Promise<GroupStudySessionDutyMemberRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data, error } = await db.client
+    .from("group_study_session_duty_members")
+    .select(
+      [
+        "*",
+        "session:group_study_sessions(id, title, session_date, sort_order)",
+        "person:people(id, person_no, full_name, display_name, email)",
+      ].join(", "),
+    )
+    .eq("group_id", groupId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return [];
+
+  return (((data ?? []) as unknown[]) ?? []).map(
+    (row) => row as GroupStudySessionDutyMemberRow,
+  );
+}
+
+export async function replaceGroupStudySessionDutyMembers(input: {
+  groupId: string;
+  sessionId: string;
+  personIds: string[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const sessionScope = await getGroupStudySessionScope({
+    client: db.client,
+    sessionId: input.sessionId,
+  });
+  if (!sessionScope.ok) return sessionScope;
+  if (sessionScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study session does not belong to this group." };
+  }
+
+  const uniquePersonIds = Array.from(
+    new Set(input.personIds.map((item) => item.trim()).filter(Boolean)),
+  );
+
+  if (uniquePersonIds.length) {
+    const { data: membershipRows, error: membershipError } = await db.client
+      .from("group_memberships")
+      .select("person_id")
+      .eq("group_id", input.groupId)
+      .eq("membership_type", "member")
+      .in("person_id", uniquePersonIds);
+
+    if (membershipError) return { ok: false, message: membershipError.message };
+    const allowedIds = new Set(
+      (membershipRows ?? []).map((row) => String((row as { person_id: unknown }).person_id)),
+    );
+    if (uniquePersonIds.some((personId) => !allowedIds.has(personId))) {
+      return { ok: false, message: "Duty members must be selected from group members." };
+    }
+  }
+
+  const { error: deleteError } = await db.client
+    .from("group_study_session_duty_members")
+    .delete()
+    .eq("group_id", input.groupId)
+    .eq("session_id", input.sessionId);
+
+  if (deleteError) return { ok: false, message: deleteError.message };
+  if (!uniquePersonIds.length) return { ok: true };
+
+  const { error: insertError } = await db.client
+    .from("group_study_session_duty_members")
+    .insert(
+      uniquePersonIds.map((personId, index) => ({
+        group_id: input.groupId,
+        session_id: input.sessionId,
+        person_id: personId,
+        note: "",
+        sort_order: 100 + index * 10,
+        created_by_account_id: input.accountId ?? null,
+        updated_by_account_id: input.accountId ?? null,
+      })),
+    );
+
+  if (insertError) return { ok: false, message: insertError.message };
+  return { ok: true };
+}
+
+export async function listGroupStudyReadingItemsByGroupId(
+  groupId: string,
+): Promise<GroupStudyReadingItemRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data, error } = await db.client
+    .from("group_study_reading_items")
+    .select(
+      [
+        "*",
+        "session:group_study_sessions(id, title, session_date, sort_order)",
+        "chapter:class_course_chapters(id, title, paper_page, sort_order)",
+      ].join(", "),
+    )
+    .eq("group_id", groupId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return [];
+
+  return (((data ?? []) as unknown[]) ?? []).map((row) => row as GroupStudyReadingItemRow);
+}
+
+export async function listGroupStudyReadingAssignmentsByGroupId(
+  groupId: string,
+): Promise<GroupStudyReadingAssignmentRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data, error } = await db.client
+    .from("group_study_reading_assignments")
+    .select(
+      [
+        "*",
+        "reading_item:group_study_reading_items(id, session_id, title, paper_page, sort_order)",
+        "person:people(id, person_no, full_name, display_name, email)",
+      ].join(", "),
+    )
+    .eq("group_id", groupId)
+    .order("created_at", { ascending: true });
+
+  if (error) return [];
+  return (((data ?? []) as unknown[]) ?? []).map(
+    (row) => row as GroupStudyReadingAssignmentRow,
+  );
+}
+
+export async function createGroupStudySession(input: {
+  groupId: string;
+  title: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  mode: GroupStudySessionMode;
+  locationAddress: string;
+  mapUrl: string;
+  onlineMeetingUrl: string;
+  note: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("group_study_sessions")
+      .select("sort_order")
+      .eq("group_id", input.groupId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("group_study_sessions").insert({
+    group_id: input.groupId,
+    title: input.title,
+    session_date: input.sessionDate || null,
+    start_time: input.startTime || null,
+    end_time: input.endTime || null,
+    mode: normalizeGroupStudySessionMode(input.mode),
+    location_address: input.locationAddress,
+    map_url: input.mapUrl,
+    online_meeting_url: input.onlineMeetingUrl,
+    note: input.note,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateGroupStudySession(input: {
+  groupId: string;
+  sessionId: string;
+  title: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  mode: GroupStudySessionMode;
+  locationAddress: string;
+  mapUrl: string;
+  onlineMeetingUrl: string;
+  note: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_study_sessions")
+    .update({
+      title: input.title,
+      session_date: input.sessionDate || null,
+      start_time: input.startTime || null,
+      end_time: input.endTime || null,
+      mode: normalizeGroupStudySessionMode(input.mode),
+      location_address: input.locationAddress,
+      map_url: input.mapUrl,
+      online_meeting_url: input.onlineMeetingUrl,
+      note: input.note,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.sessionId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteGroupStudySession(input: {
+  groupId: string;
+  sessionId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_study_sessions")
+    .delete()
+    .eq("id", input.sessionId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveGroupStudySession(input: {
+  groupId: string;
+  sessionId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("group_study_sessions")
+    .select("id")
+    .eq("group_id", input.groupId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.sessionId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "Group study session was not found." };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceGroupStudySessions({
+    groupId: input.groupId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
+}
+
+export async function createGroupStudySessionDutyMember(input: {
+  groupId: string;
+  sessionId: string;
+  personId: string;
+  note: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const sessionScope = await getGroupStudySessionScope({
+    client: db.client,
+    sessionId: input.sessionId,
+  });
+  if (!sessionScope.ok) return sessionScope;
+  if (sessionScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study session does not belong to this group." };
+  }
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("group_study_session_duty_members")
+      .select("sort_order")
+      .eq("group_id", input.groupId)
+      .eq("session_id", input.sessionId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("group_study_session_duty_members").insert({
+    group_id: input.groupId,
+    session_id: input.sessionId,
+    person_id: input.personId,
+    note: input.note,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateGroupStudySessionDutyMember(input: {
+  groupId: string;
+  sessionId: string;
+  dutyMemberId: string;
+  personId: string;
+  note: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const sessionScope = await getGroupStudySessionScope({
+    client: db.client,
+    sessionId: input.sessionId,
+  });
+  if (!sessionScope.ok) return sessionScope;
+  if (sessionScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study session does not belong to this group." };
+  }
+
+  const { error } = await db.client
+    .from("group_study_session_duty_members")
+    .update({
+      person_id: input.personId,
+      note: input.note,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.dutyMemberId)
+    .eq("group_id", input.groupId)
+    .eq("session_id", input.sessionId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteGroupStudySessionDutyMember(input: {
+  groupId: string;
+  dutyMemberId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_study_session_duty_members")
+    .delete()
+    .eq("id", input.dutyMemberId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveGroupStudySessionDutyMember(input: {
+  groupId: string;
+  sessionId: string;
+  dutyMemberId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("group_study_session_duty_members")
+    .select("id")
+    .eq("group_id", input.groupId)
+    .eq("session_id", input.sessionId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.dutyMemberId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "Group study duty member was not found." };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceGroupStudySessionDutyMembers({
+    groupId: input.groupId,
+    sessionId: input.sessionId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
+}
+
+export async function createGroupStudyReadingItem(input: {
+  groupId: string;
+  sessionId: string;
+  classCourseChapterId?: string | null;
+  title: string;
+  paperPage: string;
+  note: string;
+  sortOrder?: number | null;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const sessionScope = await getGroupStudySessionScope({
+    client: db.client,
+    sessionId: input.sessionId,
+  });
+  if (!sessionScope.ok) return sessionScope;
+  if (sessionScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study session does not belong to this group." };
+  }
+
+  let chapterTitle = input.title;
+  let chapterPaperPage = input.paperPage;
+  const chapterId = input.classCourseChapterId?.trim() || null;
+  if (chapterId) {
+    const { data: chapterRow, error: chapterError } = await db.client
+      .from("class_course_chapters")
+      .select("title, paper_page")
+      .eq("id", chapterId)
+      .maybeSingle();
+
+    if (chapterError) return { ok: false, message: chapterError.message };
+    if (!chapterRow) return { ok: false, message: "Class course chapter was not found." };
+
+    chapterTitle =
+      input.title.trim() || String((chapterRow as { title: unknown }).title ?? "");
+    chapterPaperPage =
+      input.paperPage.trim() ||
+      String((chapterRow as { paper_page: unknown }).paper_page ?? "");
+  }
+
+  let sortOrder = input.sortOrder ?? null;
+  if (sortOrder === null) {
+    const { data: maxSortRow, error: maxSortError } = await db.client
+      .from("group_study_reading_items")
+      .select("sort_order")
+      .eq("group_id", input.groupId)
+      .eq("session_id", input.sessionId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxSortError) return { ok: false, message: maxSortError.message };
+    sortOrder =
+      typeof maxSortRow?.sort_order === "number" ? maxSortRow.sort_order + 10 : 100;
+  }
+
+  const { error } = await db.client.from("group_study_reading_items").insert({
+    group_id: input.groupId,
+    session_id: input.sessionId,
+    class_course_chapter_id: chapterId,
+    title: chapterTitle,
+    paper_page: chapterPaperPage,
+    note: input.note,
+    sort_order: sortOrder,
+    created_by_account_id: input.accountId ?? null,
+    updated_by_account_id: input.accountId ?? null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function updateGroupStudyReadingItem(input: {
+  groupId: string;
+  sessionId: string;
+  readingItemId: string;
+  classCourseChapterId?: string | null;
+  title: string;
+  paperPage: string;
+  note: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const sessionScope = await getGroupStudySessionScope({
+    client: db.client,
+    sessionId: input.sessionId,
+  });
+  if (!sessionScope.ok) return sessionScope;
+  if (sessionScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study session does not belong to this group." };
+  }
+
+  const readingItemScope = await getGroupStudyReadingItemScope({
+    client: db.client,
+    readingItemId: input.readingItemId,
+  });
+  if (!readingItemScope.ok) return readingItemScope;
+  if (readingItemScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study reading item does not belong to this group." };
+  }
+
+  let chapterTitle = input.title;
+  let chapterPaperPage = input.paperPage;
+  const chapterId = input.classCourseChapterId?.trim() || null;
+  if (chapterId) {
+    const { data: chapterRow, error: chapterError } = await db.client
+      .from("class_course_chapters")
+      .select("title, paper_page")
+      .eq("id", chapterId)
+      .maybeSingle();
+
+    if (chapterError) return { ok: false, message: chapterError.message };
+    if (!chapterRow) return { ok: false, message: "Class course chapter was not found." };
+
+    chapterTitle =
+      input.title.trim() || String((chapterRow as { title: unknown }).title ?? "");
+    chapterPaperPage =
+      input.paperPage.trim() ||
+      String((chapterRow as { paper_page: unknown }).paper_page ?? "");
+  }
+
+  const { error } = await db.client
+    .from("group_study_reading_items")
+    .update({
+      session_id: input.sessionId,
+      class_course_chapter_id: chapterId,
+      title: chapterTitle,
+      paper_page: chapterPaperPage,
+      note: input.note,
+      updated_by_account_id: input.accountId ?? null,
+    })
+    .eq("id", input.readingItemId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteGroupStudyReadingItem(input: {
+  groupId: string;
+  readingItemId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_study_reading_items")
+    .delete()
+    .eq("id", input.readingItemId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function moveGroupStudyReadingItem(input: {
+  groupId: string;
+  sessionId: string;
+  readingItemId: string;
+  direction: MoveDirection;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: rows, error } = await db.client
+    .from("group_study_reading_items")
+    .select("id")
+    .eq("group_id", input.groupId)
+    .eq("session_id", input.sessionId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) return { ok: false, message: error.message };
+
+  const orderedIds = (rows ?? []).map((row) => String((row as { id: unknown }).id));
+  const nextOrder = reorderIds(orderedIds, input.readingItemId, input.direction);
+  if (nextOrder === null) return { ok: false, message: "Group study reading item was not found." };
+  if (!nextOrder.length) return { ok: true };
+
+  return resequenceGroupStudyReadingItems({
+    groupId: input.groupId,
+    sessionId: input.sessionId,
+    orderedIds: nextOrder,
+    accountId: input.accountId ?? null,
+  });
+}
+
+export async function setGroupStudyReadingAssignment(input: {
+  groupId: string;
+  readingItemId: string;
+  personId: string;
+  note: string;
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const readingItemScope = await getGroupStudyReadingItemScope({
+    client: db.client,
+    readingItemId: input.readingItemId,
+  });
+  if (!readingItemScope.ok) return readingItemScope;
+  if (readingItemScope.groupId !== input.groupId) {
+    return { ok: false, message: "The group study reading item does not belong to this group." };
+  }
+
+  const personId = input.personId.trim();
+  if (!personId) {
+    const { error } = await db.client
+      .from("group_study_reading_assignments")
+      .delete()
+      .eq("group_id", input.groupId)
+      .eq("reading_item_id", input.readingItemId);
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  }
+
+  const { error } = await db.client.from("group_study_reading_assignments").upsert(
+    {
+      group_id: input.groupId,
+      reading_item_id: input.readingItemId,
+      person_id: personId,
+      note: input.note,
+      created_by_account_id: input.accountId ?? null,
+      updated_by_account_id: input.accountId ?? null,
+    },
+    { onConflict: "reading_item_id" },
+  );
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteGroupStudyReadingAssignment(input: {
+  groupId: string;
+  assignmentId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_study_reading_assignments")
+    .delete()
+    .eq("id", input.assignmentId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
 }
 
 async function resequenceTrackingSections(input: {

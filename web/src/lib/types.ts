@@ -84,6 +84,111 @@ export type ClassCourseChapterRow = {
   } | null;
 };
 
+export type GroupStudySessionMode = "offline" | "online";
+
+export type GroupStudySessionRow = {
+  id: string;
+  group_id: string;
+  title: string;
+  session_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  mode: GroupStudySessionMode;
+  location_address: string;
+  map_url: string;
+  online_meeting_url: string;
+  note: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  group?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
+};
+
+export type GroupStudySessionDutyMemberRow = {
+  id: string;
+  group_id: string;
+  session_id: string;
+  person_id: string;
+  note: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  session?: {
+    id: string;
+    title: string;
+    session_date: string | null;
+    sort_order: number;
+  } | null;
+  person?: {
+    id: string;
+    person_no: string | null;
+    full_name: string;
+    display_name: string;
+    email: string;
+  } | null;
+};
+
+export type GroupStudyReadingItemRow = {
+  id: string;
+  group_id: string;
+  session_id: string;
+  class_course_chapter_id: string | null;
+  title: string;
+  paper_page: string;
+  note: string;
+  sort_order: number;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  session?: {
+    id: string;
+    title: string;
+    session_date: string | null;
+    sort_order: number;
+  } | null;
+  chapter?: {
+    id: string;
+    title: string;
+    paper_page: string;
+    sort_order: number;
+  } | null;
+};
+
+export type GroupStudyReadingAssignmentRow = {
+  id: string;
+  group_id: string;
+  reading_item_id: string;
+  person_id: string;
+  note: string;
+  created_by_account_id: string | null;
+  updated_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  reading_item?: {
+    id: string;
+    session_id: string;
+    title: string;
+    paper_page: string;
+    sort_order: number;
+  } | null;
+  person?: {
+    id: string;
+    person_no: string | null;
+    full_name: string;
+    display_name: string;
+    email: string;
+  } | null;
+};
+
 export type PersonRow = {
   id: string;
   person_no: string | null;
