@@ -141,9 +141,9 @@ export function GroupStudyManagementPanel({
         </div>
         {canManage && (
           <FormModalTrigger
-            buttonLabel="\u65b0\u589e\u8b80\u66f8\u6703\u6d3b\u52d5"
-            modalTitle="\u65b0\u589e\u8b80\u66f8\u6703\u6d3b\u52d5"
-            submitLabel="\u65b0\u589e\u6d3b\u52d5"
+            buttonLabel={"\u65b0\u589e\u8b80\u66f8\u6703\u6d3b\u52d5"}
+            modalTitle={"\u65b0\u589e\u8b80\u66f8\u6703\u6d3b\u52d5"}
+            submitLabel={"\u65b0\u589e\u6d3b\u52d5"}
             action={onCreateSessionAction}
             formClassName="space-y-3"
           >
@@ -274,7 +274,7 @@ export function GroupStudyManagementPanel({
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="text-sm font-semibold text-slate-900">{"\u503c\u65e5\u751f"}</h4>
                       {canManage && (
-                        <FormModalTrigger buttonLabel="\u8a2d\u5b9a" modalTitle="\u8a2d\u5b9a\u503c\u65e5\u751f" submitLabel="\u5132\u5b58\u8a2d\u5b9a" action={onReplaceDutyMembersAction}>
+                        <FormModalTrigger buttonLabel={"\u8a2d\u5b9a"} modalTitle={"\u8a2d\u5b9a\u503c\u65e5\u751f"} submitLabel={"\u5132\u5b58\u8a2d\u5b9a"} action={onReplaceDutyMembersAction}>
                           <input type="hidden" name="groupId" value={groupId} />
                           <input type="hidden" name="sessionId" value={session.id} />
                           <input type="hidden" name="returnTo" value={returnTo} />
@@ -412,9 +412,9 @@ function SessionEditModal({
 }) {
   return (
     <FormModalTrigger
-      buttonLabel="\u7de8\u8f2f\u6d3b\u52d5"
-      modalTitle="\u7de8\u8f2f\u8b80\u66f8\u6703\u6d3b\u52d5"
-      submitLabel="\u5132\u5b58\u8b8a\u66f4"
+      buttonLabel={"\u7de8\u8f2f\u6d3b\u52d5"}
+      modalTitle={"\u7de8\u8f2f\u8b80\u66f8\u6703\u6d3b\u52d5"}
+      submitLabel={"\u5132\u5b58\u8b8a\u66f4"}
       action={onAction}
       triggerClassName={iconButtonClassName("edit")}
       triggerContent={<Pencil className="h-4 w-4" />}
@@ -483,9 +483,9 @@ function ReadingCreateModal({
 }) {
   return (
     <FormModalTrigger
-      buttonLabel="\u65b0\u589e\u5c0e\u8b80\u9805\u76ee"
-      modalTitle="\u65b0\u589e\u5c0e\u8b80\u9805\u76ee"
-      submitLabel="\u65b0\u589e\u9805\u76ee"
+      buttonLabel={"\u65b0\u589e\u5c0e\u8b80\u9805\u76ee"}
+      modalTitle={"\u65b0\u589e\u5c0e\u8b80\u9805\u76ee"}
+      submitLabel={"\u65b0\u589e\u9805\u76ee"}
       action={onAction}
       triggerClassName="inline-flex items-center gap-1 rounded-md bg-emerald-700 px-2 py-1 text-xs font-semibold text-white transition hover:bg-emerald-800"
       triggerContent={
@@ -541,9 +541,9 @@ function ReadingEditModal({
 }) {
   return (
     <FormModalTrigger
-      buttonLabel="\u7de8\u8f2f\u5c0e\u8b80\u9805\u76ee"
-      modalTitle="\u7de8\u8f2f\u5c0e\u8b80\u9805\u76ee"
-      submitLabel="\u5132\u5b58\u8b8a\u66f4"
+      buttonLabel={"\u7de8\u8f2f\u5c0e\u8b80\u9805\u76ee"}
+      modalTitle={"\u7de8\u8f2f\u5c0e\u8b80\u9805\u76ee"}
+      submitLabel={"\u5132\u5b58\u8b8a\u66f4"}
       action={onAction}
       triggerClassName={iconButtonClassName("edit")}
       triggerContent={<Pencil className="h-4 w-4" />}

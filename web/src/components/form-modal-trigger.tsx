@@ -81,7 +81,7 @@ export function FormModalTrigger({
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
-                title="\u95dc\u9589"
+                title={"\u95dc\u9589"}
               >
                 <X className="h-4 w-4" />
               </button>
