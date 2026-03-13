@@ -78,6 +78,43 @@ function clean(value: string): string {
   return value.trim() ? value : "";
 }
 
+function buildGoogleMapEmbedUrl(mapUrl: string, fallbackQuery: string): string | null {
+  const normalizedFallback = fallbackQuery.trim();
+  const fallback = normalizedFallback
+    ? `https://www.google.com/maps?q=${encodeURIComponent(normalizedFallback)}&output=embed`
+    : null;
+  const trimmed = mapUrl.trim();
+  if (!trimmed) return fallback;
+
+  try {
+    const parsed = new URL(trimmed);
+    const query = parsed.searchParams.get("q") || parsed.searchParams.get("query");
+    if (query?.trim()) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(query.trim())}&output=embed`;
+    }
+
+    const placeId = parsed.searchParams.get("query_place_id");
+    if (placeId?.trim()) {
+      return `https://www.google.com/maps?output=embed&query_place_id=${encodeURIComponent(placeId.trim())}`;
+    }
+
+    const atMatch = parsed.pathname.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+    if (atMatch) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(`${atMatch[1]},${atMatch[2]}`)}&output=embed`;
+    }
+
+    const placeMatch = parsed.pathname.match(/\/place\/([^/]+)/);
+    if (placeMatch?.[1]) {
+      const place = decodeURIComponent(placeMatch[1]).replace(/\+/g, " ");
+      return `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
+    }
+  } catch {
+    return fallback;
+  }
+
+  return fallback;
+}
+
 export function GroupStudyManagementPanel({
   groupId,
   returnTo,
@@ -224,10 +261,10 @@ export function GroupStudyManagementPanel({
             const onlineMeetingUrl = clean(session.online_meeting_url);
             const mapUrl = clean(session.map_url);
             const offlineLocation = clean(session.location_address) || "\u672a\u8a2d\u5b9a";
-            const location =
-              session.mode === "online"
-                ? (onlineMeetingUrl ? "\u5df2\u8a2d\u5b9a" : "\u672a\u8a2d\u5b9a")
-                : offlineLocation;
+            const mapPreviewUrl =
+              session.mode === "offline" && mapUrl
+                ? buildGoogleMapEmbedUrl(mapUrl, offlineLocation)
+                : null;
 
             return (
               <article key={session.id} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
@@ -274,9 +311,7 @@ export function GroupStudyManagementPanel({
                     )}
                     <p className="mt-1 text-sm text-slate-700">{`\u65e5\u671f\uff1a${formatDate(session.session_date)} / \u6642\u9593\uff1a${formatTime(session.start_time)} - ${formatTime(session.end_time)}`}</p>
                     <p className="mt-1 text-sm text-slate-700">{`\u5f62\u5f0f\uff1a${session.mode === "online" ? "\u7dda\u4e0a" : "\u5be6\u9ad4"}`}</p>
-                    {session.mode === "online" ? (
-                      <p className="mt-1 text-sm text-slate-700">{`\u6703\u8b70\u9023\u7d50\uff1a${location}`}</p>
-                    ) : (
+                    {session.mode === "offline" ? (
                       <p className="mt-1 text-sm text-slate-700">
                         {"\u5730\u9ede\uff1a"}
                         {mapUrl ? (
@@ -293,7 +328,18 @@ export function GroupStudyManagementPanel({
                           <span className="ml-1">{offlineLocation}</span>
                         )}
                       </p>
-                    )}
+                    ) : null}
+                    {mapPreviewUrl ? (
+                      <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                        <iframe
+                          title={`${session.title} \u5730\u5716\u9810\u89bd`}
+                          src={mapPreviewUrl}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          className="h-44 w-full border-0"
+                        />
+                      </div>
+                    ) : null}
                     {clean(session.note) ? <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{session.note}</p> : null}
                   </div>
                   {canManage && (
