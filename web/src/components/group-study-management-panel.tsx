@@ -254,6 +254,16 @@ export function GroupStudyManagementPanel({
           {orderedSessions.map((session, sessionIndex) => {
             const dutyRows = dutyBySession.get(session.id) ?? [];
             const itemRows = readingBySession.get(session.id) ?? [];
+            const dutyAssignedIds = new Set(
+              dutyRows
+                .map((row) => row.person_id?.trim())
+                .filter((personId): personId is string => Boolean(personId)),
+            );
+            const readingAssignedIds = new Set(
+              itemRows
+                .map((item) => assignmentByItem.get(item.id)?.person_id?.trim())
+                .filter((personId): personId is string => Boolean(personId)),
+            );
             const dutyText = dutyRows
               .map((row) => row.person?.display_name || row.person?.full_name || "")
               .filter(Boolean)
@@ -361,23 +371,90 @@ export function GroupStudyManagementPanel({
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="text-sm font-semibold text-slate-900">{"\u503c\u65e5\u751f"}</h4>
-                      {canManage && (
-                        <FormModalTrigger buttonLabel={"\u8a2d\u5b9a"} modalTitle={"\u8a2d\u5b9a\u503c\u65e5\u751f"} submitLabel={"\u5132\u5b58\u8a2d\u5b9a"} action={onReplaceDutyMembersAction}>
-                          <input type="hidden" name="groupId" value={groupId} />
-                          <input type="hidden" name="sessionId" value={session.id} />
-                          <input type="hidden" name="returnTo" value={returnTo} />
-                          <div className="space-y-2">
-                            {memberOptions.map((member) => (
-                              <label key={`${session.id}:${member.id}`} className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" name="personIds" value={member.id} defaultChecked={dutyRows.some((row) => row.person_id === member.id)} />
-                                <span>{member.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </FormModalTrigger>
-                      )}
                     </div>
-                    <div className="mt-2 text-sm text-slate-700">{dutyText || "\u5c1a\u672a\u8a2d\u5b9a\u503c\u65e5\u751f"}</div>
+                    {canManage ? (
+                      <div className="mt-2 space-y-2">
+                        {dutyRows.map((dutyRow) => {
+                          const currentPersonId = dutyRow.person_id?.trim() || "";
+                          const otherDutyIds = dutyRows
+                            .map((row) => row.person_id?.trim() || "")
+                            .filter((personId) => personId && personId !== currentPersonId);
+                          const availableOptions = memberOptions.filter((member) => {
+                            if (member.id === currentPersonId) return true;
+                            if (otherDutyIds.includes(member.id)) return false;
+                            if (readingAssignedIds.has(member.id)) return false;
+                            return true;
+                          });
+
+                          return (
+                            <form key={dutyRow.id} action={onReplaceDutyMembersAction}>
+                              <input type="hidden" name="groupId" value={groupId} />
+                              <input type="hidden" name="sessionId" value={session.id} />
+                              <input type="hidden" name="returnTo" value={returnTo} />
+                              {otherDutyIds.map((personId) => (
+                                <input key={`${dutyRow.id}:${personId}`} type="hidden" name="personIds" value={personId} />
+                              ))}
+                              <select
+                                name="personIds"
+                                defaultValue={currentPersonId}
+                                onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                                className="w-full"
+                              >
+                                <option value="">
+                                  {"\u672a\u6307\u5b9a"}
+                                </option>
+                                {availableOptions.map((member) => (
+                                  <option key={`${dutyRow.id}:${member.id}`} value={member.id}>
+                                    {member.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </form>
+                          );
+                        })}
+                        {(() => {
+                          const addableOptions = memberOptions.filter((member) => {
+                            if (dutyAssignedIds.has(member.id)) return false;
+                            if (readingAssignedIds.has(member.id)) return false;
+                            return true;
+                          });
+                          const existingDutyIds = dutyRows
+                            .map((row) => row.person_id?.trim() || "")
+                            .filter(Boolean);
+
+                          return (
+                            <form action={onReplaceDutyMembersAction}>
+                              <input type="hidden" name="groupId" value={groupId} />
+                              <input type="hidden" name="sessionId" value={session.id} />
+                              <input type="hidden" name="returnTo" value={returnTo} />
+                              {existingDutyIds.map((personId) => (
+                                <input key={`${session.id}:existing:${personId}`} type="hidden" name="personIds" value={personId} />
+                              ))}
+                              <select
+                                name="personIds"
+                                defaultValue=""
+                                onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                                className="w-full"
+                                disabled={!addableOptions.length}
+                              >
+                                <option value="">
+                                  {addableOptions.length
+                                    ? "\u672a\u6307\u5b9a"
+                                    : "\u7121\u53ef\u6307\u6d3e\u5b78\u54e1"}
+                                </option>
+                                {addableOptions.map((member) => (
+                                  <option key={`${session.id}:add:${member.id}`} value={member.id}>
+                                    {member.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </form>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-sm text-slate-700">{dutyText || "\u5c1a\u672a\u8a2d\u5b9a\u503c\u65e5\u751f"}</div>
+                    )}
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
