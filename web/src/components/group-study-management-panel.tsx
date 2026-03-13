@@ -397,7 +397,18 @@ export function GroupStudyManagementPanel({
                               <select
                                 name="personIds"
                                 defaultValue={currentPersonId}
-                                onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                                onChange={(event) => {
+                                  const form = event.currentTarget.form;
+                                  if (!form) return;
+                                  const submitter = form.querySelector<HTMLButtonElement>(
+                                    'button[type="submit"][data-auto-submit="true"]',
+                                  );
+                                  if (submitter) {
+                                    form.requestSubmit(submitter);
+                                    return;
+                                  }
+                                  form.requestSubmit();
+                                }}
                                 className="w-full"
                               >
                                 <option value="">
@@ -409,6 +420,9 @@ export function GroupStudyManagementPanel({
                                   </option>
                                 ))}
                               </select>
+                              <button type="submit" data-auto-submit="true" className="hidden" aria-hidden>
+                                {"\u5132\u5b58"}
+                              </button>
                             </form>
                           );
                         })}
@@ -433,7 +447,18 @@ export function GroupStudyManagementPanel({
                               <select
                                 name="personIds"
                                 defaultValue=""
-                                onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                                onChange={(event) => {
+                                  const form = event.currentTarget.form;
+                                  if (!form) return;
+                                  const submitter = form.querySelector<HTMLButtonElement>(
+                                    'button[type="submit"][data-auto-submit="true"]',
+                                  );
+                                  if (submitter) {
+                                    form.requestSubmit(submitter);
+                                    return;
+                                  }
+                                  form.requestSubmit();
+                                }}
                                 className="w-full"
                                 disabled={!addableOptions.length}
                               >
@@ -448,6 +473,9 @@ export function GroupStudyManagementPanel({
                                   </option>
                                 ))}
                               </select>
+                              <button type="submit" data-auto-submit="true" className="hidden" aria-hidden>
+                                {"\u5132\u5b58"}
+                              </button>
                             </form>
                           );
                         })()}
@@ -518,12 +546,30 @@ export function GroupStudyManagementPanel({
                                   <input type="hidden" name="readingItemId" value={item.id} />
                                   <input type="hidden" name="returnTo" value={returnTo} />
                                   <input type="hidden" name="note" value={assignment?.note ?? ""} />
-                                  <select name="personId" defaultValue={assignment?.person_id ?? ""} onChange={(event) => event.currentTarget.form?.requestSubmit()}>
+                                  <select
+                                    name="personId"
+                                    defaultValue={assignment?.person_id ?? ""}
+                                    onChange={(event) => {
+                                      const form = event.currentTarget.form;
+                                      if (!form) return;
+                                      const submitter = form.querySelector<HTMLButtonElement>(
+                                        'button[type="submit"][data-auto-submit="true"]',
+                                      );
+                                      if (submitter) {
+                                        form.requestSubmit(submitter);
+                                        return;
+                                      }
+                                      form.requestSubmit();
+                                    }}
+                                  >
                                     <option value="">{"\u672a\u6307\u6d3e"}</option>
                                     {memberOptions.map((member) => (
                                       <option key={`${item.id}:${member.id}`} value={member.id}>{member.label}</option>
                                     ))}
                                   </select>
+                                  <button type="submit" data-auto-submit="true" className="hidden" aria-hidden>
+                                    {"\u5132\u5b58"}
+                                  </button>
                                 </form>
                               ) : (
                                 <p className="text-sm text-slate-700">{assignedLabel}</p>
