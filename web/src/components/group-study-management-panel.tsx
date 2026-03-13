@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo } from "react";
+import { ArrowDown, ArrowUp, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { FormModalTrigger } from "@/components/form-modal-trigger";
 import type {
   GroupStudyReadingAssignmentRow,
   GroupStudyReadingItemRow,
   GroupStudySessionDutyMemberRow,
+  GroupStudySessionMode,
   GroupStudySessionRow,
 } from "@/lib/types";
 
@@ -98,6 +99,7 @@ export function GroupStudyManagementPanel({
   onMoveReadingItemAction,
   onSetReadingAssignmentAction,
 }: Props) {
+  const [createMode, setCreateMode] = useState<GroupStudySessionMode>("offline");
   const orderedSessions = useMemo(() => sortByOrder(sessions), [sessions]);
   const orderedDutyMembers = useMemo(() => sortByOrder(dutyMembers), [dutyMembers]);
   const orderedReadingItems = useMemo(() => sortByOrder(readingItems), [readingItems]);
@@ -169,25 +171,36 @@ export function GroupStudyManagementPanel({
             </div>
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">{"\u8209\u8fa6\u5f62\u5f0f"}</span>
-              <select name="mode" defaultValue="offline">
+              <select
+                name="mode"
+                value={createMode}
+                onChange={(event) =>
+                  setCreateMode(event.currentTarget.value === "online" ? "online" : "offline")
+                }
+              >
                 <option value="offline">{"\u5be6\u9ad4"}</option>
                 <option value="online">{"\u7dda\u4e0a"}</option>
               </select>
             </label>
-            <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">
-                {"\u5730\u9ede\uff08\u5be6\u9ad4\uff09"}
-              </span>
-              <input name="locationAddress" />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">{"Google Map \u9023\u7d50"}</span>
-              <input name="mapUrl" type="url" />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700">{"\u7dda\u4e0a\u6703\u8b70\u9023\u7d50"}</span>
-              <input name="onlineMeetingUrl" type="url" />
-            </label>
+            {createMode === "offline" ? (
+              <>
+                <label className="space-y-1">
+                  <span className="text-sm font-medium text-slate-700">
+                    {"\u5730\u9ede\uff08\u5be6\u9ad4\uff09"}
+                  </span>
+                  <input name="locationAddress" />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-sm font-medium text-slate-700">{"Google Map \u9023\u7d50"}</span>
+                  <input name="mapUrl" type="url" />
+                </label>
+              </>
+            ) : (
+              <label className="space-y-1">
+                <span className="text-sm font-medium text-slate-700">{"\u7dda\u4e0a\u6703\u8b70\u9023\u7d50"}</span>
+                <input name="onlineMeetingUrl" type="url" />
+              </label>
+            )}
             <label className="space-y-1">
               <span className="text-sm font-medium text-slate-700">{"\u6ce8\u610f\u4e8b\u9805"}</span>
               <textarea name="note" rows={3} />
@@ -208,10 +221,13 @@ export function GroupStudyManagementPanel({
               .map((row) => row.person?.display_name || row.person?.full_name || "")
               .filter(Boolean)
               .join("\u3001");
+            const onlineMeetingUrl = clean(session.online_meeting_url);
+            const mapUrl = clean(session.map_url);
+            const offlineLocation = clean(session.location_address) || "\u672a\u8a2d\u5b9a";
             const location =
               session.mode === "online"
-                ? clean(session.online_meeting_url) || "\u672a\u8a2d\u5b9a"
-                : clean(session.location_address) || "\u672a\u8a2d\u5b9a";
+                ? (onlineMeetingUrl ? "\u5df2\u8a2d\u5b9a" : "\u672a\u8a2d\u5b9a")
+                : offlineLocation;
 
             return (
               <article key={session.id} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
@@ -244,14 +260,40 @@ export function GroupStudyManagementPanel({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-700">{`\u6d3b\u52d5 ${sessionIndex + 1}`}</p>
-                    <h3 className="mt-1 text-lg font-semibold text-slate-900">{session.title}</h3>
-                    <p className="mt-1 text-sm text-slate-700">{`\u65e5\u671f\uff1a${formatDate(session.session_date)} / \u6642\u9593\uff1a${formatTime(session.start_time)} - ${formatTime(session.end_time)}`}</p>
-                    <p className="mt-1 text-sm text-slate-700">{`\u5f62\u5f0f\uff1a${session.mode === "online" ? "\u7dda\u4e0a" : "\u5be6\u9ad4"} / ${session.mode === "online" ? "\u6703\u8b70\u9023\u7d50" : "\u5730\u9ede"}\uff1a${location}`}</p>
-                    {session.mode === "offline" && clean(session.map_url) ? (
-                      <a href={session.map_url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-sm text-blue-700 underline decoration-blue-300 underline-offset-2">
-                        {"\u958b\u555f\u5730\u5716"}
+                    {session.mode === "online" && onlineMeetingUrl ? (
+                      <a
+                        href={onlineMeetingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-block text-lg font-semibold text-blue-700 underline decoration-blue-300 underline-offset-2"
+                      >
+                        {session.title}
                       </a>
-                    ) : null}
+                    ) : (
+                      <h3 className="mt-1 text-lg font-semibold text-slate-900">{session.title}</h3>
+                    )}
+                    <p className="mt-1 text-sm text-slate-700">{`\u65e5\u671f\uff1a${formatDate(session.session_date)} / \u6642\u9593\uff1a${formatTime(session.start_time)} - ${formatTime(session.end_time)}`}</p>
+                    <p className="mt-1 text-sm text-slate-700">{`\u5f62\u5f0f\uff1a${session.mode === "online" ? "\u7dda\u4e0a" : "\u5be6\u9ad4"}`}</p>
+                    {session.mode === "online" ? (
+                      <p className="mt-1 text-sm text-slate-700">{`\u6703\u8b70\u9023\u7d50\uff1a${location}`}</p>
+                    ) : (
+                      <p className="mt-1 text-sm text-slate-700">
+                        {"\u5730\u9ede\uff1a"}
+                        {mapUrl ? (
+                          <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-1 inline-flex items-center gap-1 text-blue-700 underline decoration-blue-300 underline-offset-2"
+                          >
+                            <span>{offlineLocation}</span>
+                            <MapPin className="h-3.5 w-3.5" />
+                          </a>
+                        ) : (
+                          <span className="ml-1">{offlineLocation}</span>
+                        )}
+                      </p>
+                    )}
                     {clean(session.note) ? <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{session.note}</p> : null}
                   </div>
                   {canManage && (
@@ -410,6 +452,8 @@ function SessionEditModal({
   session: GroupStudySessionRow;
   onAction: ActionHandler;
 }) {
+  const [mode, setMode] = useState<GroupStudySessionMode>(session.mode);
+
   return (
     <FormModalTrigger
       buttonLabel={"\u7de8\u8f2f\u6d3b\u52d5"}
@@ -443,23 +487,34 @@ function SessionEditModal({
       </div>
       <label className="space-y-1">
         <span className="text-sm font-medium text-slate-700">{"\u8209\u8fa6\u5f62\u5f0f"}</span>
-        <select name="mode" defaultValue={session.mode}>
+        <select
+          name="mode"
+          value={mode}
+          onChange={(event) =>
+            setMode(event.currentTarget.value === "online" ? "online" : "offline")
+          }
+        >
           <option value="offline">{"\u5be6\u9ad4"}</option>
           <option value="online">{"\u7dda\u4e0a"}</option>
         </select>
       </label>
-      <label className="space-y-1">
-        <span className="text-sm font-medium text-slate-700">{"\u5730\u9ede\uff08\u5be6\u9ad4\uff09"}</span>
-        <input name="locationAddress" defaultValue={session.location_address} />
-      </label>
-      <label className="space-y-1">
-        <span className="text-sm font-medium text-slate-700">{"Google Map \u9023\u7d50"}</span>
-        <input name="mapUrl" type="url" defaultValue={session.map_url} />
-      </label>
-      <label className="space-y-1">
-        <span className="text-sm font-medium text-slate-700">{"\u7dda\u4e0a\u6703\u8b70\u9023\u7d50"}</span>
-        <input name="onlineMeetingUrl" type="url" defaultValue={session.online_meeting_url} />
-      </label>
+      {mode === "offline" ? (
+        <>
+          <label className="space-y-1">
+            <span className="text-sm font-medium text-slate-700">{"\u5730\u9ede\uff08\u5be6\u9ad4\uff09"}</span>
+            <input name="locationAddress" defaultValue={session.location_address} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-sm font-medium text-slate-700">{"Google Map \u9023\u7d50"}</span>
+            <input name="mapUrl" type="url" defaultValue={session.map_url} />
+          </label>
+        </>
+      ) : (
+        <label className="space-y-1">
+          <span className="text-sm font-medium text-slate-700">{"\u7dda\u4e0a\u6703\u8b70\u9023\u7d50"}</span>
+          <input name="onlineMeetingUrl" type="url" defaultValue={session.online_meeting_url} />
+        </label>
+      )}
       <label className="space-y-1">
         <span className="text-sm font-medium text-slate-700">{"\u6ce8\u610f\u4e8b\u9805"}</span>
         <textarea name="note" rows={3} defaultValue={session.note} />
