@@ -779,8 +779,13 @@ function StudyReadOnlyTable({
                           ) : null}
                         </div>
                       </td>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                        {`${formatDate(group.session.session_date)} / ${formatTimeRange(group.session.start_time, group.session.end_time)}`}
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                        <div className="inline-flex flex-col whitespace-nowrap leading-tight">
+                          <span>{formatDate(group.session.session_date)}</span>
+                          <span className="mt-0.5 text-slate-600">
+                            {formatTimeRange(group.session.start_time, group.session.end_time)}
+                          </span>
+                        </div>
                       </td>
                       <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
                         {isOnline ? (
