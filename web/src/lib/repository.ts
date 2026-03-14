@@ -2527,6 +2527,7 @@ export async function setGroupStudyReadingAssignment(input: {
   groupId: string;
   readingItemId: string;
   personId: string;
+  isCoachLed?: boolean;
   note: string;
   accountId?: string | null;
 }): Promise<MutationResult> {
@@ -2543,7 +2544,9 @@ export async function setGroupStudyReadingAssignment(input: {
   }
 
   const personId = input.personId.trim();
-  if (!personId) {
+  const isCoachLed = Boolean(input.isCoachLed);
+
+  if (!isCoachLed && !personId) {
     const { error } = await db.client
       .from("group_study_reading_assignments")
       .delete()
@@ -2554,11 +2557,27 @@ export async function setGroupStudyReadingAssignment(input: {
     return { ok: true };
   }
 
+  if (!isCoachLed) {
+    const { data: membershipRows, error: membershipError } = await db.client
+      .from("group_memberships")
+      .select("person_id")
+      .eq("group_id", input.groupId)
+      .eq("membership_type", "member")
+      .eq("person_id", personId)
+      .limit(1);
+
+    if (membershipError) return { ok: false, message: membershipError.message };
+    if (!membershipRows?.length) {
+      return { ok: false, message: "導讀指派僅可選擇該小組學員。" };
+    }
+  }
+
   const { error } = await db.client.from("group_study_reading_assignments").upsert(
     {
       group_id: input.groupId,
       reading_item_id: input.readingItemId,
-      person_id: personId,
+      person_id: isCoachLed ? null : personId,
+      is_coach_led: isCoachLed,
       note: input.note,
       created_by_account_id: input.accountId ?? null,
       updated_by_account_id: input.accountId ?? null,

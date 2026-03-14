@@ -42,6 +42,11 @@ function readDirection(formData: FormData): "up" | "down" | null {
   return null;
 }
 
+function readBoolean(formData: FormData, key: string): boolean {
+  const value = readText(formData, key).toLowerCase();
+  return value === "1" || value === "true" || value === "on" || value === "yes";
+}
+
 function normalizeSessionMode(value: string): GroupStudySessionMode {
   return value === "online" ? "online" : "offline";
 }
@@ -356,6 +361,7 @@ export async function setGroupStudyReadingAssignmentAction(formData: FormData) {
   const returnTo = readReturnTo(formData) ?? defaultReturnPath(groupId);
   const readingItemId = readText(formData, "readingItemId");
   const personId = readText(formData, "personId");
+  const isCoachLed = readBoolean(formData, "isCoachLed");
   const note = readText(formData, "note");
 
   if (!groupId || !readingItemId) {
@@ -367,6 +373,7 @@ export async function setGroupStudyReadingAssignmentAction(formData: FormData) {
     groupId,
     readingItemId,
     personId,
+    isCoachLed,
     note,
     accountId: session.accountId,
   });
@@ -376,7 +383,9 @@ export async function setGroupStudyReadingAssignmentAction(formData: FormData) {
   redirectWithMessage(
     returnTo,
     true,
-    personId
+    isCoachLed
+      ? "\u5c0e\u8b80\u5206\u914d\u5df2\u8a2d\u70ba\u7531\u6559\u7df4\u4ee3\u70ba\u5c0e\u8b80\u3002"
+      : personId
       ? "\u5c0e\u8b80\u5206\u914d\u5df2\u66f4\u65b0\u3002"
       : "\u5c0e\u8b80\u5206\u914d\u5df2\u6e05\u9664\u3002",
   );

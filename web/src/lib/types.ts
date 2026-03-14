@@ -167,7 +167,8 @@ export type GroupStudyReadingAssignmentRow = {
   id: string;
   group_id: string;
   reading_item_id: string;
-  person_id: string;
+  person_id: string | null;
+  is_coach_led: boolean;
   note: string;
   created_by_account_id: string | null;
   updated_by_account_id: string | null;

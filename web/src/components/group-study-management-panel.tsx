@@ -24,7 +24,6 @@ type Props = {
   readingItems: GroupStudyReadingItemRow[];
   readingAssignments: GroupStudyReadingAssignmentRow[];
   memberOptions: MemberOption[];
-  coachOptions: MemberOption[];
   chapterOptions: ChapterOption[];
   onCreateSessionAction: ActionHandler;
   onUpdateSessionAction: ActionHandler;
@@ -125,7 +124,6 @@ export function GroupStudyManagementPanel({
   readingItems,
   readingAssignments,
   memberOptions,
-  coachOptions,
   chapterOptions,
   onCreateSessionAction,
   onUpdateSessionAction,
@@ -166,20 +164,6 @@ export function GroupStudyManagementPanel({
   const assignmentByItem = useMemo(
     () => new Map(readingAssignments.map((row) => [row.reading_item_id, row])),
     [readingAssignments],
-  );
-
-  const readingAssigneeOptions = useMemo(() => {
-    const deduped = new Map<string, MemberOption>();
-    for (const option of [...coachOptions, ...memberOptions]) {
-      if (!option.id) continue;
-      if (!deduped.has(option.id)) deduped.set(option.id, option);
-    }
-    return [...deduped.values()];
-  }, [coachOptions, memberOptions]);
-
-  const labelByMemberId = useMemo(
-    () => new Map(readingAssigneeOptions.map((member) => [member.id, member.label])),
-    [readingAssigneeOptions],
   );
 
   return (
@@ -531,10 +515,11 @@ export function GroupStudyManagementPanel({
                             if (member.id === currentAssignedPersonId) return true;
                             return !blockedMemberIds.has(member.id);
                           });
-                          const assignedLabel =
-                            assignment?.person_id && labelByMemberId.has(assignment.person_id)
-                              ? labelByMemberId.get(assignment.person_id)
-                              : "\u672a\u6307\u6d3e";
+                          const assignedLabel = assignment?.is_coach_led
+                            ? "\u6559\u7df4\u4ee3\u70ba\u5c0e\u8b80"
+                            : assignment?.person?.display_name?.trim() ||
+                              assignment?.person?.full_name?.trim() ||
+                              "\u672a\u6307\u6d3e";
                           return (
                             <div key={item.id} className="grid gap-2 rounded-md border border-slate-200 p-2 md:grid-cols-[auto_minmax(0,1fr)_220px_auto]">
                               <div className="flex items-center gap-1">
@@ -569,14 +554,16 @@ export function GroupStudyManagementPanel({
                                 {clean(item.note) ? <p className="mt-1 text-xs text-slate-500">{item.note}</p> : null}
                               </div>
                               {canManage ? (
-                                <form action={onSetReadingAssignmentAction}>
+                                <form action={onSetReadingAssignmentAction} className="space-y-1">
                                   <input type="hidden" name="groupId" value={groupId} />
                                   <input type="hidden" name="readingItemId" value={item.id} />
                                   <input type="hidden" name="returnTo" value={returnTo} />
                                   <input type="hidden" name="note" value={assignment?.note ?? ""} />
+                                  <input type="hidden" name="isCoachLed" value="0" />
                                   <select
                                     name="personId"
-                                    defaultValue={assignment?.person_id ?? ""}
+                                    defaultValue={assignment?.is_coach_led ? "" : assignment?.person_id ?? ""}
+                                    disabled={Boolean(assignment?.is_coach_led)}
                                     onChange={(event) => {
                                       const form = event.currentTarget.form;
                                       if (!form) return;
@@ -591,15 +578,31 @@ export function GroupStudyManagementPanel({
                                     }}
                                   >
                                     <option value="">{"\u672a\u6307\u6d3e"}</option>
-                                    {coachOptions.map((coach) => (
-                                      <option key={`${item.id}:coach:${coach.id}`} value={coach.id}>
-                                        {coach.label}
-                                      </option>
-                                    ))}
                                     {readingAssignableMemberOptions.map((member) => (
                                       <option key={`${item.id}:${member.id}`} value={member.id}>{member.label}</option>
                                     ))}
                                   </select>
+                                  <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+                                    <input
+                                      type="checkbox"
+                                      name="isCoachLed"
+                                      value="1"
+                                      defaultChecked={Boolean(assignment?.is_coach_led)}
+                                      onChange={(event) => {
+                                        const form = event.currentTarget.form;
+                                        if (!form) return;
+                                        const submitter = form.querySelector<HTMLButtonElement>(
+                                          'button[type="submit"][data-auto-submit="true"]',
+                                        );
+                                        if (submitter) {
+                                          form.requestSubmit(submitter);
+                                          return;
+                                        }
+                                        form.requestSubmit();
+                                      }}
+                                    />
+                                    {"\u7531\u6559\u7df4\u4ee3\u70ba\u5c0e\u8b80"}
+                                  </label>
                                   <button type="submit" data-auto-submit="true" className="hidden" aria-hidden>
                                     {"\u5132\u5b58"}
                                   </button>
