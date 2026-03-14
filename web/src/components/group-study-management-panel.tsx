@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { FormModalTrigger } from "@/components/form-modal-trigger";
@@ -54,7 +54,7 @@ const TEXT = {
   title: "\u8b80\u66f8\u6703\u6d3b\u52d5\u8207\u5c0e\u8b80\u5206\u914d",
   subtitle:
     "\u7dad\u8b77\u8b80\u66f8\u6703\u6d3b\u52d5\u3001\u503c\u65e5\u751f\u8207\u5c0e\u8b80\u9805\u76ee\u3002",
-  readOnlyTitle: "\u8b80\u66f8\u6703\u552f\u8b80\u8868\u683c",
+  readOnlyTitle: "\u8b80\u66f8\u6703",
   readOnlySubtitle:
     "\u552f\u8b80\u6aa2\u8996\u8b80\u66f8\u6703\u6d3b\u52d5\u8207\u5c0e\u8b80\u5206\u914d\u3002",
   empty: "\u5c1a\u672a\u5efa\u7acb\u8b80\u66f8\u6703\u6d3b\u52d5\u3002",
@@ -187,7 +187,7 @@ export function GroupStudyManagementPanel({
   );
 
   return (
-    <>
+    <div className={canManage ? "flex flex-col-reverse gap-5" : ""}>
       {canManage ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -673,14 +673,10 @@ export function GroupStudyManagementPanel({
       )}
         </section>
       ) : null}
-      <section className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ${canManage ? "mt-5" : ""}`}>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
-            {canManage ? TEXT.readOnlyTitle : TEXT.title}
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            {canManage ? TEXT.readOnlySubtitle : TEXT.subtitle}
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900">{TEXT.readOnlyTitle}</h2>
+          <p className="mt-1 text-sm text-slate-600">{TEXT.readOnlySubtitle}</p>
         </div>
         {!orderedSessions.length ? (
           <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
@@ -695,7 +691,7 @@ export function GroupStudyManagementPanel({
           />
         )}
       </section>
-    </>
+    </div>
   );
 }
 
@@ -739,15 +735,13 @@ function StudyReadOnlyTable({
 
   return (
     <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200">
-      <table className="w-full min-w-[980px] table-auto border-collapse text-xs text-slate-700">
+      <table className="w-full min-w-[900px] table-auto border-collapse text-xs text-slate-700">
         <thead className="bg-slate-100 text-[11px] font-semibold text-slate-800">
           <tr>
             <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">日期</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">時間</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">日期 / 時間</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">場地</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">值日生</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left">說明</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">章節標題</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">紙本頁碼</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">導讀分配</th>
@@ -760,6 +754,7 @@ function StudyReadOnlyTable({
             const rowSpan = group.itemRows.length;
 
             return group.itemRows.map((itemRow, itemIndex) => {
+              const noteText = clean(group.session.note);
               const assignedLabel = itemRow.assignment?.is_coach_led
                 ? "教練代讀"
                 : itemRow.assignment?.person?.display_name?.trim() ||
@@ -774,13 +769,18 @@ function StudyReadOnlyTable({
                   {itemIndex === 0 ? (
                     <>
                       <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
-                        {group.session.title}
+                        <div className="space-y-1.5">
+                          <p className="font-medium text-slate-900">{group.session.title}</p>
+                          {noteText ? (
+                            <NotePreviewDialogButton
+                              title={group.session.title}
+                              note={noteText}
+                            />
+                          ) : null}
+                        </div>
                       </td>
                       <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                        {formatDate(group.session.session_date)}
-                      </td>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                        {formatTimeRange(group.session.start_time, group.session.end_time)}
+                        {`${formatDate(group.session.session_date)} / ${formatTimeRange(group.session.start_time, group.session.end_time)}`}
                       </td>
                       <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
                         {isOnline ? (
@@ -809,9 +809,6 @@ function StudyReadOnlyTable({
                       <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
                         {group.dutyText}
                       </td>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-pre-wrap break-words">
-                        {clean(group.session.note)}
-                      </td>
                     </>
                   ) : null}
                   <td className="border-b border-slate-200 px-2 py-2">
@@ -830,6 +827,64 @@ function StudyReadOnlyTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function NotePreviewDialogButton({
+  title,
+  note,
+}: {
+  title: string;
+  note: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const isBrowser = typeof window !== "undefined";
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+        title="查看說明"
+      >
+        <Eye className="h-3.5 w-3.5" />
+        <span>查看說明</span>
+      </button>
+
+      {open && isBrowser
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/45 p-4"
+              onClick={() => setOpen(false)}
+            >
+              <div
+                className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-semibold text-slate-900">讀書會說明</h4>
+                    <p className="mt-1 text-sm text-slate-600">{title}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
+                    title="關閉"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-3 max-h-[60vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{note}</p>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
