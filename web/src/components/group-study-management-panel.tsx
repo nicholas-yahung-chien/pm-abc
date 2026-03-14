@@ -750,7 +750,7 @@ function StudyReadOnlyTable({
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">讀書會</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">日期 / 時間</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">場地</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left">值日生</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">值日生</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">章節標題</th>
             <th className="border-b border-slate-200 px-1.5 py-2 text-center whitespace-nowrap w-px">紙本頁碼</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">導讀分配</th>
@@ -820,7 +820,7 @@ function StudyReadOnlyTable({
                           group.offlineLocation
                         )}
                       </td>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap w-px">
                         {group.dutyText}
                       </td>
                     </>
