@@ -268,6 +268,11 @@ export function GroupStudyManagementPanel({
               .map((row) => row.person?.display_name || row.person?.full_name || "")
               .filter(Boolean)
               .join("\u3001");
+            const dutyRenderKey = [
+              session.id,
+              dutyRows.map((row) => `${row.id}:${row.person_id}`).join("|"),
+              [...readingAssignedIds].sort().join("|"),
+            ].join("::");
             const onlineMeetingUrl = clean(session.online_meeting_url);
             const mapUrl = clean(session.map_url);
             const offlineLocation = clean(session.location_address) || "\u672a\u8a2d\u5b9a";
@@ -373,7 +378,7 @@ export function GroupStudyManagementPanel({
                       <h4 className="text-sm font-semibold text-slate-900">{"\u503c\u65e5\u751f"}</h4>
                     </div>
                     {canManage ? (
-                      <div className="mt-2 space-y-2">
+                      <div key={dutyRenderKey} className="mt-2 space-y-2">
                         {dutyRows.map((dutyRow) => {
                           const currentPersonId = dutyRow.person_id?.trim() || "";
                           const otherDutyIds = dutyRows
