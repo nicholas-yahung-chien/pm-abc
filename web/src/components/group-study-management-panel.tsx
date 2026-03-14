@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowDown, ArrowUp, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { FormModalTrigger } from "@/components/form-modal-trigger";
 import type {
   GroupStudyReadingAssignmentRow,
@@ -14,6 +15,15 @@ import type {
 type ActionHandler = (formData: FormData) => void | Promise<void>;
 type MemberOption = { id: string; label: string };
 type ChapterOption = { id: string; label: string };
+type StudyTableRow = {
+  session: GroupStudySessionRow;
+  dutyText: string;
+  item: GroupStudyReadingItemRow | null;
+  assignment: GroupStudyReadingAssignmentRow | null;
+  onlineMeetingUrl: string;
+  mapUrl: string;
+  offlineLocation: string;
+};
 
 type Props = {
   groupId: string;
@@ -72,6 +82,10 @@ function formatTime(timeInput: string | null): string {
   if (!timeInput) return "--:--";
   const [hour = "00", minute = "00"] = timeInput.split(":");
   return `${hour}:${minute}`;
+}
+
+function formatTimeRange(start: string | null, end: string | null): string {
+  return `${formatTime(start)} - ${formatTime(end)}`;
 }
 
 function clean(value: string): string {
@@ -244,7 +258,7 @@ export function GroupStudyManagementPanel({
         <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
           {TEXT.empty}
         </div>
-      ) : (
+      ) : canManage ? (
         <div className="mt-5 space-y-4">
           {orderedSessions.map((session, sessionIndex) => {
             const dutyRows = dutyBySession.get(session.id) ?? [];
@@ -521,7 +535,10 @@ export function GroupStudyManagementPanel({
                               assignment?.person?.full_name?.trim() ||
                               "\u672a\u6307\u6d3e";
                           return (
-                            <div key={item.id} className="grid gap-2 rounded-md border border-slate-200 p-2 md:grid-cols-[auto_minmax(0,1fr)_220px_auto]">
+                            <div
+                              key={item.id}
+                              className="grid gap-2 rounded-md border border-slate-200 p-2 md:grid-cols-[auto_minmax(0,1fr)_minmax(150px,180px)_auto] md:items-start"
+                            >
                               <div className="flex items-center gap-1">
                                 {canManage && (
                                   <>
@@ -554,7 +571,10 @@ export function GroupStudyManagementPanel({
                                 {clean(item.note) ? <p className="mt-1 text-xs text-slate-500">{item.note}</p> : null}
                               </div>
                               {canManage ? (
-                                <form action={onSetReadingAssignmentAction} className="space-y-1">
+                                <form
+                                  action={onSetReadingAssignmentAction}
+                                  className="min-w-0 space-y-1 md:w-[170px] md:justify-self-end"
+                                >
                                   <input type="hidden" name="groupId" value={groupId} />
                                   <input type="hidden" name="readingItemId" value={item.id} />
                                   <input type="hidden" name="returnTo" value={returnTo} />
@@ -576,13 +596,14 @@ export function GroupStudyManagementPanel({
                                       }
                                       form.requestSubmit();
                                     }}
+                                    className="w-full"
                                   >
                                     <option value="">{"\u672a\u6307\u6d3e"}</option>
                                     {readingAssignableMemberOptions.map((member) => (
                                       <option key={`${item.id}:${member.id}`} value={member.id}>{member.label}</option>
                                     ))}
                                   </select>
-                                  <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+                                  <label className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-slate-700">
                                     <input
                                       type="checkbox"
                                       name="isCoachLed"
@@ -641,8 +662,235 @@ export function GroupStudyManagementPanel({
             );
           })}
         </div>
+      ) : (
+        <StudyReadOnlyTable
+          sessions={orderedSessions}
+          dutyBySession={dutyBySession}
+          readingBySession={readingBySession}
+          assignmentByItem={assignmentByItem}
+        />
       )}
     </section>
+  );
+}
+
+function StudyReadOnlyTable({
+  sessions,
+  dutyBySession,
+  readingBySession,
+  assignmentByItem,
+}: {
+  sessions: GroupStudySessionRow[];
+  dutyBySession: Map<string, GroupStudySessionDutyMemberRow[]>;
+  readingBySession: Map<string, GroupStudyReadingItemRow[]>;
+  assignmentByItem: Map<string, GroupStudyReadingAssignmentRow>;
+}) {
+  const rows = useMemo<StudyTableRow[]>(() => {
+    const list: StudyTableRow[] = [];
+
+    for (const session of sessions) {
+      const dutyRows = dutyBySession.get(session.id) ?? [];
+      const itemRows = readingBySession.get(session.id) ?? [];
+      const dutyText =
+        dutyRows
+          .map((row) => row.person?.display_name?.trim() || row.person?.full_name?.trim() || "")
+          .filter(Boolean)
+          .join("、") || "未指定";
+
+      const rowBase = {
+        session,
+        dutyText,
+        onlineMeetingUrl: clean(session.online_meeting_url),
+        mapUrl: clean(session.map_url),
+        offlineLocation: clean(session.location_address) || "未設定",
+      };
+
+      if (!itemRows.length) {
+        list.push({
+          ...rowBase,
+          item: null,
+          assignment: null,
+        });
+        continue;
+      }
+
+      for (const item of itemRows) {
+        list.push({
+          ...rowBase,
+          item,
+          assignment: assignmentByItem.get(item.id) ?? null,
+        });
+      }
+    }
+
+    return list;
+  }, [sessions, dutyBySession, readingBySession, assignmentByItem]);
+
+  return (
+    <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200">
+      <table className="w-full min-w-[980px] table-auto border-collapse text-xs text-slate-700">
+        <thead className="bg-slate-100 text-[11px] font-semibold text-slate-800">
+          <tr>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會活動標題</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">日期</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">時間</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">場地</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">值日生</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會說明</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">章節標題</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">紙本頁碼</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">導讀分配</th>
+          </tr>
+        </thead>
+        <tbody className="text-[12px]">
+          {rows.map((row) => {
+            const isOnline = row.session.mode === "online";
+            const assignedLabel = row.assignment?.is_coach_led
+              ? "教練代讀"
+              : row.assignment?.person?.display_name?.trim() ||
+                row.assignment?.person?.full_name?.trim() ||
+                (row.item ? "未指派" : "");
+
+            return (
+              <tr key={`${row.session.id}:${row.item?.id ?? "session"}`} className="align-top odd:bg-white even:bg-slate-50/50">
+                <td className="border-b border-slate-200 px-2 py-2">
+                  {row.session.title}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                  {formatDate(row.session.session_date)}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                  {formatTimeRange(row.session.start_time, row.session.end_time)}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2">
+                  {isOnline ? (
+                    row.onlineMeetingUrl ? (
+                      <a
+                        href={row.onlineMeetingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-700 underline decoration-blue-300 underline-offset-2"
+                      >
+                        線上會議
+                      </a>
+                    ) : (
+                      "線上"
+                    )
+                  ) : row.mapUrl ? (
+                    <MapPreviewDialogButton
+                      title={row.session.title}
+                      location={row.offlineLocation}
+                      mapUrl={row.mapUrl}
+                    />
+                  ) : (
+                    row.offlineLocation
+                  )}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2">
+                  {row.dutyText}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2 whitespace-pre-wrap break-words">
+                  {clean(row.session.note)}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2">
+                  {row.item?.title ?? ""}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                  {row.item?.paper_page ?? ""}
+                </td>
+                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                  {assignedLabel}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MapPreviewDialogButton({
+  title,
+  location,
+  mapUrl,
+}: {
+  title: string;
+  location: string;
+  mapUrl: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const embedUrl = buildGoogleMapEmbedUrl(mapUrl, location);
+  const isBrowser = typeof window !== "undefined";
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex max-w-[220px] items-center gap-1 truncate text-blue-700 underline decoration-blue-300 underline-offset-2"
+        title="查看地圖預覽"
+      >
+        <span className="truncate">{location}</span>
+        <MapPin className="h-3.5 w-3.5 shrink-0" />
+      </button>
+
+      {open && isBrowser
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/45 p-4"
+              onClick={() => setOpen(false)}
+            >
+              <div
+                className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-base font-semibold text-slate-900">地圖預覽</h4>
+                    <p className="mt-1 text-sm text-slate-600">{title}</p>
+                    <p className="mt-1 text-sm text-slate-700">{location}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
+                    title="關閉"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                  {embedUrl ? (
+                    <iframe
+                      title={`${title} 地圖預覽`}
+                      src={embedUrl}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="h-[360px] w-full border-0"
+                    />
+                  ) : (
+                    <div className="flex h-[180px] items-center justify-center px-4 text-sm text-slate-500">
+                      無法產生地圖預覽，請改用外部連結開啟。
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 flex justify-end gap-2">
+                  <a
+                    href={mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    外部開啟
+                  </a>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 

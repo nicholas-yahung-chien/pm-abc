@@ -145,9 +145,7 @@ export default async function GroupStudyPage({
     });
 
   const returnTo = `/groups/${groupId}/study`;
-  const canManage =
-    session.role !== "member" ||
-    myMemberships.some((membership) => membership.group_id === groupId);
+  const canManage = session.role !== "member";
 
   return (
     <AppShell>

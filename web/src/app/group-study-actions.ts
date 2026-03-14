@@ -80,6 +80,14 @@ async function requireGroupAccess(groupId: string, redirectPath: string): Promis
   return session;
 }
 
+async function requireManageAccess(groupId: string, redirectPath: string): Promise<AppSession> {
+  const session = await requireGroupAccess(groupId, redirectPath);
+  if (session.role === "member") {
+    redirectWithMessage(redirectPath, false, "學員僅可查看讀書會內容。");
+  }
+  return session;
+}
+
 function revalidateGroupStudyPaths(groupId: string) {
   revalidatePath("/groups");
   revalidatePath(`/groups/${groupId}`);
@@ -107,7 +115,7 @@ export async function createGroupStudySessionAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u8acb\u586b\u5beb\u6d3b\u52d5\u6a19\u984c\u3002");
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await createGroupStudySession({
     groupId,
     title,
@@ -145,7 +153,7 @@ export async function updateGroupStudySessionAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u8acb\u586b\u5beb\u6d3b\u52d5\u6a19\u984c\u3002");
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await updateGroupStudySession({
     groupId,
     sessionId,
@@ -175,7 +183,7 @@ export async function deleteGroupStudySessionAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u7f3a\u5c11\u6d3b\u52d5\u8b58\u5225\u8cc7\u8a0a\u3002");
   }
 
-  await requireGroupAccess(groupId, returnTo);
+  await requireManageAccess(groupId, returnTo);
   const result = await deleteGroupStudySession({ groupId, sessionId });
 
   revalidateGroupStudyPaths(groupId);
@@ -193,7 +201,7 @@ export async function moveGroupStudySessionAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u7f3a\u5c11\u6392\u5e8f\u8abf\u6574\u8cc7\u8a0a\u3002");
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await moveGroupStudySession({
     groupId,
     sessionId,
@@ -225,7 +233,7 @@ export async function replaceGroupStudySessionDutyMembersAction(formData: FormDa
     redirectWithMessage(returnTo, false, "\u7f3a\u5c11\u503c\u65e5\u751f\u8a2d\u5b9a\u8cc7\u8a0a\u3002");
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await replaceGroupStudySessionDutyMembers({
     groupId,
     sessionId,
@@ -259,7 +267,7 @@ export async function createGroupStudyReadingItemAction(formData: FormData) {
     );
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await createGroupStudyReadingItem({
     groupId,
     sessionId,
@@ -297,7 +305,7 @@ export async function updateGroupStudyReadingItemAction(formData: FormData) {
     );
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await updateGroupStudyReadingItem({
     groupId,
     sessionId,
@@ -323,7 +331,7 @@ export async function deleteGroupStudyReadingItemAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u7f3a\u5c11\u5c0e\u8b80\u9805\u76ee\u8b58\u5225\u8cc7\u8a0a\u3002");
   }
 
-  await requireGroupAccess(groupId, returnTo);
+  await requireManageAccess(groupId, returnTo);
   const result = await deleteGroupStudyReadingItem({ groupId, readingItemId });
 
   revalidateGroupStudyPaths(groupId);
@@ -342,7 +350,7 @@ export async function moveGroupStudyReadingItemAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u7f3a\u5c11\u6392\u5e8f\u8abf\u6574\u8cc7\u8a0a\u3002");
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await moveGroupStudyReadingItem({
     groupId,
     sessionId,
@@ -374,7 +382,7 @@ export async function setGroupStudyReadingAssignmentAction(formData: FormData) {
     redirectWithMessage(returnTo, false, "\u7f3a\u5c11\u5c0e\u8b80\u5206\u914d\u8b58\u5225\u8cc7\u8a0a\u3002");
   }
 
-  const session = await requireGroupAccess(groupId, returnTo);
+  const session = await requireManageAccess(groupId, returnTo);
   const result = await setGroupStudyReadingAssignment({
     groupId,
     readingItemId,
