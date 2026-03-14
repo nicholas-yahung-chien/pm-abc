@@ -516,7 +516,7 @@ export function GroupStudyManagementPanel({
                             return !blockedMemberIds.has(member.id);
                           });
                           const assignedLabel = assignment?.is_coach_led
-                            ? "\u6559\u7df4\u4ee3\u70ba\u5c0e\u8b80"
+                            ? "\u6559\u7df4\u4ee3\u8b80"
                             : assignment?.person?.display_name?.trim() ||
                               assignment?.person?.full_name?.trim() ||
                               "\u672a\u6307\u6d3e";
@@ -601,7 +601,7 @@ export function GroupStudyManagementPanel({
                                         form.requestSubmit();
                                       }}
                                     />
-                                    {"\u7531\u6559\u7df4\u4ee3\u70ba\u5c0e\u8b80"}
+                                    {"\u6559\u7df4\u4ee3\u8b80"}
                                   </label>
                                   <button type="submit" data-auto-submit="true" className="hidden" aria-hidden>
                                     {"\u5132\u5b58"}

@@ -43,8 +43,14 @@ function readDirection(formData: FormData): "up" | "down" | null {
 }
 
 function readBoolean(formData: FormData, key: string): boolean {
-  const value = readText(formData, key).toLowerCase();
-  return value === "1" || value === "true" || value === "on" || value === "yes";
+  const values = formData
+    .getAll(key)
+    .map((value) => String(value).trim().toLowerCase())
+    .filter(Boolean);
+
+  return values.some(
+    (value) => value === "1" || value === "true" || value === "on" || value === "yes",
+  );
 }
 
 function normalizeSessionMode(value: string): GroupStudySessionMode {
@@ -384,7 +390,7 @@ export async function setGroupStudyReadingAssignmentAction(formData: FormData) {
     returnTo,
     true,
     isCoachLed
-      ? "\u5c0e\u8b80\u5206\u914d\u5df2\u8a2d\u70ba\u7531\u6559\u7df4\u4ee3\u70ba\u5c0e\u8b80\u3002"
+      ? "\u5c0e\u8b80\u5206\u914d\u5df2\u8a2d\u70ba\u6559\u7df4\u4ee3\u8b80\u3002"
       : personId
       ? "\u5c0e\u8b80\u5206\u914d\u5df2\u66f4\u65b0\u3002"
       : "\u5c0e\u8b80\u5206\u914d\u5df2\u6e05\u9664\u3002",
