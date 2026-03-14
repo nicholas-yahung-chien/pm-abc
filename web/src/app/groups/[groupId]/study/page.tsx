@@ -99,6 +99,14 @@ export default async function GroupStudyPage({
     }))
     .sort((a, b) => a.label.localeCompare(b.label, "zh-Hant"));
 
+  const coachOptions = memberships
+    .filter((item) => item.group_id === groupId && item.membership_type === "coach")
+    .map((item) => ({
+      id: item.person_id,
+      label: item.person?.display_name?.trim() || item.person?.full_name?.trim() || "\u6559\u7df4",
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, "zh-Hant"));
+
   const sortedItems = [...classCourseItems].sort(
     (a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at),
   );
@@ -189,6 +197,7 @@ export default async function GroupStudyPage({
         readingItems={readingItems}
         readingAssignments={readingAssignments}
         memberOptions={memberOptions}
+        coachOptions={coachOptions}
         chapterOptions={chapterOptions}
         onCreateSessionAction={createGroupStudySessionAction}
         onUpdateSessionAction={updateGroupStudySessionAction}

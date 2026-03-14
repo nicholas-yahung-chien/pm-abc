@@ -24,6 +24,7 @@ type Props = {
   readingItems: GroupStudyReadingItemRow[];
   readingAssignments: GroupStudyReadingAssignmentRow[];
   memberOptions: MemberOption[];
+  coachOptions: MemberOption[];
   chapterOptions: ChapterOption[];
   onCreateSessionAction: ActionHandler;
   onUpdateSessionAction: ActionHandler;
@@ -124,6 +125,7 @@ export function GroupStudyManagementPanel({
   readingItems,
   readingAssignments,
   memberOptions,
+  coachOptions,
   chapterOptions,
   onCreateSessionAction,
   onUpdateSessionAction,
@@ -166,9 +168,18 @@ export function GroupStudyManagementPanel({
     [readingAssignments],
   );
 
+  const readingAssigneeOptions = useMemo(() => {
+    const deduped = new Map<string, MemberOption>();
+    for (const option of [...coachOptions, ...memberOptions]) {
+      if (!option.id) continue;
+      if (!deduped.has(option.id)) deduped.set(option.id, option);
+    }
+    return [...deduped.values()];
+  }, [coachOptions, memberOptions]);
+
   const labelByMemberId = useMemo(
-    () => new Map(memberOptions.map((member) => [member.id, member.label])),
-    [memberOptions],
+    () => new Map(readingAssigneeOptions.map((member) => [member.id, member.label])),
+    [readingAssigneeOptions],
   );
 
   return (
@@ -508,6 +519,18 @@ export function GroupStudyManagementPanel({
                       <div className="mt-3 space-y-2">
                         {itemRows.map((item, itemIndex) => {
                           const assignment = assignmentByItem.get(item.id);
+                          const currentAssignedPersonId = assignment?.person_id?.trim() || "";
+                          const blockedMemberIds = new Set<string>([
+                            ...dutyAssignedIds,
+                            ...readingAssignedIds,
+                          ]);
+                          if (currentAssignedPersonId) {
+                            blockedMemberIds.delete(currentAssignedPersonId);
+                          }
+                          const readingAssignableMemberOptions = memberOptions.filter((member) => {
+                            if (member.id === currentAssignedPersonId) return true;
+                            return !blockedMemberIds.has(member.id);
+                          });
                           const assignedLabel =
                             assignment?.person_id && labelByMemberId.has(assignment.person_id)
                               ? labelByMemberId.get(assignment.person_id)
@@ -568,7 +591,12 @@ export function GroupStudyManagementPanel({
                                     }}
                                   >
                                     <option value="">{"\u672a\u6307\u6d3e"}</option>
-                                    {memberOptions.map((member) => (
+                                    {coachOptions.map((coach) => (
+                                      <option key={`${item.id}:coach:${coach.id}`} value={coach.id}>
+                                        {coach.label}
+                                      </option>
+                                    ))}
+                                    {readingAssignableMemberOptions.map((member) => (
                                       <option key={`${item.id}:${member.id}`} value={member.id}>{member.label}</option>
                                     ))}
                                   </select>
