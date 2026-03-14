@@ -735,15 +735,24 @@ function StudyReadOnlyTable({
 
   return (
     <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200">
-      <table className="w-full min-w-[900px] table-auto border-collapse text-xs text-slate-700">
+      <table className="w-full table-auto border-collapse text-xs text-slate-700">
+        <colgroup>
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+          <col />
+          <col className="w-[1%]" />
+          <col className="w-[1%]" />
+        </colgroup>
         <thead className="bg-slate-100 text-[11px] font-semibold text-slate-800">
           <tr>
-            <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">讀書會</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">日期 / 時間</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">場地</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">值日生</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">章節標題</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">紙本頁碼</th>
+            <th className="border-b border-slate-200 px-1.5 py-2 text-center whitespace-nowrap w-px">紙本頁碼</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">導讀分配</th>
           </tr>
         </thead>
@@ -768,9 +777,9 @@ function StudyReadOnlyTable({
                 >
                   {itemIndex === 0 ? (
                     <>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
-                        <div className="space-y-1.5">
-                          <p className="font-medium text-slate-900">{group.session.title}</p>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap w-px">
+                        <div className="max-w-[11rem] space-y-1.5">
+                          <p className="break-all font-medium leading-tight text-slate-900">{group.session.title}</p>
                           {noteText ? (
                             <NotePreviewDialogButton
                               title={group.session.title}
@@ -819,7 +828,7 @@ function StudyReadOnlyTable({
                   <td className="border-b border-slate-200 px-2 py-2">
                     {itemRow.item?.title ?? ""}
                   </td>
-                  <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                  <td className="border-b border-slate-200 px-1.5 py-2 text-center whitespace-nowrap w-px tabular-nums">
                     {itemRow.item?.paper_page ?? ""}
                   </td>
                   <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
