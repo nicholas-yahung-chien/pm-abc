@@ -258,8 +258,10 @@ export function GroupStudyManagementPanel({
         <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
           {TEXT.empty}
         </div>
-      ) : canManage ? (
-        <div className="mt-5 space-y-4">
+      ) : (
+        <>
+          {canManage ? (
+            <div className="mt-5 space-y-4">
           {orderedSessions.map((session, sessionIndex) => {
             const dutyRows = dutyBySession.get(session.id) ?? [];
             const itemRows = readingBySession.get(session.id) ?? [];
@@ -661,14 +663,15 @@ export function GroupStudyManagementPanel({
               </article>
             );
           })}
-        </div>
-      ) : (
-        <StudyReadOnlyTable
-          sessions={orderedSessions}
-          dutyBySession={dutyBySession}
-          readingBySession={readingBySession}
-          assignmentByItem={assignmentByItem}
-        />
+            </div>
+          ) : null}
+          <StudyReadOnlyTable
+            sessions={orderedSessions}
+            dutyBySession={dutyBySession}
+            readingBySession={readingBySession}
+            assignmentByItem={assignmentByItem}
+          />
+        </>
       )}
     </section>
   );
