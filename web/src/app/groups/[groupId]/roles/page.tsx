@@ -9,6 +9,7 @@ import {
 } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { FormModalTrigger } from "@/components/form-modal-trigger";
+import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { RoleAssignmentTable } from "@/components/role-assignment-table";
 import { RoleDefinitionTable } from "@/components/role-definition-table";
 import { StatusBanner } from "@/components/status-banner";
@@ -98,20 +99,13 @@ export default async function GroupRolesPage({
           <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
             回到小組總覽
           </Link>
-          <Link href={`/groups/${groupId}/directory`} className="text-amber-700 underline">
-            前往通訊錄
-          </Link>
-          <Link href={`/groups/${groupId}/study`} className="text-amber-700 underline">
-            前往讀書會
-          </Link>
-          <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
-            查看課程表
-          </Link>
         </div>
         <div className="mt-4">
           <StatusBanner status={status} message={message} />
         </div>
       </section>
+
+      <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="roles" />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">角色設定與指派</h2>

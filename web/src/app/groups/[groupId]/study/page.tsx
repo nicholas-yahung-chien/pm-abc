@@ -13,6 +13,7 @@ import {
   updateGroupStudySessionAction,
 } from "@/app/group-study-actions";
 import { AppShell } from "@/components/app-shell";
+import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { GroupStudyManagementPanel } from "@/components/group-study-management-panel";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
@@ -166,17 +167,10 @@ export default async function GroupStudyPage({
           <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
             {"\u56de\u5230\u5c0f\u7d44\u7e3d\u89bd"}
           </Link>
-          <Link href={`/groups/${groupId}/directory`} className="text-amber-700 underline">
-            {"\u524d\u5f80\u901a\u8a0a\u9304"}
-          </Link>
-          <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            {"\u524d\u5f80 R&R"}
-          </Link>
-          <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
-            {"\u67e5\u770b\u8ab2\u7a0b\u8868"}
-          </Link>
         </div>
       </section>
+
+      <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="study" />
 
       <GroupStudyManagementPanel
         groupId={groupId}

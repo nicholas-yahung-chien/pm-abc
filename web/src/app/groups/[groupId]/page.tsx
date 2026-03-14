@@ -20,6 +20,7 @@ import { AppShell } from "@/components/app-shell";
 import { AutoSubmitDateResponseForm } from "@/components/auto-submit-date-response-form";
 import { AutoSubmitNumberResponseForm } from "@/components/auto-submit-number-response-form";
 import { AutoSubmitSelectResponseForm } from "@/components/auto-submit-select-response-form";
+import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
 import { TrackingManagementPanel } from "@/components/tracking-management-panel";
@@ -450,23 +451,13 @@ export default async function GroupTrackingPage({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <Link href={`/groups/${groupId}/directory`} className="text-amber-700 underline">
-            前往通訊錄
-          </Link>
-          <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            前往 R&R
-          </Link>
-          <Link href={`/groups/${groupId}/study`} className="text-amber-700 underline">
-            前往讀書會
-          </Link>
-          <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
-            查看課程表
-          </Link>
           <Link href="/groups" className="text-amber-700 underline">
             回到小組列表
           </Link>
         </div>
       </section>
+
+      <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="tracking" />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣</h2>
@@ -639,7 +630,9 @@ export default async function GroupTrackingPage({
                                   className="xl:sticky z-10 bg-white px-3 py-2 text-slate-500"
                                   style={stickyMilestoneCellStyle}
                                 >
-                                  
+                                  {item.due_date ? (
+                                    <p className="text-xs whitespace-nowrap">到期日：{formatDate(item.due_date)}</p>
+                                  ) : null}
                                 </td>
                                 <td
                                   className="xl:sticky z-10 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
@@ -664,9 +657,6 @@ export default async function GroupTrackingPage({
                                       maxLen={18}
                                     />
                                   </div>
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    到期日：{formatDate(item.due_date)}
-                                  </p>
                                 </td>
 
                                 {visibleMembers.map((member) => (
@@ -709,7 +699,9 @@ export default async function GroupTrackingPage({
                             className="xl:sticky z-10 bg-white px-3 py-2 text-slate-500"
                             style={stickyMilestoneCellStyle}
                           >
-                            
+                            {item.due_date ? (
+                              <p className="text-xs whitespace-nowrap">到期日：{formatDate(item.due_date)}</p>
+                            ) : null}
                           </td>
                           <td
                             className="xl:sticky z-10 bg-white px-3 py-2 xl:shadow-[6px_0_8px_-8px_rgba(15,23,42,0.45)]"
@@ -734,7 +726,6 @@ export default async function GroupTrackingPage({
                                 maxLen={18}
                               />
                             </div>
-                            <p className="mt-1 text-xs text-slate-500">到期日：{formatDate(item.due_date)}</p>
                           </td>
 
                           {visibleMembers.map((member) => (

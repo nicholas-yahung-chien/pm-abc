@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { updateGroupMemberDirectoryProfileAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { GroupDirectoryMemberTable } from "@/components/group-directory-member-table";
 import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
@@ -114,17 +115,10 @@ export default async function GroupDirectoryPage({
           <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
             回到小組總覽
           </Link>
-          <Link href={`/groups/${groupId}/roles`} className="text-amber-700 underline">
-            前往 R&R
-          </Link>
-          <Link href={`/groups/${groupId}/study`} className="text-amber-700 underline">
-            前往讀書會
-          </Link>
-          <Link href={`/classes/${group.class_id}/courses`} className="text-amber-700 underline">
-            查看課程表
-          </Link>
         </div>
       </section>
+
+      <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="directory" />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">小組教練資訊</h2>
