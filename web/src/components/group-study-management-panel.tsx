@@ -15,14 +15,17 @@ import type {
 type ActionHandler = (formData: FormData) => void | Promise<void>;
 type MemberOption = { id: string; label: string };
 type ChapterOption = { id: string; label: string };
-type StudyTableRow = {
-  session: GroupStudySessionRow;
-  dutyText: string;
+type StudyReadOnlyItemRow = {
   item: GroupStudyReadingItemRow | null;
   assignment: GroupStudyReadingAssignmentRow | null;
+};
+type StudyReadOnlySessionGroup = {
+  session: GroupStudySessionRow;
+  dutyText: string;
   onlineMeetingUrl: string;
   mapUrl: string;
   offlineLocation: string;
+  itemRows: StudyReadOnlyItemRow[];
 };
 
 type Props = {
@@ -51,6 +54,9 @@ const TEXT = {
   title: "\u8b80\u66f8\u6703\u6d3b\u52d5\u8207\u5c0e\u8b80\u5206\u914d",
   subtitle:
     "\u7dad\u8b77\u8b80\u66f8\u6703\u6d3b\u52d5\u3001\u503c\u65e5\u751f\u8207\u5c0e\u8b80\u9805\u76ee\u3002",
+  readOnlyTitle: "\u8b80\u66f8\u6703\u552f\u8b80\u8868\u683c",
+  readOnlySubtitle:
+    "\u552f\u8b80\u6aa2\u8996\u8b80\u66f8\u6703\u6d3b\u52d5\u8207\u5c0e\u8b80\u5206\u914d\u3002",
   empty: "\u5c1a\u672a\u5efa\u7acb\u8b80\u66f8\u6703\u6d3b\u52d5\u3002",
 };
 
@@ -181,7 +187,9 @@ export function GroupStudyManagementPanel({
   );
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <>
+      {canManage ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">{TEXT.title}</h2>
@@ -259,9 +267,7 @@ export function GroupStudyManagementPanel({
           {TEXT.empty}
         </div>
       ) : (
-        <>
-          {canManage ? (
-            <div className="mt-5 space-y-4">
+        <div className="mt-5 space-y-4">
           {orderedSessions.map((session, sessionIndex) => {
             const dutyRows = dutyBySession.get(session.id) ?? [];
             const itemRows = readingBySession.get(session.id) ?? [];
@@ -663,17 +669,33 @@ export function GroupStudyManagementPanel({
               </article>
             );
           })}
-            </div>
-          ) : null}
+        </div>
+      )}
+        </section>
+      ) : null}
+      <section className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ${canManage ? "mt-5" : ""}`}>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {canManage ? TEXT.readOnlyTitle : TEXT.title}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {canManage ? TEXT.readOnlySubtitle : TEXT.subtitle}
+          </p>
+        </div>
+        {!orderedSessions.length ? (
+          <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+            {TEXT.empty}
+          </div>
+        ) : (
           <StudyReadOnlyTable
             sessions={orderedSessions}
             dutyBySession={dutyBySession}
             readingBySession={readingBySession}
             assignmentByItem={assignmentByItem}
           />
-        </>
-      )}
-    </section>
+        )}
+      </section>
+    </>
   );
 }
 
@@ -688,45 +710,31 @@ function StudyReadOnlyTable({
   readingBySession: Map<string, GroupStudyReadingItemRow[]>;
   assignmentByItem: Map<string, GroupStudyReadingAssignmentRow>;
 }) {
-  const rows = useMemo<StudyTableRow[]>(() => {
-    const list: StudyTableRow[] = [];
-
-    for (const session of sessions) {
+  const sessionGroups = useMemo<StudyReadOnlySessionGroup[]>(() => {
+    return sessions.map((session) => {
       const dutyRows = dutyBySession.get(session.id) ?? [];
-      const itemRows = readingBySession.get(session.id) ?? [];
+      const readingRows = readingBySession.get(session.id) ?? [];
       const dutyText =
         dutyRows
           .map((row) => row.person?.display_name?.trim() || row.person?.full_name?.trim() || "")
           .filter(Boolean)
           .join("、") || "未指定";
+      const itemRows: StudyReadOnlyItemRow[] = readingRows.length
+        ? readingRows.map((item) => ({
+            item,
+            assignment: assignmentByItem.get(item.id) ?? null,
+          }))
+        : [{ item: null, assignment: null }];
 
-      const rowBase = {
+      return {
         session,
         dutyText,
         onlineMeetingUrl: clean(session.online_meeting_url),
         mapUrl: clean(session.map_url),
         offlineLocation: clean(session.location_address) || "未設定",
+        itemRows,
       };
-
-      if (!itemRows.length) {
-        list.push({
-          ...rowBase,
-          item: null,
-          assignment: null,
-        });
-        continue;
-      }
-
-      for (const item of itemRows) {
-        list.push({
-          ...rowBase,
-          item,
-          assignment: assignmentByItem.get(item.id) ?? null,
-        });
-      }
-    }
-
-    return list;
+    });
   }, [sessions, dutyBySession, readingBySession, assignmentByItem]);
 
   return (
@@ -734,78 +742,90 @@ function StudyReadOnlyTable({
       <table className="w-full min-w-[980px] table-auto border-collapse text-xs text-slate-700">
         <thead className="bg-slate-100 text-[11px] font-semibold text-slate-800">
           <tr>
-            <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會活動標題</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">日期</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">時間</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">場地</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">值日生</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會說明</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left">說明</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">章節標題</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">紙本頁碼</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">導讀分配</th>
           </tr>
         </thead>
         <tbody className="text-[12px]">
-          {rows.map((row) => {
-            const isOnline = row.session.mode === "online";
-            const assignedLabel = row.assignment?.is_coach_led
-              ? "教練代讀"
-              : row.assignment?.person?.display_name?.trim() ||
-                row.assignment?.person?.full_name?.trim() ||
-                (row.item ? "未指派" : "");
+          {sessionGroups.flatMap((group, groupIndex) => {
+            const isOnline = group.session.mode === "online";
+            const rowClassName = groupIndex % 2 === 0 ? "bg-white" : "bg-slate-50/50";
+            const rowSpan = group.itemRows.length;
 
-            return (
-              <tr key={`${row.session.id}:${row.item?.id ?? "session"}`} className="align-top odd:bg-white even:bg-slate-50/50">
-                <td className="border-b border-slate-200 px-2 py-2">
-                  {row.session.title}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                  {formatDate(row.session.session_date)}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                  {formatTimeRange(row.session.start_time, row.session.end_time)}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2">
-                  {isOnline ? (
-                    row.onlineMeetingUrl ? (
-                      <a
-                        href={row.onlineMeetingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-700 underline decoration-blue-300 underline-offset-2"
-                      >
-                        線上會議
-                      </a>
-                    ) : (
-                      "線上"
-                    )
-                  ) : row.mapUrl ? (
-                    <MapPreviewDialogButton
-                      title={row.session.title}
-                      location={row.offlineLocation}
-                      mapUrl={row.mapUrl}
-                    />
-                  ) : (
-                    row.offlineLocation
-                  )}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2">
-                  {row.dutyText}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2 whitespace-pre-wrap break-words">
-                  {clean(row.session.note)}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2">
-                  {row.item?.title ?? ""}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                  {row.item?.paper_page ?? ""}
-                </td>
-                <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
-                  {assignedLabel}
-                </td>
-              </tr>
-            );
+            return group.itemRows.map((itemRow, itemIndex) => {
+              const assignedLabel = itemRow.assignment?.is_coach_led
+                ? "教練代讀"
+                : itemRow.assignment?.person?.display_name?.trim() ||
+                  itemRow.assignment?.person?.full_name?.trim() ||
+                  (itemRow.item ? "未指派" : "");
+
+              return (
+                <tr
+                  key={`${group.session.id}:${itemRow.item?.id ?? `session-empty-${itemIndex}`}`}
+                  className={`align-top ${rowClassName}`}
+                >
+                  {itemIndex === 0 ? (
+                    <>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                        {group.session.title}
+                      </td>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                        {formatDate(group.session.session_date)}
+                      </td>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                        {formatTimeRange(group.session.start_time, group.session.end_time)}
+                      </td>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                        {isOnline ? (
+                          group.onlineMeetingUrl ? (
+                            <a
+                              href={group.onlineMeetingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-700 underline decoration-blue-300 underline-offset-2"
+                            >
+                              線上會議
+                            </a>
+                          ) : (
+                            "線上"
+                          )
+                        ) : group.mapUrl ? (
+                          <MapPreviewDialogButton
+                            title={group.session.title}
+                            location={group.offlineLocation}
+                            mapUrl={group.mapUrl}
+                          />
+                        ) : (
+                          group.offlineLocation
+                        )}
+                      </td>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                        {group.dutyText}
+                      </td>
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-pre-wrap break-words">
+                        {clean(group.session.note)}
+                      </td>
+                    </>
+                  ) : null}
+                  <td className="border-b border-slate-200 px-2 py-2">
+                    {itemRow.item?.title ?? ""}
+                  </td>
+                  <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                    {itemRow.item?.paper_page ?? ""}
+                  </td>
+                  <td className="border-b border-slate-200 px-2 py-2 whitespace-nowrap">
+                    {assignedLabel}
+                  </td>
+                </tr>
+              );
+            });
           })}
         </tbody>
       </table>
