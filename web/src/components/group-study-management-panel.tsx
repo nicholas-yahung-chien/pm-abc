@@ -739,8 +739,8 @@ function StudyReadOnlyTable({
         <thead className="bg-slate-100 text-[11px] font-semibold text-slate-800">
           <tr>
             <th className="border-b border-slate-200 px-2 py-2 text-left">讀書會</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">日期 / 時間</th>
-            <th className="border-b border-slate-200 px-2 py-2 text-left">場地</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">日期 / 時間</th>
+            <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap w-px">場地</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">值日生</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left">章節標題</th>
             <th className="border-b border-slate-200 px-2 py-2 text-left whitespace-nowrap">紙本頁碼</th>
@@ -779,7 +779,7 @@ function StudyReadOnlyTable({
                           ) : null}
                         </div>
                       </td>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap w-px">
                         <div className="inline-flex flex-col whitespace-nowrap leading-tight">
                           <span>{formatDate(group.session.session_date)}</span>
                           <span className="mt-0.5 text-slate-600">
@@ -787,7 +787,7 @@ function StudyReadOnlyTable({
                           </span>
                         </div>
                       </td>
-                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2">
+                      <td rowSpan={rowSpan} className="border-b border-slate-200 px-2 py-2 whitespace-nowrap w-px">
                         {isOnline ? (
                           group.onlineMeetingUrl ? (
                             <a
