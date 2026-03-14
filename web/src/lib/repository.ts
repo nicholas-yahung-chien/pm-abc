@@ -1930,7 +1930,7 @@ export async function listGroupStudySessionDutyMembersByGroupId(
     .select(
       [
         "*",
-        "session:group_study_sessions(id, title, session_date, sort_order)",
+        "session:group_study_sessions!fk_group_study_session_duty_members_session_group(id, title, session_date, sort_order)",
         "person:people(id, person_no, full_name, display_name, email)",
       ].join(", "),
     )
@@ -2022,7 +2022,7 @@ export async function listGroupStudyReadingItemsByGroupId(
     .select(
       [
         "*",
-        "session:group_study_sessions(id, title, session_date, sort_order)",
+        "session:group_study_sessions!fk_group_study_reading_items_session_group(id, title, session_date, sort_order)",
         "chapter:class_course_chapters(id, title, paper_page, sort_order)",
       ].join(", "),
     )
@@ -2046,7 +2046,7 @@ export async function listGroupStudyReadingAssignmentsByGroupId(
     .select(
       [
         "*",
-        "reading_item:group_study_reading_items(id, session_id, title, paper_page, sort_order)",
+        "reading_item:group_study_reading_items!fk_group_study_reading_assignments_item_group(id, session_id, title, paper_page, sort_order)",
         "person:people(id, person_no, full_name, display_name, email)",
       ].join(", "),
     )
