@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { coachLoginAction, coachRegisterAction } from "@/app/auth-actions";
+
 import { AuthShell } from "@/components/auth-shell";
 import { StatusBanner } from "@/components/status-banner";
 import { pickSearchParam } from "@/lib/search";
@@ -30,7 +31,15 @@ export default async function CoachLoginPage({
             <input name="email" type="email" autoComplete="email" required />
           </label>
           <label className="space-y-1.5">
-            <span className="text-sm font-medium text-slate-700">密碼</span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">密碼</span>
+              <Link
+                href="/login/reset-password"
+                className="text-xs text-slate-500 underline hover:text-amber-700"
+              >
+                忘記密碼？
+              </Link>
+            </div>
             <input
               name="password"
               type="password"

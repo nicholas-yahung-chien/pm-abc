@@ -9,9 +9,13 @@ import {
   createCoachApplication,
   createCoachByAdmin,
   createMemberOtp,
+  createPasswordResetToken,
   deleteCoachByAdmin,
   findAccountById,
+  findAccountByEmail,
+  findAndConsumePasswordResetToken,
   getAdminNotificationEmail,
+  setAccountPassword,
   setAdminNotificationEmail,
   upsertCoachDirectoryProfile,
   updateAccountDisplayName,
@@ -280,6 +284,107 @@ export async function updateAdminNotificationEmailAction(formData: FormData) {
   revalidatePath("/admin/coach-approvals");
   if (!result.ok) toMessage("/admin/coach-approvals", "error", result.message);
   toMessage("/admin/coach-approvals", "success", "管理員通知信箱已更新。");
+}
+
+export async function requestPasswordResetAction(formData: FormData) {
+  const emailInput = readText(formData, "email");
+  if (!emailInput) toMessage("/login/reset-password", "error", "請輸入 Email 或帳號識別碼。");
+
+  const email = emailInput.toLowerCase();
+  const accountResult = await findAccountByEmail(email);
+
+  if (!accountResult.ok || !accountResult.data) {
+    // Generic response — do not reveal whether the account exists
+    toMessage(
+      "/login/reset-password",
+      "success",
+      "若此帳號已存在，重設密碼連結將於幾分鐘內送達信箱。",
+    );
+  }
+
+  const account = accountResult.data!;
+
+  if (account.role === "member") {
+    toMessage(
+      "/login/reset-password",
+      "error",
+      "學員帳號使用 OTP 驗證碼登入，無需重設密碼。請前往學員登入頁面取得 OTP。",
+    );
+  }
+
+  // Admin root account: send reset email to the configured admin notification email
+  let recipientEmail = email;
+  if (account.role === "admin" && email === "root") {
+    const notifResult = await getAdminNotificationEmail();
+    if (!notifResult.ok || !notifResult.data) {
+      toMessage(
+        "/login/reset-password",
+        "error",
+        "管理員通知信箱尚未設定，無法自動寄送重設連結。請至管理後台設定通知信箱後再試。",
+      );
+    }
+    recipientEmail = notifResult.data!;
+  }
+
+  const tokenResult = await createPasswordResetToken(account.id);
+  if (!tokenResult.ok) toMessage("/login/reset-password", "error", tokenResult.message);
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+
+  const resetUrl = `${baseUrl}/login/reset-password/confirm?token=${tokenResult.data}`;
+
+  const emailResult = await sendTransactionalEmail({
+    to: recipientEmail,
+    subject: "PM-ABC 密碼重設連結",
+    text: `您好，\n\n請點擊以下連結重設您的密碼（有效期限：1 小時）：\n\n${resetUrl}\n\n若您未申請重設密碼，請忽略此郵件。`,
+    html: `<p>您好，</p><p>請點擊以下連結重設您的密碼（有效期限：1 小時）：</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>若您未申請重設密碼，請忽略此郵件。</p>`,
+  });
+
+  if (!emailResult.ok) {
+    toMessage("/login/reset-password", "error", `重設密碼郵件寄送失敗：${emailResult.message}`);
+  }
+
+  toMessage(
+    "/login/reset-password",
+    "success",
+    "重設密碼連結已寄出，請至信箱查收（有效期限 1 小時）。",
+  );
+}
+
+export async function resetPasswordWithTokenAction(formData: FormData) {
+  const rawToken = readText(formData, "token");
+  const newPassword = readText(formData, "newPassword");
+  const confirmPassword = readText(formData, "confirmPassword");
+
+  if (!rawToken) toMessage("/login/reset-password", "error", "重設連結無效，請重新申請。");
+
+  const confirmPath = `/login/reset-password/confirm?token=${rawToken}`;
+
+  if (!newPassword || !confirmPassword) {
+    toMessage(confirmPath, "error", "請完整填寫密碼欄位。");
+  }
+  if (newPassword.length < 8) {
+    toMessage(confirmPath, "error", "新密碼至少需要 8 碼。");
+  }
+  if (newPassword !== confirmPassword) {
+    toMessage(confirmPath, "error", "新密碼與確認密碼不一致。");
+  }
+
+  const accountResult = await findAndConsumePasswordResetToken(rawToken);
+  if (!accountResult.ok) {
+    toMessage("/login/reset-password", "error", accountResult.message);
+  }
+
+  const account = accountResult.data!;
+  const setResult = await setAccountPassword(account.id, newPassword);
+  if (!setResult.ok) toMessage(confirmPath, "error", setResult.message);
+
+  const loginPath = account.role === "admin" ? "/login/admin" : "/login/coach";
+  toMessage(loginPath, "success", "密碼已成功重設，請使用新密碼登入。");
 }
 
 export async function updateAccountProfileAction(formData: FormData) {

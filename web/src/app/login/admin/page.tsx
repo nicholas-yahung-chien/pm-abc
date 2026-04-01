@@ -27,7 +27,15 @@ export default async function AdminLoginPage({
             <input name="username" defaultValue="root" required />
           </label>
           <label className="space-y-1.5">
-            <span className="text-sm font-medium text-slate-700">密碼</span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">密碼</span>
+              <Link
+                href="/login/reset-password"
+                className="text-xs text-slate-500 underline hover:text-amber-700"
+              >
+                忘記密碼？
+              </Link>
+            </div>
             <input
               name="password"
               type="password"

@@ -20,6 +20,16 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   return crypto.timingSafeEqual(expected, actual);
 }
 
+export function generatePasswordResetToken(): { raw: string; hash: string } {
+  const raw = crypto.randomBytes(32).toString("base64url");
+  const hash = crypto.createHash("sha256").update(raw).digest("hex");
+  return { raw, hash };
+}
+
+export function hashResetToken(raw: string): string {
+  return crypto.createHash("sha256").update(raw).digest("hex");
+}
+
 export function hashOtpCode(email: string, otpCode: string): string {
   const secret = process.env.OTP_HASH_SECRET ?? process.env.APP_SESSION_SECRET;
   if (!secret) {

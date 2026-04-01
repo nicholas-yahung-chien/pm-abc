@@ -1,6 +1,12 @@
 ﻿import { randomInt } from "crypto";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { hashOtpCode, hashPassword, verifyPassword } from "@/lib/auth/password";
+import {
+  generatePasswordResetToken,
+  hashOtpCode,
+  hashPassword,
+  hashResetToken,
+  verifyPassword,
+} from "@/lib/auth/password";
 import type { AuthAccountRow, CoachAccountStatus } from "@/lib/auth/types";
 
 type Ok<T> = { ok: true; data: T };
@@ -532,6 +538,82 @@ export async function changeAccountPassword(input: {
     .from("auth_accounts")
     .update({ password_hash: hashPassword(input.newPassword) })
     .eq("id", input.accountId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, data: null };
+}
+
+export async function createPasswordResetToken(accountId: string): Promise<Result<string>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  // Invalidate any existing unused tokens for this account
+  await db.client
+    .from("password_reset_tokens")
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("account_id", accountId)
+    .is("consumed_at", null);
+
+  const { raw, hash } = generatePasswordResetToken();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+  const { error } = await db.client.from("password_reset_tokens").insert({
+    account_id: accountId,
+    token_hash: hash,
+    expires_at: expiresAt,
+  });
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, data: raw };
+}
+
+export async function findAndConsumePasswordResetToken(
+  rawToken: string,
+): Promise<Result<AuthAccountRow>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const hash = hashResetToken(rawToken);
+
+  const { data: tokenRows, error: tokenError } = await db.client
+    .from("password_reset_tokens")
+    .select("id, account_id, expires_at, consumed_at")
+    .eq("token_hash", hash)
+    .is("consumed_at", null)
+    .limit(1);
+
+  if (tokenError) return { ok: false, message: tokenError.message };
+  if (!tokenRows?.length) return { ok: false, message: "重設連結無效或已被使用。" };
+
+  const token = tokenRows[0];
+  if (new Date(token.expires_at).getTime() < Date.now()) {
+    return { ok: false, message: "重設連結已過期，請重新申請。" };
+  }
+
+  const { error: consumeError } = await db.client
+    .from("password_reset_tokens")
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("id", token.id);
+
+  if (consumeError) return { ok: false, message: consumeError.message };
+
+  const accountResult = await findAccountById(token.account_id);
+  if (!accountResult.ok) return accountResult;
+  if (!accountResult.data) return { ok: false, message: "找不到對應帳號。" };
+  return { ok: true, data: accountResult.data };
+}
+
+export async function setAccountPassword(
+  accountId: string,
+  newPassword: string,
+): Promise<Result<null>> {
+  const db = dbOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("auth_accounts")
+    .update({ password_hash: hashPassword(newPassword) })
+    .eq("id", accountId);
 
   if (error) return { ok: false, message: error.message };
   return { ok: true, data: null };
