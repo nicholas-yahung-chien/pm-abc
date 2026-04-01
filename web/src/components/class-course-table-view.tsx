@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ClassCourseChapterRow,
   ClassCourseItemRow,
   ClassCourseTopicRow,
@@ -67,7 +67,7 @@ export function ClassCourseTableView({
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
       <table className="w-full table-auto border-collapse text-left text-sm">
         <colgroup>
           <col className="w-[1%]" />
@@ -78,23 +78,23 @@ export function ClassCourseTableView({
           <col className="w-[1%]" />
         </colgroup>
         <thead>
-          <tr className="bg-violet-50 text-slate-900">
-            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
+          <tr className="bg-[#1e2d40] text-slate-100">
+            <th className="w-[1%] whitespace-nowrap border-b-2 border-b-white/20 border-r border-r-white/10 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider">
               {"\u9806\u5e8f"}
             </th>
-            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border-b-2 border-b-white/20 border-r border-r-white/10 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider">
               {"\u4e0a\u8ab2\u65e5\u671f"}
             </th>
-            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-2 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border-b-2 border-b-white/20 border-r border-r-white/10 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider">
               {"\u6388\u8ab2\u8b1b\u5e2b"}
             </th>
-            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border-b-2 border-b-white/20 border-r border-r-white/10 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider">
               {"\u4e3b\u984c"}
             </th>
-            <th className="border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="border-b-2 border-b-white/20 border-r border-r-white/10 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider">
               {"\u7ae0\u7bc0\u6a19\u984c"}
             </th>
-            <th className="w-[1%] whitespace-nowrap border border-slate-800 px-3 py-2 text-center font-semibold">
+            <th className="w-[1%] whitespace-nowrap border-b-2 border-b-white/20 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider">
               {"\u7d19\u672c\u9801\u78bc"}
             </th>
           </tr>
@@ -103,7 +103,7 @@ export function ClassCourseTableView({
           {!orderedItems.length && (
             <tr>
               <td
-                className="border border-slate-300 px-3 py-5 text-center text-slate-500"
+                className="px-3 py-8 text-center text-sm text-slate-400"
                 colSpan={6}
               >
                 {emptyText}
@@ -138,26 +138,26 @@ export function ClassCourseTableView({
                 const rowKey = `${item.id}:${block.topic?.id ?? "default"}:${chapter?.id ?? "empty"}:${chapterIndex}`;
 
                 rows.push(
-                  <tr key={rowKey}>
+                  <tr key={rowKey} className="transition-colors duration-100 hover:bg-slate-50">
                     {!itemCellRendered && (
                       <>
                         <td
                           rowSpan={itemRowCount}
-                          className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-base font-semibold text-slate-900"
+                          className="w-[1%] whitespace-nowrap border-b border-slate-200 border-r-2 border-r-slate-300 px-2 py-2 text-center align-middle text-sm font-bold text-slate-800"
                           style={{ backgroundColor: itemBg }}
                         >
                           {itemIndex + 1}
                         </td>
                         <td
                           rowSpan={itemRowCount}
-                          className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-sm font-semibold text-slate-900"
+                          className="w-[1%] whitespace-nowrap border-b border-slate-200 border-r border-r-slate-200 px-2 py-2 text-center align-middle text-sm font-medium text-slate-700"
                           style={{ backgroundColor: itemBg }}
                         >
                           {formatDateWithWeekday(item.course_date)}
                         </td>
                         <td
                           rowSpan={itemRowCount}
-                          className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-base font-semibold text-slate-900"
+                          className="w-[1%] whitespace-nowrap border-b border-slate-200 border-r-2 border-r-slate-300 px-2 py-2 text-center align-middle text-sm font-semibold text-slate-800"
                           style={{ backgroundColor: itemBg }}
                         >
                           {item.instructor_name || "\u672a\u5b9a"}
@@ -168,17 +168,17 @@ export function ClassCourseTableView({
                     {chapterIndex === 0 && (
                       <td
                         rowSpan={block.rowCount}
-                        className="w-[1%] whitespace-nowrap border border-slate-700 px-3 py-2 align-middle text-center text-xl font-semibold text-slate-900"
+                        className="w-[1%] whitespace-nowrap border-b border-slate-200 border-r-2 border-r-slate-300 px-3 py-2 align-middle text-center text-base font-semibold text-slate-800"
                         style={{ backgroundColor: topicBg }}
                       >
                         {block.topic?.title ?? ""}
                       </td>
                     )}
 
-                    <td className="border border-slate-700 px-2 py-2 align-middle text-sm text-slate-900 break-words">
+                    <td className="border-b border-slate-200 px-3 py-2.5 align-middle text-sm leading-relaxed text-slate-700 break-words">
                       {chapter?.title ?? ""}
                     </td>
-                    <td className="w-[1%] whitespace-nowrap border border-slate-700 px-2 py-2 text-center align-middle text-sm text-slate-900">
+                    <td className="w-[1%] whitespace-nowrap border-b border-slate-200 px-3 py-2 text-center align-middle font-mono text-[13px] text-slate-500">
                       {chapter?.paper_page ?? ""}
                     </td>
                   </tr>,

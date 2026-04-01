@@ -1,10 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f6f8;
-  --foreground: #10223a;
-  --panel: #ffffff;
-  --accent: #ca8a04;
+  /* Brand */
+  --brand:              #b45309;
+  --brand-subtle:       #fef3c7;
+  --brand-border:       #fcd34d;
+
+  /* Surfaces */
+  --surface-0:          #f0f2f5;
+  --surface-1:          #ffffff;
+  --surface-2:          #f8f9fb;
+  --surface-sidebar:    #1e2d40;
+
+  /* Text */
+  --text-primary:       #10223a;
+  --text-secondary:     #4b5563;
+  --text-muted:         #9ca3af;
+  --text-on-dark:       #f1f5f9;
+  --text-on-dark-muted: #94a3b8;
+
+  /* Borders */
+  --border-default:     #e2e8f0;
+  --border-strong:      #cbd5e1;
+  --border-focus:       #b45309;
+
+  /* Legacy aliases */
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
+  --panel:      var(--surface-1);
+  --accent:     var(--brand);
 }
 
 @theme inline {
@@ -15,24 +39,21 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--surface-0);
+  color: var(--text-primary);
   font-family: var(--font-noto-sans-tc), sans-serif;
-  background-image:
-    radial-gradient(circle at 10% 10%, #fff2d8 0%, transparent 35%),
-    radial-gradient(circle at 90% 20%, #dbeafe 0%, transparent 30%);
 }
 
 input,
 select,
 textarea {
-  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition;
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors duration-150;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  @apply border-amber-400 ring-2 ring-amber-100;
+  @apply border-amber-700 ring-2 ring-amber-700/20;
 }
 
 button {
@@ -41,4 +62,42 @@ button {
 
 form[data-submit-pending="true"] {
   transition: opacity 0.15s ease;
+}
+
+/* CJK: prevent mid-character line breaks in table cells */
+td,
+th {
+  word-break: keep-all;
+}
+
+/* Modal entrance animation — apply .modal-content to inner dialog divs */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-content {
+  animation: modal-in 0.15s ease-out;
+}
+
+/* Status banner entrance animation — apply .status-banner to StatusBanner root */
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-banner {
+  animation: banner-in 0.2s ease-out;
 }

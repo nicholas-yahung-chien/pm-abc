@@ -35,10 +35,10 @@ export function GroupFeatureNavBar({ groupId, classId, current }: GroupFeatureNa
               key={item.key}
               href={hrefByKey[item.key]}
               aria-current={isActive ? "page" : undefined}
-              className={`inline-flex shrink-0 items-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${
+              className={`inline-flex shrink-0 items-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-150 ${
                 isActive
-                  ? "border-amber-400 bg-amber-50 text-amber-800"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                  ? "border-amber-600 bg-amber-50 text-amber-800"
+                  : "border-slate-200 bg-slate-50 text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
               }`}
             >
               {item.label}
@@ -49,4 +49,3 @@ export function GroupFeatureNavBar({ groupId, classId, current }: GroupFeatureNa
     </section>
   );
 }
-
