@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import {
-  createGroupPollAction,
   deleteGroupPollAction,
 } from "@/app/group-comms-actions";
 import { AppShell } from "@/components/app-shell";
 import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
+import { PollCreateForm } from "@/components/poll-create-form";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
@@ -88,64 +88,7 @@ export default async function GroupPollsPage({
       {isCoach && (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-800">建立新投票</h2>
-          <form action={createGroupPollAction} className="mt-3 space-y-3" id="create-poll-form">
-            <input type="hidden" name="groupId" value={groupId} />
-            <div className="grid gap-3 md:grid-cols-2">
-              <input
-                type="text"
-                name="title"
-                placeholder="投票標題"
-                required
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-              />
-              <select name="pollType" className="rounded-md border border-slate-300 px-3 py-1.5 text-sm">
-                <option value="topic">議題投票（單選）</option>
-                <option value="time">時間投票（可複選）</option>
-              </select>
-            </div>
-            <input
-              type="text"
-              name="description"
-              placeholder="說明（選填）"
-              className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-            />
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-600 whitespace-nowrap">截止時間</label>
-              <input
-                type="datetime-local"
-                name="expiresAt"
-                required
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-              />
-            </div>
-
-            {/* Options */}
-            <div className="space-y-1.5" id="poll-options-container">
-              <p className="text-xs font-medium text-slate-600">選項（至少 2 個）</p>
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    type="text"
-                    name={`optionLabel_${i}`}
-                    placeholder={`選項 ${i + 1}`}
-                    className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-                  />
-                  <input
-                    type="datetime-local"
-                    name={`optionSlot_${i}`}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-                    title="時間投票用（議題投票可留空）"
-                  />
-                </div>
-              ))}
-            </div>
-            <button
-              type="submit"
-              className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700"
-            >
-              建立投票
-            </button>
-          </form>
+          <PollCreateForm groupId={groupId} />
         </section>
       )}
 
