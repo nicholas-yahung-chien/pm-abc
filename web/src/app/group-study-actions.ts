@@ -16,6 +16,7 @@ import {
   updateGroupStudyReadingItem,
   updateGroupStudySession,
 } from "@/lib/repository";
+import { createZoomMeeting } from "@/lib/zoom";
 import type { AppSession } from "@/lib/auth/types";
 import type { GroupStudySessionMode } from "@/lib/types";
 
@@ -116,6 +117,19 @@ export async function createGroupStudySessionAction(formData: FormData) {
   }
 
   const session = await requireManageAccess(groupId, returnTo);
+
+  // Auto-create Zoom meeting when mode is online and no URL was provided
+  let resolvedMeetingUrl = onlineMeetingUrl;
+  let zoomMeetingId: string | null = null;
+  if (mode === "online" && !onlineMeetingUrl) {
+    const zoom = await createZoomMeeting({ topic: title, startDate: sessionDate, startTime });
+    if (zoom.ok) {
+      resolvedMeetingUrl = zoom.joinUrl;
+      zoomMeetingId = zoom.meetingId;
+    }
+    // If Zoom fails, proceed without a URL — coach can fill it in manually
+  }
+
   const result = await createGroupStudySession({
     groupId,
     title,
@@ -125,9 +139,10 @@ export async function createGroupStudySessionAction(formData: FormData) {
     mode,
     locationAddress,
     mapUrl,
-    onlineMeetingUrl,
+    onlineMeetingUrl: resolvedMeetingUrl,
     note,
     accountId: session.accountId,
+    zoomMeetingId,
   });
 
   revalidateGroupStudyPaths(groupId);
@@ -154,6 +169,18 @@ export async function updateGroupStudySessionAction(formData: FormData) {
   }
 
   const session = await requireManageAccess(groupId, returnTo);
+
+  // Auto-create Zoom meeting when switching to online with no URL
+  let resolvedMeetingUrl = onlineMeetingUrl;
+  let zoomMeetingId: string | null | undefined = undefined; // undefined = don't overwrite existing
+  if (mode === "online" && !onlineMeetingUrl) {
+    const zoom = await createZoomMeeting({ topic: title, startDate: sessionDate, startTime });
+    if (zoom.ok) {
+      resolvedMeetingUrl = zoom.joinUrl;
+      zoomMeetingId = zoom.meetingId;
+    }
+  }
+
   const result = await updateGroupStudySession({
     groupId,
     sessionId,
@@ -164,9 +191,10 @@ export async function updateGroupStudySessionAction(formData: FormData) {
     mode,
     locationAddress,
     mapUrl,
-    onlineMeetingUrl,
+    onlineMeetingUrl: resolvedMeetingUrl,
     note,
     accountId: session.accountId,
+    zoomMeetingId,
   });
 
   revalidateGroupStudyPaths(groupId);

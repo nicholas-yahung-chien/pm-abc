@@ -2086,6 +2086,7 @@ export async function createGroupStudySession(input: {
   note: string;
   sortOrder?: number | null;
   accountId?: string | null;
+  zoomMeetingId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
@@ -2119,6 +2120,7 @@ export async function createGroupStudySession(input: {
     sort_order: sortOrder,
     created_by_account_id: input.accountId ?? null,
     updated_by_account_id: input.accountId ?? null,
+    zoom_meeting_id: input.zoomMeetingId ?? null,
   });
 
   if (error) return { ok: false, message: error.message };
@@ -2138,6 +2140,7 @@ export async function updateGroupStudySession(input: {
   onlineMeetingUrl: string;
   note: string;
   accountId?: string | null;
+  zoomMeetingId?: string | null;
 }): Promise<MutationResult> {
   const db = getClientOrError();
   if (!db.client) return { ok: false, message: db.error };
@@ -2155,6 +2158,7 @@ export async function updateGroupStudySession(input: {
       online_meeting_url: input.onlineMeetingUrl,
       note: input.note,
       updated_by_account_id: input.accountId ?? null,
+      ...(input.zoomMeetingId !== undefined && { zoom_meeting_id: input.zoomMeetingId }),
     })
     .eq("id", input.sessionId)
     .eq("group_id", input.groupId);
