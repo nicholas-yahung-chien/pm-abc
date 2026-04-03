@@ -151,7 +151,7 @@ export function PollCreateForm({ groupId }: { groupId: string }) {
           onClick={addOption}
           className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
         >
-          + 新增時段
+          {pollType === "topic" ? "+ 新增選項" : "+ 新增時段"}
         </button>
       </div>
 
