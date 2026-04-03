@@ -16,11 +16,20 @@ type ZoomMeetingInput = {
   startDate?: string | null;
   /** "HH:MM" 24-hour local time */
   startTime?: string | null;
-  /** Duration in minutes */
-  durationMinutes?: number;
+  /** "HH:MM" 24-hour local time — used to calculate duration */
+  endTime?: string | null;
   /** IANA timezone, e.g. "Asia/Taipei" */
   timezone?: string;
 };
+
+/** Returns duration in whole minutes between two "HH:MM" strings, or null if invalid. */
+function calcDurationMinutes(start: string, end: string): number | null {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some((v) => isNaN(v))) return null;
+  const diff = (eh * 60 + em) - (sh * 60 + sm);
+  return diff > 0 ? diff : null;
+}
 
 export type ZoomMeetingResult =
   | { ok: true; joinUrl: string; meetingId: string }
@@ -76,7 +85,12 @@ export async function createZoomMeeting(input: ZoomMeetingInput): Promise<ZoomMe
       topic: input.topic,
       type: startTimeIso ? 2 : 1, // 2 = scheduled, 1 = instant
       ...(startTimeIso && { start_time: startTimeIso }),
-      ...(input.durationMinutes && { duration: input.durationMinutes }),
+      ...((() => {
+        const dur = input.startTime && input.endTime
+          ? calcDurationMinutes(input.startTime, input.endTime)
+          : null;
+        return dur ? { duration: dur } : {};
+      })()),
       timezone: input.timezone ?? "Asia/Taipei",
       settings: {
         host_video: true,

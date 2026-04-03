@@ -122,7 +122,7 @@ export async function createGroupStudySessionAction(formData: FormData) {
   let resolvedMeetingUrl = onlineMeetingUrl;
   let zoomMeetingId: string | null = null;
   if (mode === "online" && !onlineMeetingUrl) {
-    const zoom = await createZoomMeeting({ topic: title, startDate: sessionDate, startTime });
+    const zoom = await createZoomMeeting({ topic: title, startDate: sessionDate, startTime, endTime });
     if (zoom.ok) {
       resolvedMeetingUrl = zoom.joinUrl;
       zoomMeetingId = zoom.meetingId;
@@ -174,7 +174,7 @@ export async function updateGroupStudySessionAction(formData: FormData) {
   let resolvedMeetingUrl = onlineMeetingUrl;
   let zoomMeetingId: string | null | undefined = undefined; // undefined = don't overwrite existing
   if (mode === "online" && !onlineMeetingUrl) {
-    const zoom = await createZoomMeeting({ topic: title, startDate: sessionDate, startTime });
+    const zoom = await createZoomMeeting({ topic: title, startDate: sessionDate, startTime, endTime });
     if (zoom.ok) {
       resolvedMeetingUrl = zoom.joinUrl;
       zoomMeetingId = zoom.meetingId;
