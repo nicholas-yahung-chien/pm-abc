@@ -8,6 +8,7 @@ import {
   createGroupStudySession,
   deleteGroupStudyReadingItem,
   deleteGroupStudySession,
+  getGroupStudySessionZoomMeetingId,
   listGroupIdsByEmail,
   moveGroupStudyReadingItem,
   moveGroupStudySession,
@@ -16,7 +17,7 @@ import {
   updateGroupStudyReadingItem,
   updateGroupStudySession,
 } from "@/lib/repository";
-import { createZoomMeeting } from "@/lib/zoom";
+import { createZoomMeeting, deleteZoomMeeting } from "@/lib/zoom";
 import type { AppSession } from "@/lib/auth/types";
 import type { GroupStudySessionMode } from "@/lib/types";
 
@@ -212,7 +213,19 @@ export async function deleteGroupStudySessionAction(formData: FormData) {
   }
 
   await requireManageAccess(groupId, returnTo);
+
+  // Fetch Zoom meeting ID before deleting the DB row
+  const zoomMeetingId = await getGroupStudySessionZoomMeetingId({ groupId, sessionId });
+
   const result = await deleteGroupStudySession({ groupId, sessionId });
+
+  // Delete the Zoom meeting after DB deletion succeeds (fire-and-forget, non-blocking)
+  if (result.ok && zoomMeetingId) {
+    deleteZoomMeeting(zoomMeetingId).catch(() => {
+      // Zoom deletion failure is non-critical — log silently
+      console.warn(`[zoom] Failed to delete meeting ${zoomMeetingId} for session ${sessionId}`);
+    });
+  }
 
   revalidateGroupStudyPaths(groupId);
   if (!result.ok) redirectWithMessage(returnTo, false, result.message);

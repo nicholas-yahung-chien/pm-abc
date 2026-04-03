@@ -2167,6 +2167,23 @@ export async function updateGroupStudySession(input: {
   return { ok: true };
 }
 
+export async function getGroupStudySessionZoomMeetingId(input: {
+  groupId: string;
+  sessionId: string;
+}): Promise<string | null> {
+  const db = getClientOrError();
+  if (!db.client) return null;
+
+  const { data } = await db.client
+    .from("group_study_sessions")
+    .select("zoom_meeting_id")
+    .eq("id", input.sessionId)
+    .eq("group_id", input.groupId)
+    .maybeSingle();
+
+  return (data as { zoom_meeting_id?: string | null } | null)?.zoom_meeting_id ?? null;
+}
+
 export async function deleteGroupStudySession(input: {
   groupId: string;
   sessionId: string;

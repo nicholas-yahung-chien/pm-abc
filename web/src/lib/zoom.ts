@@ -68,6 +68,30 @@ async function getZoomAccessToken(): Promise<string> {
 }
 
 /**
+ * Delete a Zoom meeting by meeting ID.
+ * Falls back gracefully — never throws, returns { ok: false, error } on failure.
+ */
+export async function deleteZoomMeeting(meetingId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const token = await getZoomAccessToken();
+
+    const res = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // 204 = deleted, 404 = already gone — both are acceptable
+    if (res.ok || res.status === 404) return { ok: true };
+
+    const body = await res.text();
+    return { ok: false, error: `Zoom delete failed (${res.status}): ${body}` };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
+  }
+}
+
+/**
  * Create a Zoom meeting and return the join URL and meeting ID.
  * Falls back gracefully — never throws, returns { ok: false, error } on failure.
  */
