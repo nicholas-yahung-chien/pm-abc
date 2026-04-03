@@ -403,11 +403,47 @@ export type TrackingSectionProgressRow = {
   completion_percent: number;
 };
 
+export type PollType = "topic" | "time";
+
+export type GroupPollRow = {
+  id: string;
+  group_id: string;
+  title: string;
+  description: string;
+  poll_type: PollType;
+  expires_at: string;
+  created_by_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+  group?: { id: string; name: string; code: string } | null;
+};
+
+export type GroupPollOptionRow = {
+  id: string;
+  poll_id: string;
+  group_id: string;
+  label: string;
+  slot_datetime: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export type GroupPollVoteRow = {
+  id: string;
+  poll_id: string;
+  option_id: string;
+  group_id: string;
+  person_id: string;
+  created_at: string;
+  person?: { id: string; full_name: string; display_name: string } | null;
+};
+
 export type NotificationStatus = "pending" | "sent" | "failed" | "skipped";
 export type NotificationType =
   | "tracking_due_reminder"
   | "study_session_reminder_1day"
-  | "study_session_reminder_2hour";
+  | "study_session_reminder_2hour"
+  | "group_email_blast";
 
 export type NotificationLogRow = {
   id: string;

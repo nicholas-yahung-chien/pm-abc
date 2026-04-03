@@ -25,6 +25,7 @@ import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
 import { TrackingManagementPanel } from "@/components/tracking-management-panel";
 import { getCurrentSession } from "@/lib/auth/session";
+import { sendGroupEmailBlastAction } from "@/app/group-comms-actions";
 import {
   listGroups,
   listMemberships,
@@ -458,6 +459,36 @@ export default async function GroupTrackingPage({
       </section>
 
       <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="tracking" />
+
+      {(session.role === "coach" || session.role === "admin") && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-800">群發信</h2>
+          <p className="mt-0.5 text-xs text-slate-500">發送訊息給小組內所有學員。</p>
+          <form action={sendGroupEmailBlastAction} className="mt-3 space-y-2">
+            <input type="hidden" name="groupId" value={groupId} />
+            <input
+              type="text"
+              name="subject"
+              placeholder="主旨"
+              required
+              className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            />
+            <textarea
+              name="body"
+              placeholder="信件內容"
+              rows={4}
+              required
+              className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700"
+            >
+              發送給全體學員
+            </button>
+          </form>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣</h2>

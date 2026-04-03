@@ -12,6 +12,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   tracking_due_reminder: "追蹤到期",
   study_session_reminder_1day: "讀書會 T-1天",
   study_session_reminder_2hour: "讀書會 T-2小時",
+  group_email_blast: "群發信",
 };
 
 const STATUS_LABELS: Record<NotificationStatus, string> = {

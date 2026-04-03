@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type GroupFeatureKey = "tracking" | "study" | "courses" | "directory" | "roles";
+type GroupFeatureKey = "tracking" | "study" | "courses" | "directory" | "roles" | "polls";
 
 type GroupFeatureNavBarProps = {
   groupId: string;
@@ -14,6 +14,7 @@ const featureItems: Array<{ key: GroupFeatureKey; label: string }> = [
   { key: "courses", label: "課程表" },
   { key: "directory", label: "通訊錄" },
   { key: "roles", label: "R&R" },
+  { key: "polls", label: "投票" },
 ];
 
 export function GroupFeatureNavBar({ groupId, classId, current }: GroupFeatureNavBarProps) {
@@ -23,6 +24,7 @@ export function GroupFeatureNavBar({ groupId, classId, current }: GroupFeatureNa
     courses: `/classes/${classId}/courses`,
     directory: `/groups/${groupId}/directory`,
     roles: `/groups/${groupId}/roles`,
+    polls: `/groups/${groupId}/polls`,
   };
 
   return (

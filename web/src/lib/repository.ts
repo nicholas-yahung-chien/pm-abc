@@ -4,6 +4,9 @@ import type {
   ClassCourseChapterRow,
   ClassCourseItemRow,
   ClassCourseTopicRow,
+  GroupPollOptionRow,
+  GroupPollRow,
+  GroupPollVoteRow,
   GroupRow,
   GroupCoachOwnerRow,
   GroupStudyReadingAssignmentRow,
@@ -15,6 +18,7 @@ import type {
   MembershipRow,
   NotificationLogRow,
   PersonRow,
+  PollType,
   RoleAssignmentRow,
   RoleDefinitionRow,
   TrackingItemResponseType,
@@ -557,6 +561,161 @@ export async function listTrackingSectionProgress(): Promise<TrackingSectionProg
     completed_items: Number(row.completed_items ?? 0),
     completion_percent: Number(row.completion_percent ?? 0),
   }));
+}
+
+// ─── Polls ────────────────────────────────────────────────────────────────────
+
+export async function listGroupPolls(groupId: string): Promise<GroupPollRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("group_polls")
+    .select("*")
+    .eq("group_id", groupId)
+    .order("expires_at", { ascending: false });
+
+  return (data ?? []) as GroupPollRow[];
+}
+
+export async function listGroupPollOptions(pollId: string): Promise<GroupPollOptionRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("group_poll_options")
+    .select("*")
+    .eq("poll_id", pollId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return (data ?? []) as GroupPollOptionRow[];
+}
+
+export async function listGroupPollVotes(pollId: string): Promise<GroupPollVoteRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("group_poll_votes")
+    .select("*, person:people(id, full_name, display_name)")
+    .eq("poll_id", pollId);
+
+  return (data ?? []) as GroupPollVoteRow[];
+}
+
+export async function createGroupPoll(input: {
+  groupId: string;
+  title: string;
+  description: string;
+  pollType: PollType;
+  expiresAt: string;
+  options: { label: string; slotDatetime?: string | null }[];
+  accountId?: string | null;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { data: poll, error: pollError } = await db.client
+    .from("group_polls")
+    .insert({
+      group_id: input.groupId,
+      title: input.title,
+      description: input.description,
+      poll_type: input.pollType,
+      expires_at: input.expiresAt,
+      created_by_account_id: input.accountId ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (pollError || !poll) return { ok: false, message: pollError?.message ?? "建立投票失敗。" };
+
+  const optionRows = input.options.map((opt, i) => ({
+    poll_id: poll.id,
+    group_id: input.groupId,
+    label: opt.label,
+    slot_datetime: opt.slotDatetime ?? null,
+    sort_order: (i + 1) * 10,
+  }));
+
+  const { error: optError } = await db.client.from("group_poll_options").insert(optionRows);
+  if (optError) return { ok: false, message: optError.message };
+
+  return { ok: true };
+}
+
+export async function castGroupPollVote(input: {
+  pollId: string;
+  optionId: string;
+  groupId: string;
+  personId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  // For topic polls: remove any existing vote by this person first (single-choice)
+  const { data: poll } = await db.client
+    .from("group_polls")
+    .select("poll_type")
+    .eq("id", input.pollId)
+    .single();
+
+  if ((poll as { poll_type?: string } | null)?.poll_type === "topic") {
+    await db.client
+      .from("group_poll_votes")
+      .delete()
+      .eq("poll_id", input.pollId)
+      .eq("person_id", input.personId);
+  }
+
+  const { error } = await db.client.from("group_poll_votes").upsert(
+    {
+      poll_id: input.pollId,
+      option_id: input.optionId,
+      group_id: input.groupId,
+      person_id: input.personId,
+    },
+    { onConflict: "option_id,person_id" },
+  );
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function retractGroupPollVote(input: {
+  pollId: string;
+  optionId: string;
+  personId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_poll_votes")
+    .delete()
+    .eq("option_id", input.optionId)
+    .eq("person_id", input.personId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+export async function deleteGroupPoll(input: {
+  pollId: string;
+  groupId: string;
+}): Promise<MutationResult> {
+  const db = getClientOrError();
+  if (!db.client) return { ok: false, message: db.error };
+
+  const { error } = await db.client
+    .from("group_polls")
+    .delete()
+    .eq("id", input.pollId)
+    .eq("group_id", input.groupId);
+
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
 }
 
 export async function listNotificationLogs(limit = 200): Promise<NotificationLogRow[]> {
