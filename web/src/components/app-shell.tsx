@@ -28,7 +28,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     session.role === "member"
       ? memberNavItems
       : session.role === "admin"
-        ? [...coachNavItems, { href: "/admin/coach-approvals", label: "教練審核中心" }]
+        ? [
+            ...coachNavItems,
+            { href: "/admin/coach-approvals", label: "教練審核中心" },
+            { href: "/admin/notifications", label: "通知記錄" },
+          ]
         : coachNavItems;
 
   const roleLabel =

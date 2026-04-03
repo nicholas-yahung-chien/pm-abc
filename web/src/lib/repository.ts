@@ -13,6 +13,7 @@ import type {
   GroupStudySessionRow,
   GroupTrackingProgressRow,
   MembershipRow,
+  NotificationLogRow,
   PersonRow,
   RoleAssignmentRow,
   RoleDefinitionRow,
@@ -556,6 +557,19 @@ export async function listTrackingSectionProgress(): Promise<TrackingSectionProg
     completed_items: Number(row.completed_items ?? 0),
     completion_percent: Number(row.completion_percent ?? 0),
   }));
+}
+
+export async function listNotificationLogs(limit = 200): Promise<NotificationLogRow[]> {
+  const db = getClientOrError();
+  if (!db.client) return [];
+
+  const { data } = await db.client
+    .from("notification_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []) as NotificationLogRow[];
 }
 
 export function getDataLayerStatus(): { ok: boolean; message: string } {

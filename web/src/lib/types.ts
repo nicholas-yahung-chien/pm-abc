@@ -402,3 +402,26 @@ export type TrackingSectionProgressRow = {
   completed_items: number;
   completion_percent: number;
 };
+
+export type NotificationStatus = "pending" | "sent" | "failed" | "skipped";
+export type NotificationType =
+  | "tracking_due_reminder"
+  | "study_session_reminder_1day"
+  | "study_session_reminder_2hour";
+
+export type NotificationLogRow = {
+  id: string;
+  notification_type: NotificationType;
+  recipient_person_id: string | null;
+  recipient_email: string;
+  delivered_to_email: string;
+  dev_redirected: boolean;
+  subject: string;
+  tracking_item_id: string | null;
+  study_session_id: string | null;
+  idempotency_key: string;
+  status: NotificationStatus;
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+};

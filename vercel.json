@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/notify?type=tracking_due",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/notify?type=study_1day",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/notify?type=study_2hour",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
