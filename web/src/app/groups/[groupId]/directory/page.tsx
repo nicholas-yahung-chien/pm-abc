@@ -6,6 +6,7 @@ import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { GroupDirectoryMemberTable } from "@/components/group-directory-member-table";
 import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
+import { TableEmptyRow } from "@/components/empty-state";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
   listGroupCoachOwners,
@@ -158,11 +159,7 @@ export default async function GroupDirectoryPage({
                 </tr>
               )}
               {!coachOwner?.coach && (
-                <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={7}>
-                    尚未指派小組教練。
-                  </td>
-                </tr>
+                <TableEmptyRow colSpan={7} message="尚未指派小組教練。" />
               )}
             </tbody>
           </table>

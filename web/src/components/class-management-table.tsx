@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 
 type ClassListItem = {
   id: string;
@@ -625,11 +626,7 @@ export function ClassManagementTable({
             ))}
 
             {!table.getRowModel().rows.length && (
-              <tr>
-                <td className="px-3 py-4 text-slate-500" colSpan={8}>
-                  目前尚無符合條件的班別資料。
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={8} message="目前尚無符合條件的班別資料。" />
             )}
           </tbody>
         </table>

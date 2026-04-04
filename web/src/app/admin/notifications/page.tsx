@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { TableEmptyRow } from "@/components/empty-state";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import { listNotificationLogs } from "@/lib/repository";
@@ -173,11 +174,7 @@ export default async function NotificationsPage({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {logs.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
-                    目前尚無通知記錄。
-                  </td>
-                </tr>
+                <TableEmptyRow colSpan={8} message="目前尚無通知記錄。" />
               ) : (
                 logs.map((log: NotificationLogRow) => (
                   <tr key={log.id} className="hover:bg-slate-50">

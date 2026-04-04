@@ -15,6 +15,7 @@ import { GroupMembershipList } from "@/components/group-membership-list";
 import { GroupManagementTable } from "@/components/group-management-table";
 import { StatusBanner } from "@/components/status-banner";
 import { TextPreviewDialogButton } from "@/components/text-preview-dialog-button";
+import { TableEmptyRow } from "@/components/empty-state";
 import { getCurrentSession } from "@/lib/auth/session";
 import { listCoachAccounts } from "@/lib/auth/repository";
 import {
@@ -108,11 +109,7 @@ export default async function GroupsPage({
                   </tr>
                 ))}
                 {!groups.length && (
-                  <tr>
-                    <td className="px-3 py-4 text-slate-500" colSpan={5}>
-                      目前尚未被指派到任何小組。
-                    </td>
-                  </tr>
+                  <TableEmptyRow colSpan={5} message="目前尚未被指派到任何小組。" />
                 )}
               </tbody>
             </table>

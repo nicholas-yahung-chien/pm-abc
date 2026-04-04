@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 import { TRACKING_DIRECT_SUBSECTION_SENTINEL } from "@/lib/tracking";
 import type {
   TrackingItemResponseType,
@@ -575,11 +576,7 @@ export function TrackingManagementPanel({
             </tr>
           ))}
           {!input.rows.length && (
-            <tr>
-              <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                {input.emptyText}
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={4} message={input.emptyText} />
           )}
         </tbody>
       </table>

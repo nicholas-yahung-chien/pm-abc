@@ -2,6 +2,7 @@
 
 import { Check, Eye, Pencil, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 
 type GroupDirectoryMemberItem = {
   personId: string;
@@ -245,11 +246,7 @@ export function GroupDirectoryMemberTable({
             );
           })}
           {!members.length && (
-            <tr>
-              <td className="px-3 py-4 text-slate-500" colSpan={7}>
-                目前沒有小組學員資料。
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={7} message="目前沒有小組學員資料。" />
           )}
         </tbody>
       </table>

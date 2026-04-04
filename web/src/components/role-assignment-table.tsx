@@ -2,6 +2,7 @@
 
 import { Check, Pencil, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 
 type RoleOption = {
   id: string;
@@ -265,11 +266,7 @@ export function RoleAssignmentTable({
           })}
 
           {!assignments.length && (
-            <tr>
-              <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                目前尚無角色指派資料。
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={4} message="目前尚無角色指派資料。" />
           )}
         </tbody>
       </table>

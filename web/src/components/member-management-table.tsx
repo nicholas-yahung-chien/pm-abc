@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 
 type MemberListItem = {
   id: string;
@@ -417,11 +418,7 @@ export function MemberManagementTable({
             ))}
 
             {!table.getRowModel().rows.length && (
-              <tr>
-                <td className="px-3 py-4 text-slate-500" colSpan={5}>
-                  目前尚無符合條件的學員資料。
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={5} message="目前尚無符合條件的學員資料。" />
             )}
           </tbody>
         </table>

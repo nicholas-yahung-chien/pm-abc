@@ -2,6 +2,7 @@
 
 import { Check, Pencil, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 
 type RoleItem = {
   id: string;
@@ -181,11 +182,7 @@ export function RoleDefinitionTable({
           })}
 
           {!roles.length && (
-            <tr>
-              <td className="px-3 py-4 text-slate-500" colSpan={3}>
-                目前尚無角色資料。
-              </td>
-            </tr>
+            <TableEmptyRow colSpan={3} message="目前尚無角色資料。" />
           )}
         </tbody>
       </table>

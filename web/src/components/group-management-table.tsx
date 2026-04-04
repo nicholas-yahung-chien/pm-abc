@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { TableEmptyRow } from "@/components/empty-state";
 
 type GroupListItem = {
   id: string;
@@ -441,14 +442,7 @@ export function GroupManagementTable({
               </tr>
             ))}
             {!table.getRowModel().rows.length && (
-              <tr>
-                <td
-                  className="px-3 py-4 text-slate-500"
-                  colSpan={table.getVisibleLeafColumns().length}
-                >
-                  目前尚無符合條件的小組資料。
-                </td>
-              </tr>
+              <TableEmptyRow colSpan={table.getVisibleLeafColumns().length} message="目前尚無符合條件的小組資料。" />
             )}
           </tbody>
         </table>

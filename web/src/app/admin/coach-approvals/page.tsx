@@ -8,6 +8,7 @@ import {
 } from "@/app/auth-actions";
 import { AppShell } from "@/components/app-shell";
 import { StatusBanner } from "@/components/status-banner";
+import { TableEmptyRow } from "@/components/empty-state";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
   getAdminNotificationEmail,
@@ -129,11 +130,7 @@ export default async function CoachApprovalsPage({
                 </tr>
               ))}
               {!pendingCoaches.length && (
-                <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={4}>
-                    目前沒有待審核教練申請。
-                  </td>
-                </tr>
+                <TableEmptyRow colSpan={4} message="目前沒有待審核教練申請。" />
               )}
             </tbody>
           </table>
@@ -188,11 +185,7 @@ export default async function CoachApprovalsPage({
                 </tr>
               ))}
               {!coachAccounts.length && (
-                <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={5}>
-                    目前尚無教練帳號。
-                  </td>
-                </tr>
+                <TableEmptyRow colSpan={5} message="目前尚無教練帳號。" />
               )}
             </tbody>
           </table>
