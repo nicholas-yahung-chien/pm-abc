@@ -29,7 +29,7 @@ export function GroupFeatureNavBar({ groupId, classId, current }: GroupFeatureNa
 
   return (
     <section className="sticky top-3 z-30 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
-      <nav className="flex flex-nowrap gap-2 overflow-x-auto">
+      <nav className="grid grid-cols-6 gap-2">
         {featureItems.map((item) => {
           const isActive = item.key === current;
           return (
@@ -37,7 +37,7 @@ export function GroupFeatureNavBar({ groupId, classId, current }: GroupFeatureNa
               key={item.key}
               href={hrefByKey[item.key]}
               aria-current={isActive ? "page" : undefined}
-              className={`inline-flex shrink-0 items-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+              className={`flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors duration-150 ${
                 isActive
                   ? "border-amber-600 bg-amber-50 text-amber-800"
                   : "border-slate-200 bg-slate-50 text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
