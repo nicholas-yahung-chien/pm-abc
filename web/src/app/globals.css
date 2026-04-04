@@ -50,13 +50,13 @@ body {
   font-family: var(--font-noto-sans-tc), sans-serif;
 }
 
-input,
+input:not([type="radio"]):not([type="checkbox"]),
 select,
 textarea {
   @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors duration-150;
 }
 
-input:focus,
+input:not([type="radio"]):not([type="checkbox"]):focus,
 select:focus,
 textarea:focus {
   @apply border-amber-700 ring-2 ring-amber-700/20;
