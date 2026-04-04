@@ -37,8 +37,8 @@ export default async function AccountPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           帳號設定
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">基本資料</h2>
@@ -64,7 +64,7 @@ export default async function AccountPage({
             <input value={session.email} readOnly disabled />
           </label>
           <div className="md:col-span-2">
-            <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+            <button className="btn-primary">
               儲存基本資料
             </button>
           </div>
@@ -72,7 +72,7 @@ export default async function AccountPage({
       </section>
 
       {session.role === "coach" && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="card-section">
           <h3 className="text-lg font-semibold text-slate-900">教練通訊錄資料</h3>
           <p className="mt-1 text-sm text-slate-600">
             以下資料將顯示於小組通訊錄，提供學員查看。
@@ -119,7 +119,7 @@ export default async function AccountPage({
             </label>
 
             <div className="md:col-span-2">
-              <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+              <button className="btn-primary">
                 儲存通訊錄資料
               </button>
             </div>
@@ -127,7 +127,7 @@ export default async function AccountPage({
         </section>
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h3 className="text-lg font-semibold text-slate-900">密碼設定</h3>
         {session.role === "member" ? (
           <p className="mt-2 text-sm text-slate-600">

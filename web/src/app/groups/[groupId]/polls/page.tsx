@@ -3,6 +3,7 @@ import {
   deleteGroupPollAction,
 } from "@/app/group-comms-actions";
 import { AppShell } from "@/components/app-shell";
+import { PageHeader } from "@/components/page-header";
 import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { PollCreateForm } from "@/components/poll-create-form";
 import { StatusBanner } from "@/components/status-banner";
@@ -72,21 +73,15 @@ export default async function GroupPollsPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          {group.class?.name ?? ""} / {group.name}
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900">投票</h1>
-        <div className="mt-3">
-          <StatusBanner status={status} message={message} />
-        </div>
-      </section>
+      <PageHeader label={`${group.class?.name ?? ""} / ${group.name}`} title="投票">
+        <StatusBanner status={status} message={message} />
+      </PageHeader>
 
       <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="polls" />
 
       {/* Create poll form — coach only */}
       {isCoach && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="card-section">
           <h2 className="text-sm font-semibold text-slate-800">建立新投票</h2>
           <PollCreateForm groupId={groupId} />
         </section>

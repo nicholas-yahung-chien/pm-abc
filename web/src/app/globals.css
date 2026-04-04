@@ -36,6 +36,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-noto-sans-tc);
   --font-mono: var(--font-roboto-mono);
+
+  /* Brand color tokens — use text-brand, bg-brand, bg-brand-subtle, border-brand-border */
+  --color-brand:         var(--brand);
+  --color-brand-subtle:  var(--brand-subtle);
+  --color-brand-border:  var(--brand-border);
+  --color-sidebar:       var(--surface-sidebar);
 }
 
 body {
@@ -58,6 +64,46 @@ textarea:focus {
 
 button {
   @apply cursor-pointer;
+}
+
+/* ── Button style guide ────────────────────────────────────────────────────
+   Usage rules:
+   - btn-primary   : main CTA (save, submit, create)
+   - btn-secondary : secondary / ghost action
+   - btn-dark      : alternative solid (e.g. "add member")
+   - btn-danger    : destructive action with label
+   - btn-icon-edit / btn-icon-save / btn-icon-cancel / btn-icon-delete
+                   : compact icon-only buttons inside tables / panels
+   - card-section  : standard white content card used throughout pages
+   ── ──────────────────────────────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700;
+  }
+  .btn-secondary {
+    @apply rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100;
+  }
+  .btn-dark {
+    @apply rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900;
+  }
+  .btn-danger {
+    @apply rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100;
+  }
+  .btn-icon-edit {
+    @apply rounded-md border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100;
+  }
+  .btn-icon-save {
+    @apply rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-700 transition hover:bg-emerald-100;
+  }
+  .btn-icon-cancel {
+    @apply rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-700 transition hover:bg-amber-100;
+  }
+  .btn-icon-delete {
+    @apply rounded-md border border-rose-300 bg-rose-50 p-2 text-rose-700 transition hover:bg-rose-100;
+  }
+  .card-section {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  }
 }
 
 form[data-submit-pending="true"] {

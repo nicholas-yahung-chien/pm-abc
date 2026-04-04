@@ -72,9 +72,9 @@ function moveButtonClassName(): string {
 
 function iconButtonClassName(kind: "edit" | "delete"): string {
   if (kind === "delete") {
-    return "rounded-md border border-rose-300 bg-rose-50 p-2 text-rose-700 transition hover:bg-rose-100";
+    return "btn-icon-delete";
   }
-  return "rounded-md border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100";
+  return "btn-icon-edit";
 }
 
 function formatDate(dateInput: string | null): string {
@@ -189,7 +189,7 @@ export function GroupStudyManagementPanel({
   return (
     <div className={canManage ? "flex flex-col-reverse gap-5" : ""}>
       {canManage ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="card-section">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">{TEXT.title}</h2>
@@ -673,7 +673,7 @@ export function GroupStudyManagementPanel({
       )}
         </section>
       ) : null}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">{TEXT.readOnlyTitle}</h2>
           <p className="mt-1 text-sm text-slate-600">{TEXT.readOnlySubtitle}</p>

@@ -13,6 +13,7 @@ import {
   updateGroupStudySessionAction,
 } from "@/app/group-study-actions";
 import { AppShell } from "@/components/app-shell";
+import { PageHeader } from "@/components/page-header";
 import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { GroupStudyManagementPanel } from "@/components/group-study-management-panel";
 import { StatusBanner } from "@/components/status-banner";
@@ -150,25 +151,18 @@ export default async function GroupStudyPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          {"\u5c0f\u7d44\u7ba1\u7406 / \u8b80\u66f8\u6703"}
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-          {group.class?.code} / {group.code} {group.name}
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {"\u7dad\u8b77\u8b80\u66f8\u6703\u6d3b\u52d5\u3001\u503c\u65e5\u751f\u8207\u5c0e\u8b80\u5206\u914d\u3002"}
-        </p>
-        <div className="mt-4">
-          <StatusBanner status={status} message={message} />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
+      <PageHeader
+        label={"\u5c0f\u7d44\u7ba1\u7406 / \u8b80\u66f8\u6703"}
+        title={`${group.class?.code} / ${group.code} ${group.name}`}
+        description={"\u7dad\u8b77\u8b80\u66f8\u6703\u6d3b\u52d5\u3001\u503c\u65e5\u751f\u8207\u5c0e\u8b80\u5206\u914d\u3002"}
+      >
+        <StatusBanner status={status} message={message} />
+        <div className="flex flex-wrap gap-4 text-sm">
+          <Link href={`/groups/${groupId}`} className="text-brand underline">
             {"\u56de\u5230\u5c0f\u7d44\u7e3d\u89bd"}
           </Link>
         </div>
-      </section>
+      </PageHeader>
 
       <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="study" />
 

@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { updateGroupMemberDirectoryProfileAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { PageHeader } from "@/components/page-header";
 import { GroupFeatureNavBar } from "@/components/group-feature-nav-bar";
 import { GroupDirectoryMemberTable } from "@/components/group-directory-member-table";
 import { StatusBanner } from "@/components/status-banner";
@@ -99,29 +100,18 @@ export default async function GroupDirectoryPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          小組管理 / 通訊錄
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-          {group.class?.code} / {group.code} {group.name}
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          顯示教練與學員聯絡資訊，並可在下方更新學員通訊錄欄位。
-        </p>
-        <div className="mt-4">
-          <StatusBanner status={status} message={message} />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-4 text-sm">
-          <Link href={`/groups/${groupId}`} className="text-amber-700 underline">
+      <PageHeader label="小組管理 / 通訊錄" title={`${group.class?.code} / ${group.code} ${group.name}`} description="顯示教練與學員聯絡資訊，並可在下方更新學員通訊錄欄位。">
+        <StatusBanner status={status} message={message} />
+        <div className="flex flex-wrap gap-4 text-sm">
+          <Link href={`/groups/${groupId}`} className="text-brand underline">
             回到小組總覽
           </Link>
         </div>
-      </section>
+      </PageHeader>
 
       <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="directory" />
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">小組教練資訊</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -166,7 +156,7 @@ export default async function GroupDirectoryPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">小組學員通訊錄</h2>
         <p className="mt-1 text-sm text-slate-600">
           以通訊錄方式維護學員資料，包含姓名、顯示名稱、Email、LINE ID 與自我介紹。

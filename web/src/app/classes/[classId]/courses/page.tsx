@@ -64,8 +64,8 @@ export default async function ClassCoursePage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           第三階段 / 課程表
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-900">
@@ -78,16 +78,16 @@ export default async function ClassCoursePage({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <Link href="/classes" className="text-amber-700 underline">
+          <Link href="/classes" className="text-brand underline">
             返回班別管理
           </Link>
-          <Link href="/groups" className="text-amber-700 underline">
+          <Link href="/groups" className="text-brand underline">
             前往小組管理
           </Link>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">課程表內容</h2>
         <p className="mt-1 text-sm text-slate-600">
           依課程、主題與章節顯示完整課程內容，章節後續可用於讀書會導讀分配。
@@ -117,7 +117,7 @@ export default async function ClassCoursePage({
           onMoveChapterAction={moveClassCourseChapterAction}
         />
       ) : (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="card-section">
           <p className="text-sm text-slate-600">
             目前為檢視模式。若需編輯課程表，請改以教練或管理員身份登入。
           </p>

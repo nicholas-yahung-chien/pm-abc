@@ -38,8 +38,8 @@ export default async function ClassesPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           第二階段 / 班別管理
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">建立班別</h2>
@@ -89,7 +89,7 @@ export default async function ClassesPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h3 className="text-lg font-semibold text-slate-900">班別列表</h3>
 
         <ClassManagementTable
@@ -106,7 +106,7 @@ export default async function ClassesPage({
           onBatchDeleteAction={batchDeleteClassesAction}
         />
       </section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h3 className="text-lg font-semibold text-slate-900">課程表入口</h3>
         <p className="mt-1 text-sm text-slate-600">
           點擊任一班別可進入課程表管理，設定課程項目、主題與章節。

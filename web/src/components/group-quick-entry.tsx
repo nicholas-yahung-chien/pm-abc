@@ -21,7 +21,7 @@ export function GroupQuickEntry({ title, description, options }: GroupQuickEntry
 
   if (!options.length) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         <p className="mt-2 text-sm text-slate-600">{description}</p>
         <p className="mt-3 text-sm text-slate-500">目前尚無可進入的小組。</p>
@@ -30,7 +30,7 @@ export function GroupQuickEntry({ title, description, options }: GroupQuickEntry
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="card-section">
       <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
       <p className="mt-2 text-sm text-slate-600">{description}</p>
 
@@ -51,7 +51,7 @@ export function GroupQuickEntry({ title, description, options }: GroupQuickEntry
             type="button"
             disabled={!groupId}
             onClick={() => router.push(`/groups/${groupId}`)}
-            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
+            className="btn-primary disabled:cursor-not-allowed disabled:bg-amber-300"
           >
             進入小組
           </button>

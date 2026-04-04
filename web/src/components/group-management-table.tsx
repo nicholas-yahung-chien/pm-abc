@@ -245,7 +245,7 @@ export function GroupManagementTable({
             <button
               title="儲存教練指派"
               disabled={!hasCoaches}
-              className="rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-700 transition hover:bg-emerald-100"
+              className="btn-icon-save"
             >
               <Check className="h-4 w-4" />
             </button>
@@ -283,7 +283,7 @@ export function GroupManagementTable({
               <input type="hidden" name="groupId" value={item.id} />
               <button
                 title="刪除小組"
-                className="rounded-md border border-rose-300 bg-rose-50 p-2 text-rose-700 transition hover:bg-rose-100"
+                className="btn-icon-delete"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -301,7 +301,7 @@ export function GroupManagementTable({
         <Link
           href={`/groups/${row.original.id}`}
           title="進入小組"
-          className="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-700 transition hover:bg-amber-100"
+          className="inline-flex items-center btn-icon-cancel"
         >
           <ArrowRightCircle className="h-4 w-4" />
         </Link>
@@ -581,7 +581,7 @@ export function GroupManagementTable({
                 >
                   取消
                 </button>
-                <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                <button className="btn-primary">
                   儲存小組
                 </button>
               </div>
@@ -639,7 +639,7 @@ export function GroupManagementTable({
               <form action={submitGroupDescriptionUpdate}>
                 <input type="hidden" name="groupId" value={descriptionEditorGroup.id} />
                 <input type="hidden" name="description" value={descriptionEditorDraft} />
-                <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                <button className="btn-primary">
                   儲存說明
                 </button>
               </form>

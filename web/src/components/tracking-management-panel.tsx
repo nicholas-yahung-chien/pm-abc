@@ -91,15 +91,15 @@ function formatDate(dateInput: string | null): string {
 
 function iconButton(kind: "edit" | "save" | "cancel" | "delete"): string {
   if (kind === "save") {
-    return "rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-700 transition hover:bg-emerald-100";
+    return "btn-icon-save";
   }
   if (kind === "cancel") {
-    return "rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-700 transition hover:bg-amber-100";
+    return "btn-icon-cancel";
   }
   if (kind === "delete") {
-    return "rounded-md border border-rose-300 bg-rose-50 p-2 text-rose-700 transition hover:bg-rose-100";
+    return "btn-icon-delete";
   }
-  return "rounded-md border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100";
+  return "btn-icon-edit";
 }
 
 function moveButton(): string {
@@ -585,7 +585,7 @@ export function TrackingManagementPanel({
 
   return (
     <section className="space-y-4">
-      <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <article className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣管理（教練）</h2>
         <p className="mt-1 text-sm text-slate-600">
           新增、編輯、排序與刪除追蹤大項、小項、追蹤項目。
@@ -595,7 +595,7 @@ export function TrackingManagementPanel({
           <button
             type="button"
             onClick={() => setCreateModal("section")}
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+            className="inline-flex items-center gap-2 btn-primary"
           >
             <Plus className="h-4 w-4" />
             新增追蹤大項
@@ -633,7 +633,7 @@ export function TrackingManagementPanel({
         const directItems = directSubsection ? (itemsBySubsectionId.get(directSubsection.id) ?? []) : [];
 
         return (
-          <article key={section.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <article key={section.id} className="card-section">
             <div className="flex flex-wrap items-start gap-3">
               <div className="mt-0.5 flex flex-col gap-1">
                 <form action={onMoveSectionAction}>
@@ -899,7 +899,7 @@ export function TrackingManagementPanel({
       })}
 
       {!orderedSections.length && (
-        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <article className="card-section">
           <p className="text-sm text-slate-500">目前尚無追蹤大項，請先新增追蹤大項。</p>
         </article>
       )}
@@ -925,7 +925,7 @@ export function TrackingManagementPanel({
               >
                 取消
               </button>
-              <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+              <button className="btn-primary">
                 新增大項
               </button>
             </div>

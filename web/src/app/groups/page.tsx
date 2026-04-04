@@ -57,8 +57,8 @@ export default async function GroupsPage({
 
     return (
       <AppShell>
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+        <section className="card-section">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
             第二階段 / 我的小組
           </p>
           <h2 className="mt-2 text-xl font-semibold text-slate-900">我的小組列表</h2>
@@ -71,7 +71,7 @@ export default async function GroupsPage({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="card-section">
           <h3 className="text-lg font-semibold text-slate-900">小組列表</h3>
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
@@ -101,7 +101,7 @@ export default async function GroupsPage({
                       <Link
                         href={`/groups/${item.id}`}
                         title="進入小組"
-                        className="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 p-2 text-amber-700 transition hover:bg-amber-100"
+                        className="inline-flex items-center btn-icon-cancel"
                       >
                         <ArrowRightCircle className="h-4 w-4" />
                       </Link>
@@ -174,8 +174,8 @@ export default async function GroupsPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           第二階段 / 小組管理
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">建立小組</h2>
@@ -275,7 +275,7 @@ export default async function GroupsPage({
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h3 className="text-lg font-semibold text-slate-900">小組列表</h3>
         <GroupManagementTable
           groups={groups.map((item) => ({
@@ -298,7 +298,7 @@ export default async function GroupsPage({
         />
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h3 className="text-lg font-semibold text-slate-900">小組成員列表</h3>
         <GroupMembershipList groups={groupOptions} rows={memberMembershipRows} />
       </section>

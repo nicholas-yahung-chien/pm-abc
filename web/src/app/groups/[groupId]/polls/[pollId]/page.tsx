@@ -88,8 +88,8 @@ export default async function PollDetailPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           {group!.class?.name ?? ""} / {group!.name} / 投票
         </p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-900">{poll.title}</h1>
@@ -172,7 +172,7 @@ export default async function PollDetailPage({
       <div className="flex justify-start">
         <a
           href={`/groups/${groupId}/polls`}
-          className="text-sm text-amber-700 underline"
+          className="text-sm text-brand underline"
         >
           ← 回到投票列表
         </a>

@@ -37,8 +37,8 @@ export default async function PeoplePage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           第二階段 / 學員管理
         </p>
         <h2 className="mt-2 text-xl font-semibold text-slate-900">新增學員帳號</h2>
@@ -72,7 +72,7 @@ export default async function PeoplePage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h3 className="text-lg font-semibold text-slate-900">學員管理清單</h3>
         <p className="mt-1 text-sm text-slate-600">
           可修改學員編號、姓名、Email，或刪除學員。新增完成後即可到小組管理進行成員指派。

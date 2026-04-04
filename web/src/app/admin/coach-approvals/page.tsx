@@ -7,8 +7,9 @@ import {
   updateAdminNotificationEmailAction,
 } from "@/app/auth-actions";
 import { AppShell } from "@/components/app-shell";
-import { StatusBanner } from "@/components/status-banner";
 import { TableEmptyRow } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import {
   getAdminNotificationEmail,
@@ -59,22 +60,11 @@ export default async function CoachApprovalsPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          管理員
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-          教練註冊審核中心
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          管理教練申請、審核狀態與帳號維護。
-        </p>
-        <div className="mt-4">
-          <StatusBanner status={status} message={message} />
-        </div>
-      </section>
+      <PageHeader label="管理員" title="教練註冊審核中心" description="管理教練申請、審核狀態與帳號維護。">
+        <StatusBanner status={status} message={message} />
+      </PageHeader>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">管理員通知信箱</h2>
         <form
           action={updateAdminNotificationEmailAction}
@@ -87,13 +77,13 @@ export default async function CoachApprovalsPage({
             defaultValue={notificationEmail}
             placeholder="admin@example.com"
           />
-          <button className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+          <button className="btn-primary">
             儲存
           </button>
         </form>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">待審核申請</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -137,7 +127,7 @@ export default async function CoachApprovalsPage({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">手動建立或重設教練帳號</h2>
         <form
           action={createCoachByAdminAction}
@@ -152,7 +142,7 @@ export default async function CoachApprovalsPage({
         </form>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">教練帳號列表</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">

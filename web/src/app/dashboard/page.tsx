@@ -69,9 +69,9 @@ export default async function DashboardPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
             PM-ABC
           </p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">
@@ -105,7 +105,7 @@ export default async function DashboardPage({
         options={quickEntryOptions}
       />
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">操作指引</h2>
         {session.role === "member" ? (
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">

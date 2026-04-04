@@ -54,9 +54,9 @@ function moveButtonClassName(): string {
 
 function iconButtonClassName(kind: "edit" | "delete"): string {
   if (kind === "delete") {
-    return "rounded-md border border-rose-300 bg-rose-50 p-2 text-rose-700 transition hover:bg-rose-100";
+    return "btn-icon-delete";
   }
-  return "rounded-md border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100";
+  return "btn-icon-edit";
 }
 
 export function ClassCourseManagementPanel({
@@ -133,7 +133,7 @@ export function ClassCourseManagementPanel({
   );
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="card-section">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">課程表管理</h2>

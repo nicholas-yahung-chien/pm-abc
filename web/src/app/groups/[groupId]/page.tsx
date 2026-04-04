@@ -415,8 +415,8 @@ export default async function GroupTrackingPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+      <section className="card-section">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
           小組管理 / 追蹤表
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-900">
@@ -452,7 +452,7 @@ export default async function GroupTrackingPage({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <Link href="/groups" className="text-amber-700 underline">
+          <Link href="/groups" className="text-brand underline">
             回到小組列表
           </Link>
         </div>
@@ -461,7 +461,7 @@ export default async function GroupTrackingPage({
       <GroupFeatureNavBar groupId={groupId} classId={group.class_id} current="tracking" />
 
       {(session.role === "coach" || session.role === "admin") && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="card-section">
           <h2 className="text-sm font-semibold text-slate-800">群發信</h2>
           <p className="mt-0.5 text-xs text-slate-500">發送訊息給小組內所有學員。</p>
           <form action={sendGroupEmailBlastAction} className="mt-3 space-y-2">
@@ -490,7 +490,7 @@ export default async function GroupTrackingPage({
         </section>
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="card-section">
         <h2 className="text-lg font-semibold text-slate-900">追蹤矩陣</h2>
         <p className="mt-1 text-sm text-slate-600">
           以里程碑與待辦事項為列、學員為欄，直接查看並回報每位學員完成狀態。

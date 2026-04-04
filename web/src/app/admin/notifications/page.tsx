@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { TableEmptyRow } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { StatusBanner } from "@/components/status-banner";
 import { getCurrentSession } from "@/lib/auth/session";
 import { listNotificationLogs } from "@/lib/repository";
@@ -77,18 +78,9 @@ export default async function NotificationsPage({
 
   return (
     <AppShell>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-          管理員
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">通知記錄</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          查看所有系統自動發送的通知信件狀態與明細。
-        </p>
-        <div className="mt-4">
-          <StatusBanner status={status} message={message} />
-        </div>
-      </section>
+      <PageHeader label="管理員" title="通知記錄" description="查看所有系統自動發送的通知信件狀態與明細。">
+        <StatusBanner status={status} message={message} />
+      </PageHeader>
 
       {/* Summary counters */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">

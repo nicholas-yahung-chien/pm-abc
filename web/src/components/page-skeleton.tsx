@@ -14,7 +14,7 @@ function Shimmer({ className }: { className?: string }) {
 /** Header card skeleton — matches the amber-label + h1 + description pattern */
 export function HeaderCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="card-section">
       <Shimmer className="h-3 w-24" />
       <Shimmer className="mt-2 h-7 w-48" />
       <Shimmer className="mt-2 h-4 w-72" />

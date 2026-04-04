@@ -28,7 +28,7 @@ export function FormModalTrigger({
   triggerContent,
   triggerClassName,
   formClassName = "space-y-3",
-  submitClassName = "rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700",
+  submitClassName = "btn-primary",
   actionsClassName,
   disabled = false,
 }: FormModalTriggerProps) {
@@ -49,7 +49,7 @@ export function FormModalTrigger({
         title={buttonLabel}
         className={[
           triggerClassName ??
-            "inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700",
+            "inline-flex items-center gap-2 btn-primary",
           "disabled:cursor-not-allowed disabled:bg-slate-400",
         ].join(" ")}
       >
